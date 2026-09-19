@@ -33,7 +33,7 @@ const dimensions = {
 
 const presets = {
   lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
-  time: { title: 'DATE-TIME-VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 30, venueFontSize: 25, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
+  time: { title: 'DATE-TIME-VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 33, venueFontSize: 25, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
   address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
   organizer: { title: 'ORGANIZER', content: '主办方名称', w: 360, h: 210, fontSize: 24, theme: 'pink', logoUrl: '' },
 };
@@ -41,9 +41,11 @@ const presets = {
 const variantSets = {};
 
 const fontSizeSets = {
-  time: [28, 30, 32, 34],
+  time: [22, 33],
   default: [14, 18, 22, 26, 32, 40, 48, 56, 64, 72],
 };
+
+const WIN98_FONT = '"Pixelated MS Sans Serif", "MS Sans Serif", sans-serif';
 
 let state = {
   width: 900,
@@ -58,6 +60,7 @@ let state = {
 };
 
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+function win98FontSize(value) { return Number(value) < 28 ? 22 : 33; }
 function snap(value) { return state.snap ? Math.round(value / 8) * 8 : Math.round(value); }
 
 function fitStage() {
@@ -123,8 +126,9 @@ function renderWidget(widget) {
   const logo = el.querySelector('.widget-logo');
   lineRoot.style.fontSize = `${widget.fontSize}px`;
   specialRoot.replaceChildren();
-  const specialFontSize = widget.type === 'time' ? clamp(widget.fontSize, 28, 34) : widget.fontSize;
+  const specialFontSize = widget.type === 'time' ? win98FontSize(widget.fontSize) : widget.fontSize;
   specialRoot.style.fontSize = `${specialFontSize}px`;
+  specialRoot.style.setProperty('--win98-time-size', `${specialFontSize}px`);
   specialRoot.hidden = !['time', 'address'].includes(widget.type);
   logo.hidden = widget.type !== 'organizer' || !widget.logoUrl;
   el.classList.toggle('no-logo', widget.type === 'organizer' && !widget.logoUrl);
@@ -251,8 +255,8 @@ function updateEditor() {
   controls.content.value = widget.content;
   controls.theme.value = widget.theme;
   controls.fontSize.value = widget.fontSize;
-  controls.fontSize.min = widget.type === 'time' ? 28 : 12;
-  controls.fontSize.max = widget.type === 'time' ? 34 : 72;
+  controls.fontSize.min = widget.type === 'time' ? 22 : 12;
+  controls.fontSize.max = widget.type === 'time' ? 33 : 72;
   controls.shadow.checked = widget.shadow;
   const showVenueSize = widget.type === 'time';
   controls.venueSizeControl.hidden = !showVenueSize;
@@ -442,7 +446,7 @@ async function drawWidget(ctx, widget) {
   if (widget.shadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(widget.x + 9, widget.y + 10, widget.w, widget.h); }
   drawBevel(ctx, widget.x, widget.y, widget.w, widget.h);
   ctx.fillStyle = titleColor; ctx.fillRect(widget.x + 4, widget.y + 4, widget.w - 8, 34);
-  ctx.fillStyle = '#fff'; ctx.font = '22px "Courier New", monospace'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#fff'; ctx.font = `700 22px ${WIN98_FONT}`; ctx.textBaseline = 'middle';
   ctx.fillText(widget.title, widget.x + 10, widget.y + 21, widget.w - 112);
   ['_', '□', '×'].forEach((label, index) => {
     const bx = widget.x + widget.w - 81 + index * 25;
@@ -461,7 +465,7 @@ async function drawWidget(ctx, widget) {
     const [hour = '00', minute = '00'] = time.match(/\d+/g) || [];
     const weekdayNames = { 星期一: 'MON', 星期二: 'TUE', 星期三: 'WED', 星期四: 'THU', 星期五: 'FRI', 星期六: 'SAT', 星期日: 'SUN', 周一: 'MON', 周二: 'TUE', 周三: 'WED', 周四: 'THU', 周五: 'FRI', 周六: 'SAT', 周日: 'SUN' };
     const weekdayText = weekdayNames[weekday] || weekday.replace(/[()]/g, '');
-    const timeBase = clamp(widget.fontSize, 28, 34);
+    const timeBase = win98FontSize(widget.fontSize);
     const venueSize = clamp(widget.venueFontSize || 20, 14, 32);
     const statusH = Math.max(48, Math.round(venueSize * 1.35 + 10));
     const mainX = bx + 7;
@@ -479,11 +483,11 @@ async function drawWidget(ctx, widget) {
     ctx.beginPath(); ctx.moveTo(rightX, mainY + mainH / 2); ctx.lineTo(mainX + mainW, mainY + mainH / 2); ctx.stroke();
     drawAnalogClock(ctx, clockX, clockY, 33, hour, minute);
     ctx.fillStyle = '#071d35'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.font = `bold ${Math.max(25, timeBase - 2)}px monospace`;
+    ctx.font = `700 22px ${WIN98_FONT}`;
     ctx.fillText(date, rightX + 18, mainY + mainH * .25, rightW - 30);
-    ctx.font = `bold ${timeBase}px monospace`;
+    ctx.font = `700 ${timeBase}px ${WIN98_FONT}`;
     ctx.fillText(`${hour}:${minute}`, rightX + 18, mainY + mainH * .75, rightW * .52);
-    ctx.font = `bold ${Math.max(20, timeBase * .72)}px monospace`;
+    ctx.font = `700 22px ${WIN98_FONT}`;
     ctx.fillText(`(${weekdayText})`, rightX + rightW * .56, mainY + mainH * .75, rightW * .4);
 
     const statusY = mainY + mainH;
@@ -493,7 +497,7 @@ async function drawWidget(ctx, widget) {
     ctx.fillStyle = '#071d35'; ctx.beginPath(); ctx.arc(pinX, pinY - 5, 11, 0, Math.PI * 2); ctx.fill();
     ctx.beginPath(); ctx.moveTo(pinX - 8, pinY + 1); ctx.lineTo(pinX, pinY + 15); ctx.lineTo(pinX + 8, pinY + 1); ctx.fill();
     ctx.fillStyle = '#e9f3e8'; ctx.beginPath(); ctx.arc(pinX, pinY - 5, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.font = `bold ${venueSize}px sans-serif`; ctx.fillStyle = '#071d35'; ctx.fillText(venue, mainX + 53, statusY + statusH / 2, mainW - 64);
+    ctx.font = `700 ${venueSize}px ${WIN98_FONT}`; ctx.fillStyle = '#071d35'; ctx.fillText(venue, mainX + 53, statusY + statusH / 2, mainW - 64);
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   } else if (widget.type === 'lineup') {
     let y = by + 8;
@@ -544,6 +548,10 @@ async function drawWidget(ctx, widget) {
 }
 
 async function exportPoster() {
+  await Promise.all([
+    document.fonts.load(`400 22px ${WIN98_FONT}`),
+    document.fonts.load(`700 33px ${WIN98_FONT}`),
+  ]);
   const canvas = document.createElement('canvas');
   canvas.width = state.width;
   canvas.height = state.height;
@@ -576,7 +584,11 @@ stage.addEventListener('pointerdown', (event) => { if (event.target === stage ||
 controls.title.addEventListener('input', (event) => updateSelected('title', event.target.value));
 controls.content.addEventListener('input', (event) => updateSelected('content', event.target.value));
 controls.theme.addEventListener('change', (event) => updateSelected('theme', event.target.value));
-controls.fontSize.addEventListener('input', (event) => updateSelected('fontSize', clamp(Number(event.target.value) || 12, 12, 72)));
+controls.fontSize.addEventListener('input', (event) => {
+  const widget = selectedWidget();
+  const value = Number(event.target.value) || 12;
+  updateSelected('fontSize', widget?.type === 'time' ? win98FontSize(value) : clamp(value, 12, 72));
+});
 controls.shadow.addEventListener('change', (event) => updateSelected('shadow', event.target.checked));
 controls.venueFontSize.addEventListener('input', (event) => {
   const value = clamp(Number(event.target.value), 14, 32);

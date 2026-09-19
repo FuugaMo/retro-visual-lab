@@ -1,3 +1,21 @@
+@font-face {
+  font-family: "Pixelated MS Sans Serif";
+  src: url("./assets/fonts/ms_sans_serif.woff2") format("woff2"),
+       url("./assets/fonts/ms_sans_serif.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pixelated MS Sans Serif";
+  src: url("./assets/fonts/ms_sans_serif_bold.woff2") format("woff2"),
+       url("./assets/fonts/ms_sans_serif_bold.woff") format("woff");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
 :root {
   --chrome: #c0c0c0;
   --chrome-dark: #7d7d7d;
@@ -232,8 +250,11 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
   color: #fff;
   background: var(--title);
   cursor: move;
-  font: 22px/1 "Courier New", monospace;
-  letter-spacing: -1px;
+  font: 700 22px/1 "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+  letter-spacing: 0;
+  -webkit-font-smoothing: none;
+  font-smooth: never;
+  text-rendering: optimizeSpeed;
   overflow: hidden;
 }
 .title-icon { display: none; }
@@ -273,7 +294,7 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .widget-window[data-type="venue"][data-variant="building"] .widget-body::before { content: "▦"; font-family: "Courier New", monospace; }
 .widget-window[data-type="time"] .widget-body { display: block; text-align: center; padding: 7px; }
 .widget-window[data-type="time"] .widget-lines { display: none; }
-.datetime-layout { --venue-row-height: max(48px, calc(var(--venue-font-size, 20px) * 1.35 + 10px)); width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) var(--venue-row-height); gap: 0; font-family: "Courier New", monospace; border: 2px solid #31585f; background: #dcece2; }
+.datetime-layout { --venue-row-height: max(48px, calc(var(--venue-font-size, 20px) * 1.35 + 10px)); --win98-time-size: 33px; width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) var(--venue-row-height); gap: 0; font-family: "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; border: 2px solid #31585f; background: #dcece2; -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
 .datetime-main { min-width: 0; min-height: 0; padding: 0; background: #e9f3e8; border-bottom: 3px solid #214d57; }
 .reference-main { display: grid; grid-template-columns: 106px minmax(0, 1fr); align-items: stretch; }
 .clock-readout { display: grid; grid-template-rows: 1fr 1fr; min-width: 0; padding: 7px 14px 7px 18px; border-left: 3px solid #31585f; }
@@ -295,25 +316,25 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .analog-clock .hour-hand { height: 20px; width: 5px; transform: translateX(-50%) rotate(var(--hour-angle, 240deg)); }
 .analog-clock .minute-hand { height: 26px; width: 4px; transform: translateX(-50%) rotate(var(--minute-angle, 0deg)); }
 .analog-clock .clock-pin { width: 6px; height: 6px; left: 50%; top: 50%; bottom: auto; border-radius: 50%; background: #111; transform: translate(-50%, -50%); }
-.datetime-layout .big-time { display: block; font-size: 1em; font-weight: 800; line-height: 1; letter-spacing: -1px; white-space: nowrap; }
+.datetime-layout .big-time { display: block; font-size: var(--win98-time-size); font-weight: 700; line-height: 1; letter-spacing: 0; white-space: nowrap; }
 .weekday-label, .datetime-layout .date-chip { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.weekday-label { font: 800 .72em "Courier New", monospace; }
-.datetime-layout .date-chip { display: flex; align-items: center; border-bottom: 3px solid #31585f; font: 800 .86em "Courier New", monospace; text-align: left; }
+.weekday-label { font: 700 22px/1 "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; }
+.datetime-layout .date-chip { display: flex; align-items: center; border-bottom: 3px solid #31585f; font: 700 22px/1 "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; text-align: left; }
 .reference-time-row { display: flex; align-items: center; gap: 22px; min-width: 0; }
 .segmented-primary { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 4px; }
-.segmented-primary .big-time { padding-left: 10px; font-size: 32px; text-align: left; }
+.segmented-primary .big-time { padding-left: 10px; text-align: left; }
 .segmented-date { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 3px; }
-.segmented-date span { padding: 3px 4px; text-align: center; background: #fff; box-shadow: inset 2px 2px #777, inset -2px -2px #fff; font: 22px "Courier New", monospace; }
+.segmented-date span { padding: 3px 4px; text-align: center; background: #fff; box-shadow: inset 2px 2px #777, inset -2px -2px #fff; font: 22px "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; }
 .compact-primary { display: flex; align-items: baseline; gap: 16px; }
 .compact-primary .weekday-label { padding: 0; background: transparent; box-shadow: none; }
-.compact-primary .big-time { font-size: 32px; }
+.compact-primary .big-time { font-size: var(--win98-time-size); }
 .compact-date { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: #fff; box-shadow: inset 2px 2px #777, inset -2px -2px #fff; }
 .compact-date .date-chip { padding: 0; background: transparent; box-shadow: none; }
 .date-mini-icon { width: 15px; height: 15px; flex: 0 0 15px; border: 2px solid #111; background: linear-gradient(var(--title) 0 4px, #fff 4px); }
 .datefirst-main .date-chip { padding: 3px 9px; font-weight: 700; }
 .datefirst-secondary { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 4px; align-items: center; }
-.datefirst-secondary .big-time { padding-left: 10px; font-size: 28px; text-align: left; }
-.venue-status { height: var(--venue-row-height); padding: 4px 15px; display: flex; align-items: center; gap: 15px; text-align: left; background: #e9f3e8; font: 800 var(--venue-font-size, 20px)/1 "Arial Narrow", "SimSun", sans-serif; white-space: nowrap; overflow: hidden; }
+.datefirst-secondary .big-time { padding-left: 10px; font-size: var(--win98-time-size); text-align: left; }
+.venue-status { height: var(--venue-row-height); padding: 4px 15px; display: flex; align-items: center; gap: 15px; text-align: left; background: #e9f3e8; font: 700 var(--venue-font-size, 20px)/1 "Pixelated MS Sans Serif", "MS Sans Serif", "SimSun", sans-serif; white-space: nowrap; overflow: hidden; }
 .venue-status > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .venue-pin-icon { width: 24px; height: 31px; flex: 0 0 24px; position: relative; background: #071d35; clip-path: polygon(50% 100%, 11% 49%, 11% 27%, 27% 8%, 50% 0, 73% 8%, 89% 27%, 89% 49%); }
 .venue-pin-icon::after { content: ""; position: absolute; width: 8px; height: 8px; left: 8px; top: 8px; background: #e9f3e8; border-radius: 50%; }
