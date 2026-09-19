@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>CRT Signal Lab</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <p>ANALOG IMAGE PROCESSOR / LOCAL</p>
+            <h1>CRT SIGNAL LAB</h1>
+          </div>
+        </div>
+        <div class="header-status">
+          <span class="signal-dot"></span>
+          <span id="renderStatus">NO SIGNAL</span>
+          <button class="button button-accent" id="exportButton" disabled>EXPORT PNG</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <aside class="source-panel panel">
+          <div class="panel-heading">
+            <span>01</span>
+            <h2>SOURCE</h2>
+          </div>
+
+          <label class="drop-zone" id="dropZone">
+            <input id="fileInput" type="file" accept="image/*" hidden />
+            <span class="drop-icon" aria-hidden="true"></span>
+            <strong>DROP IMAGE HERE</strong>
+            <small>或点击选择 PNG / JPG / WEBP</small>
+          </label>
+
+          <div class="source-meta">
+            <span id="fileName">DEMO_SIGNAL.PNG</span>
+            <span id="imageSize">1600 × 1000</span>
+          </div>
+
+          <div class="panel-heading compact">
+            <span>02</span>
+            <h2>PRESETS</h2>
+          </div>
+          <div class="preset-grid" id="presetGrid">
+            <button class="preset active" data-preset="studio"><i></i><b>STUDIO</b><small>克制扫描</small></button>
+            <button class="preset" data-preset="consumer"><i></i><b>HOME TV</b><small>家用电视</small></button>
+            <button class="preset" data-preset="arcade"><i></i><b>ARCADE</b><small>街机荧光</small></button>
+            <button class="preset" data-preset="damaged"><i></i><b>DAMAGED</b><small>受损信号</small></button>
+          </div>
+
+          <div class="source-actions">
+            <button class="button" id="resetButton">RESET</button>
+            <button class="button" id="randomButton">RANDOMIZE</button>
+          </div>
+
+          <p class="privacy-note">LOCAL PROCESSING<br />图像不会离开当前设备</p>
+        </aside>
+
+        <section class="preview-column">
+          <div class="preview-toolbar panel">
+            <div class="toolbar-group">
+              <button class="tool-button active" id="fitButton">FIT</button>
+              <button class="tool-button" id="actualButton">100%</button>
+            </div>
+            <div class="toolbar-copy">
+              <span id="zoomLabel">FIT TO VIEW</span>
+              <span class="separator">/</span>
+              <span id="fpsLabel">LIVE</span>
+            </div>
+            <button class="compare-button" id="compareButton" disabled>
+              <span>HOLD TO COMPARE</span>
+              <kbd>SPACE</kbd>
+            </button>
+          </div>
+
+          <div class="preview-viewport" id="previewViewport">
+            <div class="screen-frame" id="screenFrame">
+              <canvas id="glCanvas" aria-label="CRT 处理预览"></canvas>
+              <div class="glass-glare" aria-hidden="true"></div>
+              <div class="empty-overlay" id="emptyOverlay">
+                <span>DEMO SIGNAL ACTIVE</span>
+                <small>上传图片后开始处理</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-footer panel">
+            <span>WEBGL / GPU</span>
+            <span id="outputSize">OUTPUT 1600 × 1000</span>
+            <label>
+              EXPORT SCALE
+              <select id="exportScale">
+                <option value="1">100%</option>
+                <option value="0.75">75%</option>
+                <option value="0.5">50%</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <aside class="controls-panel panel">
+          <div class="panel-heading">
+            <span>03</span>
+            <h2>SIMULATION</h2>
+          </div>
+          <div id="controlGroups"></div>
+          <label class="toggle-row">
+            <span><b>ANIMATE SIGNAL</b><small>噪点与抖动持续变化</small></span>
+            <input id="animateToggle" type="checkbox" checked />
+            <i></i>
+          </label>
+        </aside>
+      </main>
+
+      <footer class="statusbar">
+        <span>READY</span>
+        <span id="statusMessage">UPLOAD AN IMAGE OR USE THE DEMO SIGNAL</span>
+        <span>CRT-SIM v1.0</span>
+      </footer>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>

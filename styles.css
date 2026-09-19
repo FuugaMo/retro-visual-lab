@@ -1,0 +1,115 @@
+:root {
+  --shell: #101713;
+  --chrome: #c4c7c0;
+  --chrome-light: #f8faf2;
+  --chrome-mid: #777c75;
+  --chrome-dark: #111411;
+  --blue: #284b93;
+  --acid: #b9ff45;
+  --cyan: #54dfd2;
+  font-family: Monaco, Menlo, "Courier New", monospace;
+  background: var(--shell);
+}
+
+* { box-sizing: border-box; }
+
+html,
+body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+
+body {
+  min-width: 320px;
+  background:
+    radial-gradient(circle at 48% -35%, rgba(84, 223, 210, .2), transparent 50%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
+    var(--shell);
+}
+
+button { font: inherit; color: inherit; }
+
+.lab-shell { width: 100%; height: 100%; display: grid; grid-template-rows: 66px minmax(0, 1fr); }
+
+.lab-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) auto minmax(180px, 1fr);
+  align-items: center;
+  gap: 20px;
+  padding: 8px 14px;
+  color: #eef7ef;
+  border-bottom: 1px solid #536058;
+  box-shadow: 0 3px 0 #050806;
+}
+
+.lab-brand { display: flex; align-items: center; gap: 11px; color: inherit; text-decoration: none; }
+.lab-brand > span:last-child { display: grid; gap: 2px; }
+.lab-brand small { color: var(--acid); font-size: 8px; letter-spacing: 1.6px; }
+.lab-brand strong { font: 900 22px/.95 Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif; letter-spacing: 1.5px; }
+
+.brand-glyph {
+  width: 37px;
+  height: 37px;
+  position: relative;
+  flex: none;
+  border: 2px solid var(--acid);
+  box-shadow: 3px 3px 0 var(--blue), inset 0 0 12px rgba(185,255,69,.16);
+}
+.brand-glyph::before,
+.brand-glyph::after { content: ""; position: absolute; background: var(--acid); }
+.brand-glyph::before { width: 23px; height: 2px; left: 5px; top: 10px; box-shadow: 0 7px 0 var(--cyan), 0 14px 0 #ffb931; }
+.brand-glyph::after { width: 2px; height: 27px; left: 16px; top: 3px; transform: rotate(12deg); opacity: .5; }
+
+.lab-tabs {
+  align-self: end;
+  display: flex;
+  gap: 5px;
+  padding: 0 5px;
+}
+
+.lab-tab {
+  min-width: 184px;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border: 0;
+  background: var(--chrome);
+  box-shadow: inset 2px 2px var(--chrome-light), inset -2px -2px var(--chrome-dark), inset -4px -4px var(--chrome-mid);
+  color: #161916;
+  text-align: left;
+  cursor: pointer;
+}
+.lab-tab:hover { background: #d8dbd3; }
+.lab-tab:active { box-shadow: inset 2px 2px var(--chrome-dark), inset -2px -2px var(--chrome-light); transform: translate(1px, 1px); }
+.lab-tab.active { color: #fff; background: var(--blue); box-shadow: inset 2px 2px #7997d7, inset -2px -2px #081531; }
+.lab-tab span:last-child { display: grid; gap: 2px; }
+.lab-tab b { font-size: 11px; letter-spacing: .6px; }
+.lab-tab small { font-family: "Songti SC", serif; font-size: 10px; opacity: .78; }
+.tab-index { display: grid; place-items: center; width: 25px; height: 25px; color: #111; background: var(--acid); font-size: 10px; }
+
+.lab-status { justify-self: end; display: flex; align-items: center; gap: 8px; color: #abb7af; font-size: 9px; letter-spacing: .8px; }
+.lab-status i { width: 7px; height: 7px; background: var(--acid); box-shadow: 0 0 9px var(--acid); }
+
+.tool-deck { min-height: 0; position: relative; padding-top: 3px; }
+.tool-panel { position: absolute; inset: 3px 0 0; background: #111; }
+.tool-panel[hidden] { display: none; }
+.tool-panel iframe { display: block; width: 100%; height: 100%; border: 0; background: #111; }
+
+@media (max-width: 840px) {
+  .lab-shell { grid-template-rows: 58px minmax(0, 1fr); }
+  .lab-header { grid-template-columns: auto 1fr; gap: 10px; padding: 6px 8px; }
+  .lab-brand small, .lab-status { display: none; }
+  .lab-brand strong { font-size: 18px; }
+  .brand-glyph { width: 32px; height: 32px; }
+  .lab-tabs { justify-self: end; align-self: center; }
+  .lab-tab { min-width: 0; min-height: 40px; grid-template-columns: 22px auto; padding: 5px 8px; }
+  .lab-tab small { display: none; }
+  .tab-index { width: 20px; height: 20px; }
+}
+
+@media (max-width: 520px) {
+  .lab-brand > span:last-child { display: none; }
+  .lab-tabs { width: 100%; }
+  .lab-tab { flex: 1; display: flex; justify-content: center; }
+  .lab-tab b { font-size: 9px; }
+}

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Retro Visual Lab</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="lab-shell">
+      <header class="lab-header">
+        <a class="lab-brand" href="#layout" aria-label="Retro Visual Lab 首页">
+          <span class="brand-glyph" aria-hidden="true"></span>
+          <span>
+            <small>LOCAL IMAGE WORKSTATION</small>
+            <strong>RETRO VISUAL LAB</strong>
+          </span>
+        </a>
+
+        <nav class="lab-tabs" role="tablist" aria-label="工具切换">
+          <button
+            class="lab-tab active"
+            id="layoutTab"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="layoutPanel"
+            data-tab="layout"
+          >
+            <span class="tab-index">01</span>
+            <span><b>WIN98 LAYOUT</b><small>组件排版</small></span>
+          </button>
+          <button
+            class="lab-tab"
+            id="crtTab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="crtPanel"
+            data-tab="crt"
+          >
+            <span class="tab-index">02</span>
+            <span><b>CRT PROCESSOR</b><small>图像风格化</small></span>
+          </button>
+        </nav>
+
+        <div class="lab-status"><i></i><span>LOCAL / NO UPLOAD</span></div>
+      </header>
+
+      <main class="tool-deck">
+        <section class="tool-panel active" id="layoutPanel" role="tabpanel" aria-labelledby="layoutTab">
+          <iframe
+            title="Win98 小组件排版工具"
+            src="./apps/layout/index.html"
+            loading="eager"
+          ></iframe>
+        </section>
+        <section class="tool-panel" id="crtPanel" role="tabpanel" aria-labelledby="crtTab" hidden>
+          <iframe
+            title="CRT 图片风格化工具"
+            src="./apps/crt/index.html"
+            loading="eager"
+          ></iframe>
+        </section>
+      </main>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>

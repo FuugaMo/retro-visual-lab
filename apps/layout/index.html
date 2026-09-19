@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Win98 Gig Widget Lab</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="brand-icon" aria-hidden="true"></span>
+        <div>
+          <p class="eyebrow">WINDOWS 98 COMPONENT WORKBENCH</p>
+          <h1>Gig Widget Lab</h1>
+        </div>
+      </div>
+      <div class="header-actions">
+        <label class="win-button file-button">
+          上传底图
+          <input id="backgroundInput" type="file" accept="image/*" hidden />
+        </label>
+        <label class="win-button file-button">
+          上传主办 Logo
+          <input id="logoInput" type="file" accept="image/*" hidden />
+        </label>
+        <button class="win-button" id="clearBackground">清除底图</button>
+        <button class="win-button primary" id="exportButton">导出 PNG</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="tool-panel win-panel">
+        <section>
+          <div class="section-title">01 / 添加组件</div>
+          <div class="preset-grid">
+            <button class="preset-card" data-add="lineup">
+              <span class="preset-icon list-icon"></span>
+              <strong>LINE-UP</strong>
+              <small>阵容列表窗口</small>
+            </button>
+            <button class="preset-card" data-add="time">
+              <span class="preset-icon clock-icon"></span>
+              <strong>DATE / TIME</strong>
+              <small>日期时间与场地窗口</small>
+            </button>
+            <button class="preset-card" data-add="address">
+              <span class="preset-icon doc-icon"></span>
+              <strong>ADDRESS</strong>
+              <small>地址详情窗口</small>
+            </button>
+            <button class="preset-card" data-add="organizer">
+              <span class="preset-icon logo-icon"></span>
+              <strong>ORGANIZER</strong>
+              <small>主办方 Logo 窗口</small>
+            </button>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-title">02 / 画布</div>
+          <div class="field-row">
+            <label for="ratioSelect">比例</label>
+            <select id="ratioSelect" class="win-input">
+              <option value="3:4">3:4 海报</option>
+              <option value="4:3">4:3 横版</option>
+              <option value="9:16">9:16 竖屏</option>
+              <option value="1:1">1:1 方形</option>
+            </select>
+          </div>
+          <label class="check-row">
+            <input id="gridToggle" type="checkbox" checked />
+            <span>显示对齐网格</span>
+          </label>
+          <label class="check-row">
+            <input id="snapToggle" type="checkbox" checked />
+            <span>吸附 8px 网格</span>
+          </label>
+          <div class="field-row range-row">
+            <label for="bgOpacity">底图</label>
+            <input id="bgOpacity" type="range" min="10" max="100" value="100" />
+            <output id="bgOpacityValue">100%</output>
+          </div>
+        </section>
+
+        <section class="selected-controls">
+          <div class="section-title">03 / 当前组件</div>
+          <div id="emptySelection" class="empty-state">点击画布中的窗口进行编辑。</div>
+          <div id="editorFields" hidden>
+            <label class="field-stack">
+              <span>标题栏</span>
+              <input id="titleInput" class="win-input" type="text" />
+            </label>
+            <label class="field-stack">
+              <span>内容（每行一项）</span>
+              <textarea id="contentInput" class="win-input" rows="5"></textarea>
+            </label>
+            <div id="variantControl" class="field-stack" hidden>
+              <span id="variantLabel">组件款式</span>
+              <div id="variantChoices" class="variant-choices"></div>
+            </div>
+            <div id="venueSizeControl" class="field-row range-row" hidden>
+              <label for="venueFontSizeInput">场地字号</label>
+              <input id="venueFontSizeInput" type="range" min="14" max="32" value="20" />
+              <output id="venueFontSizeValue">20px</output>
+            </div>
+            <div class="two-col">
+              <label class="field-stack">
+                <span>主题</span>
+                <select id="themeInput" class="win-input">
+                  <option value="blue">Win98 蓝</option>
+                  <option value="teal">青绿</option>
+                  <option value="gray">灰阶</option>
+                  <option value="pink">粉色</option>
+                </select>
+              </label>
+              <label class="field-stack">
+                <span>字号</span>
+                <input id="fontSizeInput" class="win-input" type="number" min="12" max="72" />
+              </label>
+            </div>
+            <div class="field-stack">
+              <span>字号档位</span>
+              <div id="fontSizeChoices" class="size-choices"></div>
+            </div>
+            <label class="check-row">
+              <input id="shadowInput" type="checkbox" checked />
+              <span>窗口投影</span>
+            </label>
+            <div class="button-row">
+              <button class="win-button" id="duplicateButton">复制</button>
+              <button class="win-button" id="frontButton">置顶</button>
+              <button class="win-button danger" id="deleteButton">删除</button>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <section class="stage-column">
+        <div class="stage-toolbar win-panel">
+          <div class="status-copy">
+            <span class="status-light"></span>
+            <span id="canvasStatus">900 × 1200 px</span>
+          </div>
+          <p>拖动标题栏移动，拖动右下角调整大小</p>
+        </div>
+        <div id="stageViewport" class="stage-viewport">
+          <div id="stageScaler" class="stage-scaler">
+            <div id="posterStage" class="poster-stage grid-on" tabindex="0">
+              <div class="empty-canvas-message" id="emptyCanvasMessage">
+                <span class="empty-folder"></span>
+                <strong>UPLOAD A BACKGROUND</strong>
+                <small>也可以先放置组件，再上传海报底图</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="status-bar">
+      <span>READY</span>
+      <span id="selectionStatus">NO WIDGET SELECTED</span>
+      <span>LOCAL / NO UPLOAD</span>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
