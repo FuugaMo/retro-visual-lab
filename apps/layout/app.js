@@ -32,19 +32,13 @@ const dimensions = {
 };
 
 const presets = {
-  lineup: { title: 'LINE-UP', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 360, h: 250, fontSize: 26, theme: 'blue' },
-  time: { title: 'DATE / TIME / VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n珠海浴室', w: 460, h: 250, fontSize: 32, venueFontSize: 20, theme: 'blue', variant: 'segmented' },
-  address: { title: 'ADDRESS', content: '中国广东省珠海市金湾区敏德巷 1 号', w: 410, h: 220, fontSize: 25, theme: 'gray' },
+  lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
+  time: { title: 'DATE-TIME-VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 30, venueFontSize: 25, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
+  address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
   organizer: { title: 'ORGANIZER', content: '主办方名称', w: 360, h: 210, fontSize: 24, theme: 'pink', logoUrl: '' },
 };
 
-const variantSets = {
-  time: [
-    { value: 'segmented', label: '六  20:00\n2026│10│31', name: 'A 分段字段' },
-    { value: 'compact', label: '六  20:00\n▣ 2026/10/31', name: 'B 紧凑左对齐' },
-    { value: 'datefirst', label: '2026/10/31\n六 │ 20:00', name: 'C 日期优先' },
-  ],
-};
+const variantSets = {};
 
 const fontSizeSets = {
   time: [28, 30, 32, 34],
@@ -131,11 +125,11 @@ function renderWidget(widget) {
   specialRoot.replaceChildren();
   const specialFontSize = widget.type === 'time' ? clamp(widget.fontSize, 28, 34) : widget.fontSize;
   specialRoot.style.fontSize = `${specialFontSize}px`;
-  specialRoot.hidden = widget.type !== 'time';
+  specialRoot.hidden = !['time', 'address'].includes(widget.type);
   logo.hidden = widget.type !== 'organizer' || !widget.logoUrl;
   el.classList.toggle('no-logo', widget.type === 'organizer' && !widget.logoUrl);
   if (!logo.hidden) logo.src = widget.logoUrl;
-  lineRoot.hidden = widget.type === 'time';
+  lineRoot.hidden = ['time', 'address'].includes(widget.type);
   if (widget.type === 'lineup') {
     lineRoot.replaceChildren(...widget.content.split('\n').map((line) => {
       const span = document.createElement('span');
@@ -144,6 +138,8 @@ function renderWidget(widget) {
     }));
   } else if (widget.type === 'time') {
     renderDateTime(specialRoot, widget);
+  } else if (widget.type === 'address') {
+    renderAddress(specialRoot, widget);
   } else {
     lineRoot.textContent = widget.content;
   }
@@ -157,8 +153,6 @@ function renderWidget(widget) {
 
 function renderDateTime(root, widget) {
   const [date = '', weekday = '星期六', time = '', venue = 'VENUE'] = widget.content.split('\n');
-  const parts = date.match(/\d+/g) || [];
-  const [year = 'YYYY', month = 'MM', day = 'DD'] = parts;
   const timeParts = time.match(/\d+/g) || [];
   const [hour = '00', minute = '00'] = timeParts;
   const wrap = document.createElement('div');
@@ -174,32 +168,32 @@ function renderDateTime(root, widget) {
   main.className = 'datetime-main';
   const readout = document.createElement('div'); readout.className = 'clock-readout';
   const timeLabel = document.createElement('strong'); timeLabel.className = 'big-time'; timeLabel.textContent = `${hour}:${minute}`;
-  const weekdayLabel = document.createElement('span'); weekdayLabel.className = 'weekday-label'; weekdayLabel.textContent = weekday;
+  const weekdayNames = { 星期一: 'MON', 星期二: 'TUE', 星期三: 'WED', 星期四: 'THU', 星期五: 'FRI', 星期六: 'SAT', 星期日: 'SUN', 周一: 'MON', 周二: 'TUE', 周三: 'WED', 周四: 'THU', 周五: 'FRI', 周六: 'SAT', 周日: 'SUN' };
+  const weekdayLabel = document.createElement('span'); weekdayLabel.className = 'weekday-label'; weekdayLabel.textContent = `(${weekdayNames[weekday] || weekday.replace(/[()]/g, '')})`;
   const dateLabel = document.createElement('span'); dateLabel.className = 'date-chip'; dateLabel.textContent = date;
-  if (widget.variant === 'compact') {
-    main.classList.add('compact-main');
-    const primaryRow = document.createElement('div'); primaryRow.className = 'compact-primary'; primaryRow.append(weekdayLabel, timeLabel);
-    const dateRow = document.createElement('div'); dateRow.className = 'compact-date';
-    const dateIcon = document.createElement('span'); dateIcon.className = 'date-mini-icon';
-    dateRow.append(dateIcon, dateLabel);
-    readout.append(primaryRow, dateRow);
-  } else if (widget.variant === 'datefirst') {
-    main.classList.add('datefirst-main');
-    const secondaryRow = document.createElement('div'); secondaryRow.className = 'datefirst-secondary'; secondaryRow.append(weekdayLabel, timeLabel);
-    readout.append(dateLabel, secondaryRow);
-  } else {
-    main.classList.add('segmented-main');
-    const primaryRow = document.createElement('div'); primaryRow.className = 'segmented-primary'; primaryRow.append(weekdayLabel, timeLabel);
-    const dateRow = document.createElement('div'); dateRow.className = 'segmented-date';
-    [year, month, day].forEach((value) => { const cell = document.createElement('span'); cell.textContent = value; dateRow.append(cell); });
-    readout.append(primaryRow, dateRow);
-  }
+  main.classList.add('reference-main');
+  const timeRow = document.createElement('div'); timeRow.className = 'reference-time-row'; timeRow.append(timeLabel, weekdayLabel);
+  readout.append(dateLabel, timeRow);
   main.append(clock, readout);
   const venueBar = document.createElement('div'); venueBar.className = 'venue-status';
-  const venueIcon = document.createElement('span'); venueIcon.className = 'venue-mini-icon';
+  const venueIcon = document.createElement('span'); venueIcon.className = 'venue-pin-icon';
   const venueText = document.createElement('span'); venueText.textContent = venue;
   venueBar.append(venueIcon, venueText);
   wrap.append(main, venueBar);
+  root.append(wrap);
+}
+
+function renderAddress(root, widget) {
+  const wrap = document.createElement('div');
+  wrap.className = 'address-layout';
+  const map = document.createElement('div');
+  map.className = 'address-map';
+  map.innerHTML = '<i class="address-pin"></i>';
+  const copy = document.createElement('p');
+  copy.className = 'address-copy';
+  copy.style.fontSize = `${widget.fontSize}px`;
+  copy.textContent = widget.content;
+  wrap.append(map, copy);
   root.append(wrap);
 }
 
@@ -217,12 +211,13 @@ function renderAll() {
 function addWidget(type) {
   const preset = presets[type];
   const offset = (state.widgets.length * 32) % 180;
+  const useStartPosition = !state.widgets.some((item) => item.type === type) && Number.isFinite(preset.startX);
   const widget = {
     ...preset,
     id: state.nextId++,
     type,
-    x: snap(clamp(70 + offset, 0, state.width - preset.w)),
-    y: snap(clamp(90 + offset, 0, state.height - preset.h)),
+    x: snap(clamp(useStartPosition ? preset.startX : 70 + offset, 0, state.width - preset.w)),
+    y: snap(clamp(useStartPosition ? preset.startY : 90 + offset, 0, state.height - preset.h)),
     z: ++state.topZ,
     shadow: true,
   };
@@ -446,100 +441,70 @@ async function drawWidget(ctx, widget) {
   const titleColor = themes[widget.theme];
   if (widget.shadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(widget.x + 9, widget.y + 10, widget.w, widget.h); }
   drawBevel(ctx, widget.x, widget.y, widget.w, widget.h);
-  ctx.fillStyle = titleColor; ctx.fillRect(widget.x + 4, widget.y + 4, widget.w - 8, 32);
-  ctx.fillStyle = '#fff'; ctx.font = '16px Tahoma, sans-serif'; ctx.textBaseline = 'middle';
-  ctx.fillText(widget.title, widget.x + 13, widget.y + 20, widget.w - 115);
+  ctx.fillStyle = titleColor; ctx.fillRect(widget.x + 4, widget.y + 4, widget.w - 8, 34);
+  ctx.fillStyle = '#fff'; ctx.font = '22px "Courier New", monospace'; ctx.textBaseline = 'middle';
+  ctx.fillText(widget.title, widget.x + 10, widget.y + 21, widget.w - 112);
   ['_', '□', '×'].forEach((label, index) => {
     const bx = widget.x + widget.w - 81 + index * 25;
-    drawBevel(ctx, bx, widget.y + 9, 22, 21);
+    drawBevel(ctx, bx, widget.y + 8, 23, 23);
     ctx.fillStyle = '#111'; ctx.font = '17px monospace'; ctx.textAlign = 'center'; ctx.fillText(label, bx + 11, widget.y + 19);
   });
   ctx.textAlign = 'left';
-  const bx = widget.x + 12, by = widget.y + 45, bw = widget.w - 24, bh = widget.h - 58;
-  ctx.fillStyle = '#f7f7f1'; ctx.fillRect(bx, by, bw, bh);
+  const bx = widget.x + 10, by = widget.y + 44, bw = widget.w - 20, bh = widget.h - 54;
+  ctx.fillStyle = '#e9f3e8'; ctx.fillRect(bx, by, bw, bh);
   ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.strokeRect(bx, by, bw, bh);
   ctx.fillStyle = '#101010'; ctx.textBaseline = 'top';
   const family = widget.type === 'time' || widget.type === 'lineup' ? 'monospace' : 'serif';
   ctx.font = `${widget.type === 'lineup' ? 'bold ' : ''}${widget.fontSize}px ${family}`;
   if (widget.type === 'time') {
     const [date = '', weekday = '星期六', time = '', venue = 'VENUE'] = widget.content.split('\n');
-    const [year = 'YYYY', month = 'MM', day = 'DD'] = date.match(/\d+/g) || [];
     const [hour = '00', minute = '00'] = time.match(/\d+/g) || [];
+    const weekdayNames = { 星期一: 'MON', 星期二: 'TUE', 星期三: 'WED', 星期四: 'THU', 星期五: 'FRI', 星期六: 'SAT', 星期日: 'SUN', 周一: 'MON', 周二: 'TUE', 周三: 'WED', 周四: 'THU', 周五: 'FRI', 周六: 'SAT', 周日: 'SUN' };
+    const weekdayText = weekdayNames[weekday] || weekday.replace(/[()]/g, '');
     const timeBase = clamp(widget.fontSize, 28, 34);
     const venueSize = clamp(widget.venueFontSize || 20, 14, 32);
-    ctx.textAlign = 'center';
-    const statusH = Math.max(33, Math.round(venueSize * 1.35 + 8));
-    const mainX = bx + 10;
-    const mainY = by + 10;
-    const mainW = bw - 20;
-    const mainH = bh - statusH - 27;
-    const clockX = mainX + 26;
+    const statusH = Math.max(48, Math.round(venueSize * 1.35 + 10));
+    const mainX = bx + 7;
+    const mainY = by + 7;
+    const mainW = bw - 14;
+    const mainH = bh - statusH - 14;
+    const clockW = 106;
+    const clockX = mainX + clockW / 2;
     const clockY = mainY + mainH / 2;
-    const rightX = mainX + 60;
-    const rightW = mainW - 68;
-    const contentTop = mainY + Math.max(6, (mainH - 70) / 2);
-    const drawInsetField = (x, y, w, h, fill = '#fff') => {
-      ctx.fillStyle = fill; ctx.fillRect(x, y, w, h);
-      ctx.lineWidth = 2; ctx.strokeStyle = '#777';
-      ctx.beginPath(); ctx.moveTo(x + w, y); ctx.lineTo(x, y); ctx.lineTo(x, y + h); ctx.stroke();
-      ctx.strokeStyle = '#fff';
-      ctx.beginPath(); ctx.moveTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y); ctx.stroke();
-    };
+    const rightX = mainX + clockW;
+    const rightW = mainW - clockW;
+    ctx.fillStyle = '#e9f3e8'; ctx.fillRect(mainX, mainY, mainW, mainH);
+    ctx.strokeStyle = '#31585f'; ctx.lineWidth = 3; ctx.strokeRect(mainX, mainY, mainW, mainH);
+    ctx.beginPath(); ctx.moveTo(rightX, mainY); ctx.lineTo(rightX, mainY + mainH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(rightX, mainY + mainH / 2); ctx.lineTo(mainX + mainW, mainY + mainH / 2); ctx.stroke();
+    drawAnalogClock(ctx, clockX, clockY, 33, hour, minute);
+    ctx.fillStyle = '#071d35'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.font = `bold ${Math.max(25, timeBase - 2)}px monospace`;
+    ctx.fillText(date, rightX + 18, mainY + mainH * .25, rightW - 30);
+    ctx.font = `bold ${timeBase}px monospace`;
+    ctx.fillText(`${hour}:${minute}`, rightX + 18, mainY + mainH * .75, rightW * .52);
+    ctx.font = `bold ${Math.max(20, timeBase * .72)}px monospace`;
+    ctx.fillText(`(${weekdayText})`, rightX + rightW * .56, mainY + mainH * .75, rightW * .4);
 
-    drawBevel(ctx, mainX, mainY, mainW, mainH, false);
-    drawAnalogClock(ctx, clockX, clockY, 22, hour, minute);
-    ctx.strokeStyle = '#777'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(rightX - 8, mainY + 6); ctx.lineTo(rightX - 8, mainY + mainH - 6); ctx.stroke();
-    ctx.textBaseline = 'middle';
-
-    if (widget.variant === 'compact') {
-      ctx.textAlign = 'left'; ctx.fillStyle = '#111';
-      ctx.font = 'bold 18px serif'; ctx.fillText(weekday, rightX, contentTop + 15, 86);
-      ctx.font = `bold ${timeBase}px monospace`; ctx.fillText(`${hour}:${minute}`, rightX + 100, contentTop + 15, rightW - 100);
-      const fieldY = contentTop + 37;
-      drawInsetField(rightX, fieldY, rightW, 31);
-      ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(rightX + 8, fieldY + 8, 15, 15);
-      ctx.fillStyle = titleColor; ctx.fillRect(rightX + 10, fieldY + 10, 11, 4);
-      ctx.fillStyle = '#111'; ctx.font = '22px monospace'; ctx.fillText(date, rightX + 31, fieldY + 16, rightW - 39);
-    } else if (widget.variant === 'datefirst') {
-      drawInsetField(rightX, contentTop, rightW, 34, '#c0c0c0');
-      ctx.fillStyle = '#111'; ctx.textAlign = 'left'; ctx.font = 'bold 22px monospace'; ctx.fillText(date, rightX + 9, contentTop + 17, rightW - 18);
-      const rowY = contentTop + 39;
-      const weekdayW = Math.min(84, rightW * .34);
-      drawInsetField(rightX, rowY, weekdayW, 29, '#c0c0c0');
-      ctx.textAlign = 'center'; ctx.font = 'bold 18px serif'; ctx.fillText(weekday, rightX + weekdayW / 2, rowY + 15, weekdayW - 8);
-      ctx.textAlign = 'left'; ctx.font = `bold ${Math.max(28, timeBase - 2)}px monospace`; ctx.fillText(`${hour}:${minute}`, rightX + weekdayW + 13, rowY + 15, rightW - weekdayW - 16);
-    } else {
-      const weekdayW = Math.min(78, rightW * .32);
-      drawInsetField(rightX, contentTop, weekdayW, 31, '#c0c0c0');
-      ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = 'bold 18px serif'; ctx.fillText(weekday, rightX + weekdayW / 2, contentTop + 16, weekdayW - 8);
-      ctx.textAlign = 'left'; ctx.font = `bold ${timeBase}px monospace`; ctx.fillText(`${hour}:${minute}`, rightX + weekdayW + 14, contentTop + 16, rightW - weekdayW - 16);
-      const fieldY = contentTop + 37;
-      const gap = 3;
-      const yearW = Math.round((rightW - gap * 2) * .5);
-      const shortW = Math.round((rightW - gap * 2 - yearW) / 2);
-      const fields = [[year, yearW], [month, shortW], [day, rightW - yearW - shortW - gap * 2]];
-      let fieldX = rightX;
-      fields.forEach(([value, width]) => {
-        drawInsetField(fieldX, fieldY, width, 31);
-        ctx.fillStyle = '#111'; ctx.textAlign = 'center'; ctx.font = '22px monospace'; ctx.fillText(value, fieldX + width / 2, fieldY + 16, width - 6);
-        fieldX += width + gap;
-      });
-    }
-    const statusY = by + bh - statusH - 10;
-    drawBevel(ctx, bx + 10, statusY, bw - 20, statusH, false);
-    const venueIconW = venueSize * .8;
-    const venueIconH = venueSize * .7;
-    const venueIconX = bx + 18;
-    const venueIconY = statusY + statusH / 2 - venueIconH / 2;
-    ctx.fillStyle = '#111'; ctx.fillRect(venueIconX, venueIconY, venueIconW, venueIconH);
-    ctx.fillStyle = titleColor; ctx.fillRect(venueIconX + venueIconW * .18, venueIconY + venueIconH * .2, venueIconW * .18, venueIconH * .65);
-    ctx.fillStyle = '#fff'; ctx.fillRect(venueIconX + venueIconW * .55, venueIconY + venueIconH * .2, venueIconW * .18, venueIconH * .65);
-    ctx.font = `bold ${venueSize}px serif`; ctx.textBaseline = 'middle'; ctx.fillStyle = '#111'; ctx.textAlign = 'left'; ctx.fillText(venue, venueIconX + venueIconW + 10, statusY + statusH / 2, bw - 62);
+    const statusY = mainY + mainH;
+    ctx.fillStyle = '#e9f3e8'; ctx.fillRect(mainX, statusY, mainW, statusH);
+    ctx.strokeStyle = '#31585f'; ctx.lineWidth = 3; ctx.strokeRect(mainX, statusY, mainW, statusH);
+    const pinX = mainX + 25, pinY = statusY + statusH / 2;
+    ctx.fillStyle = '#071d35'; ctx.beginPath(); ctx.arc(pinX, pinY - 5, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(pinX - 8, pinY + 1); ctx.lineTo(pinX, pinY + 15); ctx.lineTo(pinX + 8, pinY + 1); ctx.fill();
+    ctx.fillStyle = '#e9f3e8'; ctx.beginPath(); ctx.arc(pinX, pinY - 5, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.font = `bold ${venueSize}px sans-serif`; ctx.fillStyle = '#071d35'; ctx.fillText(venue, mainX + 53, statusY + statusH / 2, mainW - 64);
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   } else if (widget.type === 'lineup') {
-    let y = by + 14;
-    widget.content.split('\n').forEach((line) => { ctx.fillStyle = titleColor; ctx.fillText('■', bx + 13, y); ctx.fillStyle = '#111'; ctx.fillText(line, bx + 42, y); y += widget.fontSize * 1.35; });
+    let y = by + 8;
+    widget.content.split('\n').forEach((line) => {
+      const box = 27;
+      ctx.fillStyle = '#0c3654'; ctx.fillRect(bx + 13, y, box, box);
+      ctx.strokeStyle = '#061d36'; ctx.lineWidth = 3; ctx.strokeRect(bx + 13, y, box, box);
+      ctx.strokeStyle = '#53c468'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bx + 18, y + 14); ctx.lineTo(bx + 24, y + 21); ctx.lineTo(bx + 36, y + 6); ctx.stroke();
+      ctx.fillStyle = '#071d35'; ctx.font = `bold ${widget.fontSize}px sans-serif`; ctx.textBaseline = 'top'; ctx.fillText(line, bx + 53, y - 1, bw - 62);
+      y += Math.max(37, widget.fontSize * 1.12);
+    });
   } else if (widget.type === 'venue') {
     ctx.fillStyle = '#ededed'; ctx.fillRect(bx, by, bw * .25, bh);
     ctx.fillStyle = titleColor; ctx.textAlign = 'center'; ctx.font = `bold ${Math.min(54, widget.fontSize * 1.8)}px monospace`;
@@ -561,20 +526,18 @@ async function drawWidget(ctx, widget) {
     ctx.fillStyle = '#111'; ctx.font = `bold ${widget.fontSize}px monospace`;
     drawWrappedText(ctx, widget.content, textX, by + 18, bx + bw - textX - 12, widget.fontSize * 1.35);
   } else if (widget.type === 'address') {
-    const iconW = widget.fontSize * .88;
-    const iconH = widget.fontSize * 1.16;
-    const iconX = bx + 12;
-    const iconY = by + 16;
-    ctx.fillStyle = titleColor; ctx.fillRect(iconX + 4, iconY + 4, iconW, iconH);
-    ctx.fillStyle = '#fff'; ctx.fillRect(iconX, iconY, iconW, iconH);
-    ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.strokeRect(iconX, iconY, iconW, iconH);
-    ctx.strokeStyle = '#777'; ctx.lineWidth = 1;
-    for (let lineY = iconY + 6; lineY < iconY + iconH - 3; lineY += 5) {
-      ctx.beginPath(); ctx.moveTo(iconX + 4, lineY); ctx.lineTo(iconX + iconW - 4, lineY); ctx.stroke();
-    }
-    const inset = iconW + 28;
-    ctx.fillStyle = '#111'; ctx.font = `${widget.fontSize}px serif`;
-    drawWrappedText(ctx, widget.content, bx + inset, by + 16, bw - inset - 12, widget.fontSize * 1.35);
+    const pad = 7, mapW = Math.min(132, bw * .32), innerH = bh - pad * 2;
+    const mapX = bx + pad, mapY = by + pad;
+    ctx.fillStyle = '#075077'; ctx.fillRect(mapX, mapY, mapW, innerH);
+    ctx.strokeStyle = '#57bed1'; ctx.lineWidth = 4;
+    [[0,.22,1,.75], [.12,1,.72,0], [0,.66,1,.42]].forEach(([x1,y1,x2,y2]) => { ctx.beginPath(); ctx.moveTo(mapX + mapW*x1, mapY + innerH*y1); ctx.lineTo(mapX + mapW*x2, mapY + innerH*y2); ctx.stroke(); });
+    const px = mapX + mapW * .58, py = mapY + innerH * .38;
+    ctx.fillStyle = '#ffe744'; ctx.beginPath(); ctx.arc(px, py, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(px - 8, py + 5); ctx.lineTo(px, py + 20); ctx.lineTo(px + 8, py + 5); ctx.fill();
+    ctx.fillStyle = '#075077'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#31585f'; ctx.lineWidth = 3; ctx.strokeRect(mapX, mapY, mapW, innerH);
+    ctx.fillStyle = '#071d35'; ctx.font = `bold ${widget.fontSize}px sans-serif`;
+    drawWrappedText(ctx, widget.content, mapX + mapW + 14, mapY + 8, bw - mapW - 30, widget.fontSize * 1.18);
   } else {
     drawWrappedText(ctx, widget.content, bx + 18, by + 16, bw - 30, widget.fontSize * 1.35);
   }
