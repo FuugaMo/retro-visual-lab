@@ -21,8 +21,8 @@
           <input id="backgroundInput" type="file" accept="image/*" hidden />
         </label>
         <label class="win-button file-button">
-          上传主办 Logo
-          <input id="logoInput" type="file" accept="image/*" hidden />
+          上传图片
+          <input id="imageInput" type="file" accept="image/*" hidden />
         </label>
         <button class="win-button" id="clearBackground">清除底图</button>
         <button class="win-button primary" id="exportButton">导出 PNG</button>
@@ -49,10 +49,10 @@
               <strong>ADDRESS</strong>
               <small>地址详情窗口</small>
             </button>
-            <button class="preset-card" data-add="organizer">
-              <span class="preset-icon logo-icon"></span>
-              <strong>ORGANIZER</strong>
-              <small>主办方 Logo 窗口</small>
+            <button class="preset-card" id="uploadImageCard">
+              <span class="preset-icon image-icon"></span>
+              <strong>IMAGE</strong>
+              <small>无边框图片图层</small>
             </button>
           </div>
         </section>
@@ -87,11 +87,11 @@
           <div class="section-title">03 / 当前组件</div>
           <div id="emptySelection" class="empty-state">点击画布中的窗口进行编辑。</div>
           <div id="editorFields" hidden>
-            <label class="field-stack">
+            <label class="field-stack" id="titleControl">
               <span>标题栏</span>
               <input id="titleInput" class="win-input" type="text" />
             </label>
-            <label class="field-stack">
+            <label class="field-stack" id="contentControl">
               <span>内容（每行一项）</span>
               <textarea id="contentInput" class="win-input" rows="5"></textarea>
             </label>
@@ -99,12 +99,7 @@
               <span id="variantLabel">组件款式</span>
               <div id="variantChoices" class="variant-choices"></div>
             </div>
-            <div id="venueSizeControl" class="field-row range-row" hidden>
-              <label for="venueFontSizeInput">场地字号</label>
-              <input id="venueFontSizeInput" type="range" min="14" max="32" value="20" />
-              <output id="venueFontSizeValue">20px</output>
-            </div>
-            <div class="two-col">
+            <div class="two-col" id="styleControls">
               <label class="field-stack">
                 <span>主题</span>
                 <select id="themeInput" class="win-input">
@@ -119,11 +114,11 @@
                 <input id="fontSizeInput" class="win-input" type="number" min="12" max="72" />
               </label>
             </div>
-            <div class="field-stack">
+            <div class="field-stack" id="fontChoicesControl">
               <span>字号档位</span>
               <div id="fontSizeChoices" class="size-choices"></div>
             </div>
-            <label class="check-row">
+            <label class="check-row" id="shadowControl">
               <input id="shadowInput" type="checkbox" checked />
               <span>窗口投影</span>
             </label>

@@ -2,7 +2,7 @@ const stage = document.querySelector('#posterStage');
 const scaler = document.querySelector('#stageScaler');
 const viewport = document.querySelector('#stageViewport');
 const backgroundInput = document.querySelector('#backgroundInput');
-const logoInput = document.querySelector('#logoInput');
+const imageInput = document.querySelector('#imageInput');
 const emptyCanvasMessage = document.querySelector('#emptyCanvasMessage');
 const canvasStatus = document.querySelector('#canvasStatus');
 const selectionStatus = document.querySelector('#selectionStatus');
@@ -18,10 +18,12 @@ const controls = {
   variantControl: document.querySelector('#variantControl'),
   variantLabel: document.querySelector('#variantLabel'),
   variantChoices: document.querySelector('#variantChoices'),
-  venueSizeControl: document.querySelector('#venueSizeControl'),
-  venueFontSize: document.querySelector('#venueFontSizeInput'),
-  venueFontSizeValue: document.querySelector('#venueFontSizeValue'),
   fontSizeChoices: document.querySelector('#fontSizeChoices'),
+  titleControl: document.querySelector('#titleControl'),
+  contentControl: document.querySelector('#contentControl'),
+  styleControls: document.querySelector('#styleControls'),
+  fontChoicesControl: document.querySelector('#fontChoicesControl'),
+  shadowControl: document.querySelector('#shadowControl'),
 };
 
 const dimensions = {
@@ -33,9 +35,9 @@ const dimensions = {
 
 const presets = {
   lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
-  time: { title: 'DATE-TIME-VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 33, venueFontSize: 25, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
+  time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 22, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
   address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
-  organizer: { title: 'ORGANIZER', content: '主办方名称', w: 360, h: 210, fontSize: 24, theme: 'pink', logoUrl: '' },
+  image: { title: 'IMAGE', content: '', w: 320, h: 220, fontSize: 22, theme: 'blue', imageUrl: '' },
 };
 
 const variantSets = {};
@@ -113,7 +115,6 @@ function renderWidget(widget) {
   el.dataset.type = widget.type;
   el.dataset.theme = widget.theme;
   el.dataset.variant = widget.variant || '';
-  el.style.setProperty('--venue-font-size', `${widget.venueFontSize || 20}px`);
   el.style.setProperty('--address-font-size', `${widget.fontSize}px`);
   el.classList.toggle('selected', widget.id === state.selectedId);
   el.classList.toggle('no-shadow', !widget.shadow);
@@ -123,17 +124,17 @@ function renderWidget(widget) {
   el.querySelector('.widget-title').textContent = widget.title;
   const lineRoot = el.querySelector('.widget-lines');
   const specialRoot = el.querySelector('.widget-special');
-  const logo = el.querySelector('.widget-logo');
+  const image = el.querySelector('.widget-logo');
   lineRoot.style.fontSize = `${widget.fontSize}px`;
   specialRoot.replaceChildren();
   const specialFontSize = widget.type === 'time' ? win98FontSize(widget.fontSize) : widget.fontSize;
   specialRoot.style.fontSize = `${specialFontSize}px`;
-  specialRoot.style.setProperty('--win98-time-size', `${specialFontSize}px`);
+  specialRoot.style.setProperty('--win98-base-size', `${specialFontSize}px`);
+  specialRoot.style.setProperty('--win98-time-size', `${specialFontSize + 11}px`);
   specialRoot.hidden = !['time', 'address'].includes(widget.type);
-  logo.hidden = widget.type !== 'organizer' || !widget.logoUrl;
-  el.classList.toggle('no-logo', widget.type === 'organizer' && !widget.logoUrl);
-  if (!logo.hidden) logo.src = widget.logoUrl;
-  lineRoot.hidden = ['time', 'address'].includes(widget.type);
+  image.hidden = widget.type !== 'image' || !widget.imageUrl;
+  if (!image.hidden) image.src = widget.imageUrl;
+  lineRoot.hidden = ['time', 'address', 'image'].includes(widget.type);
   if (widget.type === 'lineup') {
     lineRoot.replaceChildren(...widget.content.split('\n').map((line) => {
       const span = document.createElement('span');
@@ -246,11 +247,12 @@ function updateEditor() {
   if (!widget) {
     controls.variantControl.hidden = true;
     controls.variantControl.style.display = 'none';
-    controls.venueSizeControl.hidden = true;
-    controls.venueSizeControl.style.display = 'none';
     selectionStatus.textContent = 'NO WIDGET SELECTED';
     return;
   }
+  const isImage = widget.type === 'image';
+  [controls.titleControl, controls.contentControl, controls.styleControls, controls.fontChoicesControl, controls.shadowControl]
+    .forEach((control) => { control.hidden = isImage; });
   controls.title.value = widget.title;
   controls.content.value = widget.content;
   controls.theme.value = widget.theme;
@@ -258,13 +260,6 @@ function updateEditor() {
   controls.fontSize.min = widget.type === 'time' ? 22 : 12;
   controls.fontSize.max = widget.type === 'time' ? 33 : 72;
   controls.shadow.checked = widget.shadow;
-  const showVenueSize = widget.type === 'time';
-  controls.venueSizeControl.hidden = !showVenueSize;
-  controls.venueSizeControl.style.display = showVenueSize ? 'grid' : 'none';
-  if (showVenueSize) {
-    controls.venueFontSize.value = widget.venueFontSize || 20;
-    controls.venueFontSizeValue.textContent = `${widget.venueFontSize || 20}px`;
-  }
   renderVariantChoices(widget);
   renderFontSizeChoices(widget);
   selectionStatus.textContent = `${widget.type.toUpperCase()} · X ${widget.x} · Y ${widget.y} · ${widget.w} × ${widget.h}`;
@@ -350,8 +345,8 @@ function bindWidgetEvents(el, id) {
     const originW = widget.w;
     const originH = widget.h;
     const move = (moveEvent) => {
-      const minWidth = widget.type === 'time' ? 360 : 170;
-      const minHeight = widget.type === 'time' ? 210 : widget.type === 'address' ? (widget.minContentHeight || 110) : 110;
+      const minWidth = widget.type === 'image' ? 40 : widget.type === 'time' ? 360 : 170;
+      const minHeight = widget.type === 'image' ? 40 : widget.type === 'time' ? 210 : widget.type === 'address' ? (widget.minContentHeight || 110) : 110;
       widget.w = snap(clamp(originW + (moveEvent.clientX - startX) * state.width / rect.width, minWidth, state.width - widget.x));
       widget.h = snap(clamp(originH + (moveEvent.clientY - startY) * state.height / rect.height, minHeight, state.height - widget.y));
       renderWidget(widget);
@@ -443,6 +438,16 @@ function drawAnalogClock(ctx, cx, cy, radius, hour, minute) {
 async function drawWidget(ctx, widget) {
   const themes = { blue: '#000080', teal: '#007c7c', gray: '#555555', pink: '#a53d77' };
   const titleColor = themes[widget.theme];
+  if (widget.type === 'image') {
+    if (!widget.imageUrl) return;
+    const image = await loadImage(widget.imageUrl);
+    const scale = Math.min(widget.w / image.width, widget.h / image.height);
+    const width = image.width * scale;
+    const height = image.height * scale;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(image, widget.x + (widget.w - width) / 2, widget.y + (widget.h - height) / 2, width, height);
+    return;
+  }
   if (widget.shadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(widget.x + 9, widget.y + 10, widget.w, widget.h); }
   drawBevel(ctx, widget.x, widget.y, widget.w, widget.h);
   ctx.fillStyle = titleColor; ctx.fillRect(widget.x + 4, widget.y + 4, widget.w - 8, 34);
@@ -465,9 +470,9 @@ async function drawWidget(ctx, widget) {
     const [hour = '00', minute = '00'] = time.match(/\d+/g) || [];
     const weekdayNames = { 星期一: 'MON', 星期二: 'TUE', 星期三: 'WED', 星期四: 'THU', 星期五: 'FRI', 星期六: 'SAT', 星期日: 'SUN', 周一: 'MON', 周二: 'TUE', 周三: 'WED', 周四: 'THU', 周五: 'FRI', 周六: 'SAT', 周日: 'SUN' };
     const weekdayText = weekdayNames[weekday] || weekday.replace(/[()]/g, '');
-    const timeBase = win98FontSize(widget.fontSize);
-    const venueSize = clamp(widget.venueFontSize || 20, 14, 32);
-    const statusH = Math.max(48, Math.round(venueSize * 1.35 + 10));
+    const baseSize = win98FontSize(widget.fontSize);
+    const timeSize = baseSize + 11;
+    const statusH = Math.max(48, Math.round(baseSize * 1.35 + 10));
     const mainX = bx + 7;
     const mainY = by + 7;
     const mainW = bw - 14;
@@ -483,21 +488,27 @@ async function drawWidget(ctx, widget) {
     ctx.beginPath(); ctx.moveTo(rightX, mainY + mainH / 2); ctx.lineTo(mainX + mainW, mainY + mainH / 2); ctx.stroke();
     drawAnalogClock(ctx, clockX, clockY, 33, hour, minute);
     ctx.fillStyle = '#071d35'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.font = `700 22px ${WIN98_FONT}`;
-    ctx.fillText(date, rightX + 18, mainY + mainH * .25, rightW - 30);
-    ctx.font = `700 ${timeBase}px ${WIN98_FONT}`;
-    ctx.fillText(`${hour}:${minute}`, rightX + 18, mainY + mainH * .75, rightW * .52);
-    ctx.font = `700 22px ${WIN98_FONT}`;
-    ctx.fillText(`(${weekdayText})`, rightX + rightW * .56, mainY + mainH * .75, rightW * .4);
+    const dateX = rightX + Math.round(baseSize * .7);
+    const timeX = rightX + Math.round(timeSize * .45);
+    ctx.font = `700 ${baseSize}px ${WIN98_FONT}`;
+    ctx.fillText(date, dateX, mainY + mainH * .25, rightW - baseSize * 1.4);
+    ctx.font = `700 ${timeSize}px ${WIN98_FONT}`;
+    const timeText = `${hour}:${minute}`;
+    ctx.fillText(timeText, timeX, mainY + mainH * .75, rightW * .58);
+    const weekdayX = timeX + ctx.measureText(timeText).width + timeSize * .7;
+    ctx.font = `700 ${baseSize}px ${WIN98_FONT}`;
+    ctx.fillText(`(${weekdayText})`, weekdayX, mainY + mainH * .75, rightX + rightW - weekdayX - baseSize * .45);
 
     const statusY = mainY + mainH;
     ctx.fillStyle = '#e9f3e8'; ctx.fillRect(mainX, statusY, mainW, statusH);
     ctx.strokeStyle = '#31585f'; ctx.lineWidth = 3; ctx.strokeRect(mainX, statusY, mainW, statusH);
-    const pinX = mainX + 25, pinY = statusY + statusH / 2;
-    ctx.fillStyle = '#071d35'; ctx.beginPath(); ctx.arc(pinX, pinY - 5, 11, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.moveTo(pinX - 8, pinY + 1); ctx.lineTo(pinX, pinY + 15); ctx.lineTo(pinX + 8, pinY + 1); ctx.fill();
-    ctx.fillStyle = '#e9f3e8'; ctx.beginPath(); ctx.arc(pinX, pinY - 5, 4, 0, Math.PI * 2); ctx.fill();
-    ctx.font = `700 ${venueSize}px ${WIN98_FONT}`; ctx.fillStyle = '#071d35'; ctx.fillText(venue, mainX + 53, statusY + statusH / 2, mainW - 64);
+    const iconScale = baseSize / 22;
+    const pinX = mainX + 25 * iconScale, pinY = statusY + statusH / 2;
+    ctx.fillStyle = '#071d35'; ctx.beginPath(); ctx.arc(pinX, pinY - 5 * iconScale, 11 * iconScale, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(pinX - 8 * iconScale, pinY + iconScale); ctx.lineTo(pinX, pinY + 15 * iconScale); ctx.lineTo(pinX + 8 * iconScale, pinY + iconScale); ctx.fill();
+    ctx.fillStyle = '#e9f3e8'; ctx.beginPath(); ctx.arc(pinX, pinY - 5 * iconScale, 4 * iconScale, 0, Math.PI * 2); ctx.fill();
+    const venueX = mainX + 53 * iconScale;
+    ctx.font = `700 ${baseSize}px ${WIN98_FONT}`; ctx.fillStyle = '#071d35'; ctx.fillText(venue, venueX, statusY + statusH / 2, mainX + mainW - venueX - baseSize * .45);
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   } else if (widget.type === 'lineup') {
     let y = by + 8;
@@ -516,19 +527,6 @@ async function drawWidget(ctx, widget) {
     ctx.fillText(icon, bx + bw * .125, by + 22);
     ctx.textAlign = 'left'; ctx.fillStyle = '#111'; ctx.font = `${widget.fontSize}px serif`;
     drawWrappedText(ctx, widget.content, bx + bw * .31, by + 16, bw * .65, widget.fontSize * 1.35);
-  } else if (widget.type === 'organizer') {
-    let textX = bx + 18;
-    if (widget.logoUrl) {
-      const logo = await loadImage(widget.logoUrl);
-      const boxW = bw * .36, boxH = bh - 28;
-      const scale = Math.min(boxW / logo.width, boxH / logo.height);
-      const lw = logo.width * scale, lh = logo.height * scale;
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(logo, bx + 12 + (boxW - lw) / 2, by + 14 + (boxH - lh) / 2, lw, lh);
-      textX = bx + boxW + 24;
-    }
-    ctx.fillStyle = '#111'; ctx.font = `bold ${widget.fontSize}px monospace`;
-    drawWrappedText(ctx, widget.content, textX, by + 18, bx + bw - textX - 12, widget.fontSize * 1.35);
   } else if (widget.type === 'address') {
     const pad = 7, mapW = Math.min(132, bw * .32), innerH = bh - pad * 2;
     const mapX = bx + pad, mapY = by + pad;
@@ -590,12 +588,6 @@ controls.fontSize.addEventListener('input', (event) => {
   updateSelected('fontSize', widget?.type === 'time' ? win98FontSize(value) : clamp(value, 12, 72));
 });
 controls.shadow.addEventListener('change', (event) => updateSelected('shadow', event.target.checked));
-controls.venueFontSize.addEventListener('input', (event) => {
-  const value = clamp(Number(event.target.value), 14, 32);
-  controls.venueFontSizeValue.textContent = `${value}px`;
-  updateSelected('venueFontSize', value);
-});
-
 document.querySelector('#deleteButton').addEventListener('click', () => {
   state.widgets = state.widgets.filter((item) => item.id !== state.selectedId);
   state.selectedId = null; renderAll();
@@ -620,22 +612,28 @@ backgroundInput.addEventListener('change', (event) => {
   const [file] = event.target.files; if (!file) return;
   const reader = new FileReader(); reader.onload = () => setBackground(reader.result); reader.readAsDataURL(file);
 });
-logoInput.addEventListener('change', (event) => {
+imageInput.addEventListener('change', (event) => {
   const [file] = event.target.files;
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    let widget = state.widgets.find((item) => item.type === 'organizer');
-    if (!widget) {
-      addWidget('organizer');
-      widget = selectedWidget();
-    }
-    widget.logoUrl = reader.result;
-    state.selectedId = widget.id;
-    renderAll();
+    const source = new Image();
+    source.onload = () => {
+      addWidget('image');
+      const widget = selectedWidget();
+      const scale = Math.min(360 / source.width, 280 / source.height, 1);
+      widget.w = Math.max(40, Math.round(source.width * scale));
+      widget.h = Math.max(40, Math.round(source.height * scale));
+      widget.imageUrl = reader.result;
+      widget.shadow = false;
+      renderAll();
+      imageInput.value = '';
+    };
+    source.src = reader.result;
   };
   reader.readAsDataURL(file);
 });
+document.querySelector('#uploadImageCard').addEventListener('click', () => imageInput.click());
 document.querySelector('#clearBackground').addEventListener('click', () => { backgroundInput.value = ''; setBackground(''); });
 document.querySelector('#exportButton').addEventListener('click', exportPoster);
 window.addEventListener('resize', fitStage);
