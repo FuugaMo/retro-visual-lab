@@ -271,13 +271,10 @@ function renderCalendar(root, widget) {
   const venueBar = document.createElement('div');
   venueBar.className = 'calendar-venue';
   const [venueName = '', ...ticketParts] = venue.split(/\s*·\s*/);
-  const venueLabel = document.createElement('span');
-  venueLabel.className = 'calendar-venue-label';
-  venueLabel.textContent = 'VENUE';
   const venueText = document.createElement('strong');
   venueText.className = 'calendar-venue-name';
   venueText.textContent = venueName.replace(/^@\s*/, '');
-  venueBar.append(venueLabel, venueText);
+  venueBar.append(venueText);
   if (ticketParts.length) {
     const ticket = document.createElement('span');
     ticket.className = 'calendar-ticket-badge';

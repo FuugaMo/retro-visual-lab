@@ -370,11 +370,9 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .calendar-time-panel { display: grid; place-items: center; grid-template-rows: minmax(0, 1fr) 34px; padding: 8px; }
 .calendar-clock { width: min(82px, 100%); height: auto; aspect-ratio: 1; }
 .calendar-digital-time { width: 100%; min-width: 0; padding: 5px 9px; text-align: center; background: #fff; box-shadow: inset 2px 2px #777, inset -2px -2px #fff; font-size: 18px; }
-.calendar-venue { container-type: inline-size; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: stretch; padding: 0; overflow: hidden; background: #e9f3e8; }
-.calendar-venue-label { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; color: #000080; background: #c0c0c0; border-right: 2px solid #7d7d7d; font-size: clamp(12px, 4.2cqw, 14px); font-weight: 700; letter-spacing: .03em; }
-.calendar-venue-label::before { content: ""; width: 10px; height: 14px; flex: 0 0 10px; background: #000080; clip-path: polygon(50% 100%, 10% 48%, 10% 27%, 26% 8%, 50% 0, 74% 8%, 90% 27%, 90% 48%); }
-.calendar-venue-name { min-width: 0; align-self: center; overflow: hidden; padding: 0 10px; color: #071d35; font-size: clamp(17px, 5.5cqw, 20px); font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
-.calendar-ticket-badge { align-self: center; margin-right: 7px; padding: 5px 7px; color: #071d35; background: #c0c0c0; box-shadow: inset 1px 1px #fff, inset -1px -1px #777; font-size: clamp(12px, 4cqw, 14px); font-weight: 700; white-space: nowrap; }
+.calendar-venue { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; padding: 6px 10px; overflow: hidden; background: #e9f3e8; }
+.calendar-venue-name { min-width: 0; overflow: hidden; color: #071d35; font-size: 18px; font-weight: 700; line-height: 1; white-space: nowrap; text-overflow: ellipsis; }
+.calendar-ticket-badge { align-self: stretch; display: flex; align-items: center; padding-left: 12px; color: #31585f; border-left: 1px solid #7d7d7d; font-size: 18px; font-weight: 700; line-height: 1; white-space: nowrap; }
 .widget-window[data-type="address"] .widget-body { padding: 5px 7px; }
 .widget-window[data-type="address"] .widget-lines { display: none; }
 .address-layout { width: 100%; height: 100%; display: grid; grid-template-columns: 132px minmax(0, 1fr); border: 2px solid #31585f; background: #e9f3e8; }
