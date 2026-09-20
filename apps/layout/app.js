@@ -41,7 +41,7 @@ const dimensions = {
 const presets = {
   lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
   time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 33, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
-  calendar: { title: 'DATE/TIME PROPERTIES', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免票入场', w: 300, h: 286, fontSize: 22, theme: 'gray', startXPct: .126, startYPct: .753 },
+  calendar: { title: 'DATE.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免票入场', w: 300, h: 286, fontSize: 22, theme: 'gray', startXPct: .126, startYPct: .753 },
   address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
   image: { title: 'IMAGE', content: '', w: 320, h: 220, fontSize: 22, theme: 'blue', imageUrl: '' },
   text: { title: 'TEXT', content: 'Before the Moon Falls', w: 820, h: 150, fontSize: 72, textColor: '#ffe744', theme: 'blue', startX: 40, startY: 24 },
@@ -87,7 +87,7 @@ async function writeSavedLayout() {
   const db = await openLayoutDb();
   const snapshot = {
     ...state,
-    schemaVersion: 3,
+    schemaVersion: 4,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -226,7 +226,7 @@ function renderCalendar(root, widget) {
   calendar.className = 'month-calendar';
   const header = document.createElement('div');
   header.className = 'month-selectors';
-  header.innerHTML = `<span>${year} / ${String(month).padStart(2, '0')}</span><span>${weekday}</span>`;
+  header.innerHTML = `<span>${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}</span><span>${weekday}</span>`;
   const weekdays = document.createElement('div');
   weekdays.className = 'calendar-weekdays';
   ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((label) => { const cell = document.createElement('span'); cell.textContent = label; weekdays.append(cell); });
@@ -663,7 +663,7 @@ async function drawWidget(ctx, widget) {
     ctx.fillStyle = '#fff'; ctx.fillRect(mainX + 7, mainY + 8, leftW - 14, 28);
     ctx.strokeStyle = '#333'; ctx.strokeRect(mainX + 7, mainY + 8, leftW - 14, 28);
     ctx.fillStyle = '#111'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.font = `700 12px ${WIN98_FONT}`;
-    ctx.fillText(`${year} / ${String(month).padStart(2, '0')}`, mainX + 14, mainY + 22);
+    ctx.fillText(`${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}`, mainX + 14, mainY + 22);
     ctx.textAlign = 'right'; ctx.fillText(weekday, mainX + leftW - 14, mainY + 22);
     const gridX = mainX + 8, gridY = mainY + 43, gridW = leftW - 16;
     const cellW = gridW / 7, cellH = Math.max(18, (mainH - 49) / 7);
@@ -853,11 +853,11 @@ async function initialize() {
   try {
     const saved = await readSavedLayout();
     if (saved && Array.isArray(saved.widgets)) {
-      const restoredWidgets = saved.widgets.map((widget) => (
-        (saved.schemaVersion || 0) < 2 && widget.type === 'time'
-          ? { ...widget, fontSize: 33 }
-          : widget
-      ));
+      const restoredWidgets = saved.widgets.map((widget) => {
+        if ((saved.schemaVersion || 0) < 2 && widget.type === 'time') return { ...widget, fontSize: 33 };
+        if ((saved.schemaVersion || 0) < 4 && widget.type === 'calendar') return { ...widget, title: 'DATE.VENUE' };
+        return widget;
+      });
       if ((saved.schemaVersion || 0) < 3 && !restoredWidgets.some((widget) => widget.type === 'calendar')) {
         const width = saved.width || state.width;
         const height = saved.height || state.height;
