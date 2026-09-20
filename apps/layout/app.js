@@ -182,7 +182,8 @@ function renderWidget(widget) {
   const specialFontSize = widget.type === 'time' ? win98FontSize(widget.fontSize) : widget.fontSize;
   specialRoot.style.fontSize = `${specialFontSize}px`;
   specialRoot.style.setProperty('--win98-base-size', `${specialFontSize}px`);
-  specialRoot.style.setProperty('--win98-time-size', `${specialFontSize + 11}px`);
+  specialRoot.style.setProperty('--win98-date-size', `${specialFontSize + 11}px`);
+  specialRoot.style.setProperty('--win98-time-size', `${specialFontSize}px`);
   specialRoot.hidden = !['time', 'address'].includes(widget.type);
   image.hidden = widget.type !== 'image' || !widget.imageUrl;
   if (!image.hidden) image.src = widget.imageUrl;
@@ -548,7 +549,8 @@ async function drawWidget(ctx, widget) {
     const weekdayNames = { 星期一: 'MON', 星期二: 'TUE', 星期三: 'WED', 星期四: 'THU', 星期五: 'FRI', 星期六: 'SAT', 星期日: 'SUN', 周一: 'MON', 周二: 'TUE', 周三: 'WED', 周四: 'THU', 周五: 'FRI', 周六: 'SAT', 周日: 'SUN' };
     const weekdayText = weekdayNames[weekday] || weekday.replace(/[()]/g, '');
     const baseSize = win98FontSize(widget.fontSize);
-    const timeSize = baseSize + 11;
+    const dateSize = baseSize + 11;
+    const timeSize = baseSize;
     const statusH = Math.max(48, Math.round(baseSize * 1.35 + 10));
     const mainX = bx + 7;
     const mainY = by + 7;
@@ -565,10 +567,10 @@ async function drawWidget(ctx, widget) {
     ctx.beginPath(); ctx.moveTo(rightX, mainY + mainH / 2); ctx.lineTo(mainX + mainW, mainY + mainH / 2); ctx.stroke();
     drawAnalogClock(ctx, clockX, clockY, 33, hour, minute);
     ctx.fillStyle = '#071d35'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    const dateX = rightX + Math.round(baseSize * .7);
-    const timeX = rightX + Math.round(timeSize * .45);
-    ctx.font = `700 ${baseSize}px ${WIN98_FONT}`;
-    ctx.fillText(date, dateX, mainY + mainH * .25, rightW - baseSize * 1.4);
+    const dateX = rightX + Math.round(dateSize * .45);
+    const timeX = rightX + Math.round(timeSize * .7);
+    ctx.font = `700 ${dateSize}px ${WIN98_FONT}`;
+    ctx.fillText(date, dateX, mainY + mainH * .25, rightW - dateSize * .9);
     ctx.font = `700 ${timeSize}px ${WIN98_FONT}`;
     const timeText = `${hour}:${minute}`;
     ctx.fillText(timeText, timeX, mainY + mainH * .75, rightW * .58);
