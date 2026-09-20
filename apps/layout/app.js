@@ -7,6 +7,7 @@ const emptyCanvasMessage = document.querySelector('#emptyCanvasMessage');
 const canvasStatus = document.querySelector('#canvasStatus');
 const selectionStatus = document.querySelector('#selectionStatus');
 const appStatus = document.querySelector('#appStatus');
+const fontFamilySelect = document.querySelector('#fontFamilySelect');
 
 const controls = {
   empty: document.querySelector('#emptySelection'),
@@ -56,6 +57,10 @@ const fontSizeSets = {
 };
 
 const WIN98_FONT = '"Pixelated MS Sans Serif", "MS Sans Serif", sans-serif';
+const posterFontFamilies = {
+  pingfang: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+  pixel: '"Pixelated MS Sans Serif", "MS Sans Serif", "SimSun", sans-serif',
+};
 const LAYOUT_DB = 'retro-visual-lab';
 const LAYOUT_STORE = 'saved-layouts';
 const LAYOUT_KEY = 'current-layout';
@@ -69,6 +74,7 @@ let state = {
   nextId: 1,
   topZ: 4,
   snap: true,
+  fontFamily: 'pingfang',
   widgets: [],
 };
 
@@ -87,7 +93,7 @@ async function writeSavedLayout() {
   const db = await openLayoutDb();
   const snapshot = {
     ...state,
-    schemaVersion: 4,
+    schemaVersion: 5,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -116,6 +122,12 @@ async function readSavedLayout() {
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 function win98FontSize(value) { return Number(value) < 28 ? 22 : 33; }
 function snap(value) { return state.snap ? Math.round(value / 8) * 8 : Math.round(value); }
+
+function applyPosterFont() {
+  const family = posterFontFamilies[state.fontFamily] || posterFontFamilies.pingfang;
+  stage.style.setProperty('--poster-font-family', family);
+  fontFamilySelect.value = state.fontFamily in posterFontFamilies ? state.fontFamily : 'pingfang';
+}
 
 function fitStage() {
   const pad = 42;
@@ -787,6 +799,10 @@ document.querySelector('#duplicateButton').addEventListener('click', () => {
 });
 document.querySelector('#frontButton').addEventListener('click', () => { const widget = selectedWidget(); if (widget) { widget.z = ++state.topZ; renderAll(); } });
 document.querySelector('#ratioSelect').addEventListener('change', (event) => setRatio(event.target.value));
+fontFamilySelect.addEventListener('change', (event) => {
+  state.fontFamily = event.target.value;
+  applyPosterFont();
+});
 document.querySelector('#gridToggle').addEventListener('change', (event) => stage.classList.toggle('grid-on', event.target.checked));
 document.querySelector('#snapToggle').addEventListener('change', (event) => { state.snap = event.target.checked; });
 document.querySelector('#bgOpacity').addEventListener('input', (event) => {
@@ -853,6 +869,7 @@ window.addEventListener('keydown', (event) => {
 });
 
 async function initialize() {
+  applyPosterFont();
   fitStage();
   try {
     const saved = await readSavedLayout();
@@ -884,6 +901,7 @@ async function initialize() {
         nextId: Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1)),
       };
       document.querySelector('#ratioSelect').value = saved.ratio || '3:4';
+      applyPosterFont();
       document.querySelector('#gridToggle').checked = saved.grid !== false;
       stage.classList.toggle('grid-on', saved.grid !== false);
       document.querySelector('#snapToggle').checked = saved.snap !== false;
