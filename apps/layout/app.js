@@ -239,7 +239,7 @@ function renderCalendar(root, widget) {
   calendar.className = 'month-calendar';
   const header = document.createElement('div');
   header.className = 'month-selectors';
-  header.innerHTML = `<span>${year}/${String(month).padStart(2, '0')}/${String(day).padStart(2, '0')}</span><span>${weekday}</span>`;
+  header.innerHTML = `<span>${year} / ${String(month).padStart(2, '0')} / ${String(day).padStart(2, '0')}</span><span>${weekday}</span>`;
   const weekdays = document.createElement('div');
   weekdays.className = 'calendar-weekdays';
   ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((label) => { const cell = document.createElement('span'); cell.textContent = label; weekdays.append(cell); });
