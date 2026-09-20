@@ -223,6 +223,10 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
   background-image: linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px);
   background-size: 32px 32px;
 }
+.poster-stage.exporting.grid-on::after { display: none; }
+.poster-stage.exporting .widget-window.selected { outline: none; }
+.poster-stage.exporting .resize-handle,
+.poster-stage.exporting .empty-canvas-message { display: none !important; }
 .poster-stage.has-background { background-size: cover; background-position: center; background-repeat: no-repeat; }
 .empty-canvas-message { position: absolute; inset: 0; display: grid; place-content: center; gap: 9px; text-align: center; color: #d4fff3; font-family: "Courier New", monospace; letter-spacing: 1px; }
 .empty-canvas-message small { color: #8ebcb0; letter-spacing: 0; }

@@ -728,36 +728,40 @@ async function drawWidget(ctx, widget) {
 }
 
 async function exportPoster() {
-  await document.fonts.ready;
-  await Promise.all([
-    document.fonts.load(`400 22px ${WIN98_FONT}`),
-    document.fonts.load(`700 33px ${WIN98_FONT}`),
-  ]);
-  const canvas = document.createElement('canvas');
-  canvas.width = state.width;
-  canvas.height = state.height;
-  const ctx = canvas.getContext('2d');
-  if (state.backgroundUrl) {
-    const image = new Image();
-    image.src = state.backgroundUrl;
-    await image.decode();
-    const scale = Math.max(state.width / image.width, state.height / image.height);
-    const w = image.width * scale, h = image.height * scale;
-    ctx.globalAlpha = state.backgroundOpacity;
-    ctx.drawImage(image, (state.width - w) / 2, (state.height - h) / 2, w, h);
-    ctx.globalAlpha = 1;
-  } else {
-    const gradient = ctx.createLinearGradient(0, 0, state.width, state.height);
-    gradient.addColorStop(0, '#2b5551'); gradient.addColorStop(1, '#090f12');
-    ctx.fillStyle = gradient; ctx.fillRect(0, 0, state.width, state.height);
+  const button = document.querySelector('#exportButton');
+  button.disabled = true;
+  appStatus.textContent = 'EXPORTING...';
+  stage.classList.add('exporting');
+  try {
+    await document.fonts.ready;
+    const fontEmbedCSS = await htmlToImage.getFontEmbedCSS(stage, { cacheBust: true });
+    const dataUrl = await htmlToImage.toPng(stage, {
+      width: state.width,
+      height: state.height,
+      canvasWidth: state.width,
+      canvasHeight: state.height,
+      pixelRatio: 1,
+      cacheBust: true,
+      fontEmbedCSS,
+      filter: (node) => {
+        if (node instanceof HTMLImageElement && node.hidden) return false;
+        return !node.classList?.contains('resize-handle') && !node.classList?.contains('empty-canvas-message');
+      },
+      style: { transform: 'none', transformOrigin: 'top left' },
+    });
+    const link = document.createElement('a');
+    link.download = `win98-layout-${Date.now()}.png`;
+    link.href = dataUrl;
+    link.click();
+    appStatus.textContent = 'PNG EXPORTED';
+  } catch (error) {
+    console.error(error);
+    appStatus.textContent = 'EXPORT FAILED';
+  } finally {
+    stage.classList.remove('exporting');
+    button.disabled = false;
+    setTimeout(() => { if (appStatus.textContent !== 'LAYOUT SAVED') appStatus.textContent = 'READY'; }, 1400);
   }
-  for (const widget of [...state.widgets].sort((a, b) => a.z - b.z)) {
-    await drawWidget(ctx, widget);
-  }
-  const link = document.createElement('a');
-  link.download = `win98-layout-${Date.now()}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
 }
 
 document.querySelectorAll('[data-add]').forEach((button) => button.addEventListener('click', () => addWidget(button.dataset.add)));
