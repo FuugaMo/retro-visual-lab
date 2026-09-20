@@ -59,6 +59,7 @@ const fontSizeSets = {
 const WIN98_FONT = '"Pixelated MS Sans Serif", "MS Sans Serif", sans-serif';
 const posterFontFamilies = {
   pingfang: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+  'fusion-pixel': '"Fusion Pixel 12px Proportional", sans-serif',
   pixel: '"Pixelated MS Sans Serif", "MS Sans Serif", "SimSun", sans-serif',
 };
 const LAYOUT_DB = 'retro-visual-lab';
