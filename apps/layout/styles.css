@@ -376,10 +376,10 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .datefirst-main .date-chip { padding: 3px 9px; font-weight: 700; }
 .datefirst-secondary { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 4px; align-items: center; }
 .datefirst-secondary .big-time { padding-left: 10px; font-size: var(--win98-time-size); text-align: left; }
-.venue-status { height: var(--venue-row-height); padding: .3em .7em; display: flex; align-items: center; gap: .65em; text-align: left; background: #e9f3e8; font: 700 var(--win98-base-size)/1 var(--poster-font-family); white-space: nowrap; overflow: hidden; }
+.venue-status { height: var(--venue-row-height); padding: .3em .7em; display: flex; align-items: center; gap: .65em; color: #f2fcf6; text-align: left; background: #31585f; font: 700 var(--win98-base-size)/1 var(--poster-font-family); white-space: nowrap; overflow: hidden; }
 .venue-status > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-.venue-pin-icon { width: 1.1em; height: 1.4em; flex: 0 0 1.1em; position: relative; background: #071d35; clip-path: polygon(50% 100%, 11% 49%, 11% 27%, 27% 8%, 50% 0, 73% 8%, 89% 27%, 89% 49%); }
-.venue-pin-icon::after { content: ""; position: absolute; width: .36em; height: .36em; left: .37em; top: .36em; background: #e9f3e8; border-radius: 50%; }
+.venue-pin-icon { width: 1.1em; height: 1.4em; flex: 0 0 1.1em; position: relative; background: #dcece2; clip-path: polygon(50% 100%, 11% 49%, 11% 27%, 27% 8%, 50% 0, 73% 8%, 89% 27%, 89% 49%); }
+.venue-pin-icon::after { content: ""; position: absolute; width: .36em; height: .36em; left: .37em; top: .36em; background: #31585f; border-radius: 50%; }
 .widget-window[data-type="calendar"] .widget-body { padding: 7px; background: #c0c0c0; }
 .widget-window[data-type="calendar"] .widget-lines { display: none; }
 .calendar-layout { width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) 56px; gap: 7px; padding: 7px; color: #111; background: #c0c0c0; font-family: var(--poster-font-family); -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
