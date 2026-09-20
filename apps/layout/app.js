@@ -269,10 +269,20 @@ function renderCalendar(root, widget) {
   main.append(calendar, timePanel);
   const venueBar = document.createElement('div');
   venueBar.className = 'calendar-venue';
-  venueBar.innerHTML = '<span>VENUE</span>';
+  const [venueName = '', ...ticketParts] = venue.split(/\s*·\s*/);
+  const venueLabel = document.createElement('span');
+  venueLabel.className = 'calendar-venue-label';
+  venueLabel.textContent = 'VENUE';
   const venueText = document.createElement('strong');
-  venueText.textContent = venue;
-  venueBar.append(venueText);
+  venueText.className = 'calendar-venue-name';
+  venueText.textContent = venueName.replace(/^@\s*/, '');
+  venueBar.append(venueLabel, venueText);
+  if (ticketParts.length) {
+    const ticket = document.createElement('span');
+    ticket.className = 'calendar-ticket-badge';
+    ticket.textContent = ticketParts.join(' · ');
+    venueBar.append(ticket);
+  }
   wrap.append(main, venueBar);
   root.append(wrap);
 }

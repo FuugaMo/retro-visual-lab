@@ -357,7 +357,7 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .venue-pin-icon::after { content: ""; position: absolute; width: .36em; height: .36em; left: .37em; top: .36em; background: #e9f3e8; border-radius: 50%; }
 .widget-window[data-type="calendar"] .widget-body { padding: 7px; background: #c0c0c0; }
 .widget-window[data-type="calendar"] .widget-lines { display: none; }
-.calendar-layout { width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) 48px; gap: 7px; padding: 7px; color: #111; background: #c0c0c0; font-family: var(--poster-font-family); -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
+.calendar-layout { width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) 56px; gap: 7px; padding: 7px; color: #111; background: #c0c0c0; font-family: var(--poster-font-family); -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
 .calendar-main { min-width: 0; min-height: 0; display: grid; grid-template-columns: 1.3fr .7fr; gap: 8px; }
 .month-calendar, .calendar-time-panel, .calendar-venue { position: relative; min-width: 0; background: #c0c0c0; box-shadow: inset 1px 1px #777, inset -1px -1px #fff; }
 .month-calendar { container-type: inline-size; display: grid; grid-template-rows: 38px 22px minmax(0, 1fr); padding: 7px; }
@@ -370,9 +370,11 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .calendar-time-panel { display: grid; place-items: center; grid-template-rows: minmax(0, 1fr) 34px; padding: 8px; }
 .calendar-clock { width: min(82px, 100%); height: auto; aspect-ratio: 1; }
 .calendar-digital-time { width: 100%; min-width: 0; padding: 5px 9px; text-align: center; background: #fff; box-shadow: inset 2px 2px #777, inset -2px -2px #fff; font-size: 18px; }
-.calendar-venue { display: flex; align-items: center; padding: 10px 13px 6px; }
-.calendar-venue > span { position: absolute; left: 10px; top: -7px; padding: 0 5px; background: #c0c0c0; font-size: 11px; }
-.calendar-venue strong { overflow: hidden; font-size: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.calendar-venue { container-type: inline-size; display: grid; grid-template-columns: clamp(62px, 23%, 76px) minmax(0, 1fr) auto; align-items: stretch; padding: 0; overflow: hidden; background: #e9f3e8; }
+.calendar-venue-label { display: flex; align-items: center; justify-content: center; gap: 6px; color: #fff; background: #000080; font-size: clamp(12px, 4.5cqw, 15px); font-weight: 700; letter-spacing: .03em; }
+.calendar-venue-label::before { content: ""; width: 11px; height: 15px; flex: 0 0 11px; background: #ffe744; clip-path: polygon(50% 100%, 10% 48%, 10% 27%, 26% 8%, 50% 0, 74% 8%, 90% 27%, 90% 48%); }
+.calendar-venue-name { min-width: 0; align-self: center; overflow: hidden; padding: 0 9px; font-size: clamp(16px, 6cqw, 20px); font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
+.calendar-ticket-badge { align-self: center; margin-right: 7px; padding: 5px 7px; color: #111; background: #ffe744; box-shadow: inset 2px 2px #fff7a8, inset -2px -2px #725f00, 2px 2px #777; font-size: clamp(12px, 4.2cqw, 14px); font-weight: 700; white-space: nowrap; }
 .widget-window[data-type="address"] .widget-body { padding: 5px 7px; }
 .widget-window[data-type="address"] .widget-lines { display: none; }
 .address-layout { width: 100%; height: 100%; display: grid; grid-template-columns: 132px minmax(0, 1fr); border: 2px solid #31585f; background: #e9f3e8; }
