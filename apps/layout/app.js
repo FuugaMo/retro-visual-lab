@@ -570,13 +570,13 @@ async function drawWidget(ctx, widget) {
     drawAnalogClock(ctx, clockX, clockY, 33, hour, minute);
     ctx.fillStyle = '#071d35'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     const dateX = rightX + Math.round(dateSize * .45);
-    const timeX = rightX + Math.round(timeSize * .7);
+    const timeX = dateX;
     ctx.font = `700 ${dateSize}px ${WIN98_FONT}`;
     ctx.fillText(date, dateX, mainY + mainH * .25, rightW - dateSize * .9);
     ctx.font = `700 ${timeSize}px ${WIN98_FONT}`;
     const timeText = `${hour}:${minute}`;
     ctx.fillText(timeText, timeX, mainY + mainH * .75, rightW * .58);
-    const weekdayX = timeX + ctx.measureText(timeText).width + timeSize * .7;
+    const weekdayX = timeX + ctx.measureText(timeText).width + timeSize * .65;
     ctx.font = `700 ${baseSize}px ${WIN98_FONT}`;
     ctx.fillText(`(${weekdayText})`, weekdayX, mainY + mainH * .75, rightX + rightW - weekdayX - baseSize * .45);
 
