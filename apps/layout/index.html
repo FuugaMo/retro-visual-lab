@@ -24,6 +24,7 @@
           上传图片
           <input id="imageInput" type="file" accept="image/*" hidden />
         </label>
+        <button class="win-button" id="saveLayoutButton">保存当前布局</button>
         <button class="win-button" id="clearBackground">清除底图</button>
         <button class="win-button primary" id="exportButton">导出 PNG</button>
       </div>
@@ -53,6 +54,11 @@
               <span class="preset-icon image-icon"></span>
               <strong>IMAGE</strong>
               <small>无边框图片图层</small>
+            </button>
+            <button class="preset-card" data-add="text">
+              <span class="preset-icon text-icon">T</span>
+              <strong>TEXT</strong>
+              <small>亮黄色大标题</small>
             </button>
           </div>
         </section>
@@ -100,7 +106,7 @@
               <div id="variantChoices" class="variant-choices"></div>
             </div>
             <div class="two-col" id="styleControls">
-              <label class="field-stack">
+              <label class="field-stack" id="themeControl">
                 <span>主题</span>
                 <select id="themeInput" class="win-input">
                   <option value="blue">Win98 蓝</option>
@@ -109,11 +115,15 @@
                   <option value="pink">粉色</option>
                 </select>
               </label>
-              <label class="field-stack">
+              <label class="field-stack" id="fontSizeControl">
                 <span>字号</span>
                 <input id="fontSizeInput" class="win-input" type="number" min="12" max="72" />
               </label>
             </div>
+            <label class="field-stack" id="textColorControl" hidden>
+              <span>文字颜色</span>
+              <input id="textColorInput" class="win-input color-input" type="color" value="#ffe744" />
+            </label>
             <div class="field-stack" id="fontChoicesControl">
               <span>字号档位</span>
               <div id="fontSizeChoices" class="size-choices"></div>
@@ -154,7 +164,7 @@
     </main>
 
     <footer class="status-bar">
-      <span>READY</span>
+      <span id="appStatus">READY</span>
       <span id="selectionStatus">NO WIDGET SELECTED</span>
       <span>LOCAL / NO UPLOAD</span>
     </footer>

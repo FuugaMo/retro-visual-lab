@@ -6,6 +6,7 @@ const imageInput = document.querySelector('#imageInput');
 const emptyCanvasMessage = document.querySelector('#emptyCanvasMessage');
 const canvasStatus = document.querySelector('#canvasStatus');
 const selectionStatus = document.querySelector('#selectionStatus');
+const appStatus = document.querySelector('#appStatus');
 
 const controls = {
   empty: document.querySelector('#emptySelection'),
@@ -24,6 +25,10 @@ const controls = {
   styleControls: document.querySelector('#styleControls'),
   fontChoicesControl: document.querySelector('#fontChoicesControl'),
   shadowControl: document.querySelector('#shadowControl'),
+  themeControl: document.querySelector('#themeControl'),
+  fontSizeControl: document.querySelector('#fontSizeControl'),
+  textColorControl: document.querySelector('#textColorControl'),
+  textColor: document.querySelector('#textColorInput'),
 };
 
 const dimensions = {
@@ -38,16 +43,21 @@ const presets = {
   time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 22, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
   address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
   image: { title: 'IMAGE', content: '', w: 320, h: 220, fontSize: 22, theme: 'blue', imageUrl: '' },
+  text: { title: 'TEXT', content: 'Before the Moon Falls', w: 820, h: 150, fontSize: 72, textColor: '#ffe744', theme: 'blue', startX: 40, startY: 24 },
 };
 
 const variantSets = {};
 
 const fontSizeSets = {
   time: [22, 33],
+  text: [22, 33, 44, 55, 66, 77, 88, 99, 110, 120],
   default: [14, 18, 22, 26, 32, 40, 48, 56, 64, 72],
 };
 
 const WIN98_FONT = '"Pixelated MS Sans Serif", "MS Sans Serif", sans-serif';
+const LAYOUT_DB = 'retro-visual-lab';
+const LAYOUT_STORE = 'saved-layouts';
+const LAYOUT_KEY = 'current-layout';
 
 let state = {
   width: 900,
@@ -60,6 +70,46 @@ let state = {
   snap: true,
   widgets: [],
 };
+
+function openLayoutDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(LAYOUT_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(LAYOUT_STORE)) request.result.createObjectStore(LAYOUT_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function writeSavedLayout() {
+  const db = await openLayoutDb();
+  const snapshot = {
+    ...state,
+    selectedId: null,
+    grid: document.querySelector('#gridToggle').checked,
+    ratio: document.querySelector('#ratioSelect').value,
+    savedAt: Date.now(),
+  };
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(LAYOUT_STORE, 'readwrite');
+    transaction.objectStore(LAYOUT_STORE).put(snapshot, LAYOUT_KEY);
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+  db.close();
+}
+
+async function readSavedLayout() {
+  const db = await openLayoutDb();
+  const snapshot = await new Promise((resolve, reject) => {
+    const request = db.transaction(LAYOUT_STORE, 'readonly').objectStore(LAYOUT_STORE).get(LAYOUT_KEY);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return snapshot;
+}
 
 function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
 function win98FontSize(value) { return Number(value) < 28 ? 22 : 33; }
@@ -83,7 +133,8 @@ function fitStage() {
 
 function setBackground(url) {
   state.backgroundUrl = url;
-  stage.style.backgroundImage = url ? `url("${url}")` : '';
+  const overlay = 1 - state.backgroundOpacity;
+  stage.style.backgroundImage = url ? `linear-gradient(rgba(24,34,33,${overlay}), rgba(24,34,33,${overlay})), url("${url}")` : '';
   stage.classList.toggle('has-background', Boolean(url));
   stage.style.setProperty('--bg-opacity', state.backgroundOpacity);
   const showEmptyMessage = !url && state.widgets.length === 0;
@@ -126,6 +177,7 @@ function renderWidget(widget) {
   const specialRoot = el.querySelector('.widget-special');
   const image = el.querySelector('.widget-logo');
   lineRoot.style.fontSize = `${widget.fontSize}px`;
+  lineRoot.style.color = widget.textColor || '';
   specialRoot.replaceChildren();
   const specialFontSize = widget.type === 'time' ? win98FontSize(widget.fontSize) : widget.fontSize;
   specialRoot.style.fontSize = `${specialFontSize}px`;
@@ -251,15 +303,21 @@ function updateEditor() {
     return;
   }
   const isImage = widget.type === 'image';
+  const isText = widget.type === 'text';
   [controls.titleControl, controls.contentControl, controls.styleControls, controls.fontChoicesControl, controls.shadowControl]
     .forEach((control) => { control.hidden = isImage; });
+  controls.titleControl.hidden = isImage || isText;
+  controls.themeControl.hidden = isText;
+  controls.fontSizeControl.hidden = false;
+  controls.textColorControl.hidden = !isText;
   controls.title.value = widget.title;
   controls.content.value = widget.content;
   controls.theme.value = widget.theme;
   controls.fontSize.value = widget.fontSize;
   controls.fontSize.min = widget.type === 'time' ? 22 : 12;
-  controls.fontSize.max = widget.type === 'time' ? 33 : 72;
+  controls.fontSize.max = widget.type === 'time' ? 33 : widget.type === 'text' ? 120 : 72;
   controls.shadow.checked = widget.shadow;
+  controls.textColor.value = widget.textColor || '#ffe744';
   renderVariantChoices(widget);
   renderFontSizeChoices(widget);
   selectionStatus.textContent = `${widget.type.toUpperCase()} · X ${widget.x} · Y ${widget.y} · ${widget.w} × ${widget.h}`;
@@ -287,7 +345,7 @@ function renderVariantChoices(widget) {
 }
 
 function renderFontSizeChoices(widget) {
-  const sizes = widget.type === 'time' ? fontSizeSets.time : fontSizeSets.default;
+  const sizes = fontSizeSets[widget.type] || fontSizeSets.default;
   controls.fontSizeChoices.replaceChildren();
   sizes.forEach((size) => {
     const button = document.createElement('button');
@@ -345,8 +403,9 @@ function bindWidgetEvents(el, id) {
     const originW = widget.w;
     const originH = widget.h;
     const move = (moveEvent) => {
-      const minWidth = widget.type === 'image' ? 40 : widget.type === 'time' ? 360 : 170;
-      const minHeight = widget.type === 'image' ? 40 : widget.type === 'time' ? 210 : widget.type === 'address' ? (widget.minContentHeight || 110) : 110;
+      const isFreeform = ['image', 'text'].includes(widget.type);
+      const minWidth = isFreeform ? 40 : widget.type === 'time' ? 360 : 170;
+      const minHeight = isFreeform ? 40 : widget.type === 'time' ? 210 : widget.type === 'address' ? (widget.minContentHeight || 110) : 110;
       widget.w = snap(clamp(originW + (moveEvent.clientX - startX) * state.width / rect.width, minWidth, state.width - widget.x));
       widget.h = snap(clamp(originH + (moveEvent.clientY - startY) * state.height / rect.height, minHeight, state.height - widget.y));
       renderWidget(widget);
@@ -448,6 +507,18 @@ async function drawWidget(ctx, widget) {
     ctx.drawImage(image, widget.x + (widget.w - width) / 2, widget.y + (widget.h - height) / 2, width, height);
     return;
   }
+  if (widget.type === 'text') {
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.font = `700 ${widget.fontSize}px ${WIN98_FONT}`;
+    ctx.fillStyle = 'rgba(3, 23, 35, .82)';
+    ctx.fillText(widget.content, widget.x + widget.w / 2 + 3, widget.y + widget.h / 2 + 4, widget.w);
+    ctx.fillStyle = widget.textColor || '#ffe744';
+    ctx.fillText(widget.content, widget.x + widget.w / 2, widget.y + widget.h / 2, widget.w);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    return;
+  }
   if (widget.shadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(widget.x + 9, widget.y + 10, widget.w, widget.h); }
   drawBevel(ctx, widget.x, widget.y, widget.w, widget.h);
   ctx.fillStyle = titleColor; ctx.fillRect(widget.x + 4, widget.y + 4, widget.w - 8, 34);
@@ -517,7 +588,7 @@ async function drawWidget(ctx, widget) {
       ctx.fillStyle = '#0c3654'; ctx.fillRect(bx + 13, y, box, box);
       ctx.strokeStyle = '#061d36'; ctx.lineWidth = 3; ctx.strokeRect(bx + 13, y, box, box);
       ctx.strokeStyle = '#53c468'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(bx + 18, y + 14); ctx.lineTo(bx + 24, y + 21); ctx.lineTo(bx + 36, y + 6); ctx.stroke();
-      ctx.fillStyle = '#071d35'; ctx.font = `bold ${widget.fontSize}px sans-serif`; ctx.textBaseline = 'top'; ctx.fillText(line, bx + 53, y - 1, bw - 62);
+      ctx.fillStyle = '#071d35'; ctx.font = `700 ${widget.fontSize}px ${WIN98_FONT}`; ctx.textBaseline = 'top'; ctx.fillText(line, bx + 53, y - 1, bw - 62);
       y += Math.max(37, widget.fontSize * 1.12);
     });
   } else if (widget.type === 'venue') {
@@ -538,7 +609,7 @@ async function drawWidget(ctx, widget) {
     ctx.beginPath(); ctx.moveTo(px - 8, py + 5); ctx.lineTo(px, py + 20); ctx.lineTo(px + 8, py + 5); ctx.fill();
     ctx.fillStyle = '#075077'; ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#31585f'; ctx.lineWidth = 3; ctx.strokeRect(mapX, mapY, mapW, innerH);
-    ctx.fillStyle = '#071d35'; ctx.font = `bold ${widget.fontSize}px sans-serif`;
+    ctx.fillStyle = '#071d35'; ctx.font = `700 ${widget.fontSize}px ${WIN98_FONT}`;
     drawWrappedText(ctx, widget.content, mapX + mapW + 14, mapY + 8, bw - mapW - 30, widget.fontSize * 1.18);
   } else {
     drawWrappedText(ctx, widget.content, bx + 18, by + 16, bw - 30, widget.fontSize * 1.35);
@@ -546,6 +617,7 @@ async function drawWidget(ctx, widget) {
 }
 
 async function exportPoster() {
+  await document.fonts.ready;
   await Promise.all([
     document.fonts.load(`400 22px ${WIN98_FONT}`),
     document.fonts.load(`700 33px ${WIN98_FONT}`),
@@ -585,8 +657,9 @@ controls.theme.addEventListener('change', (event) => updateSelected('theme', eve
 controls.fontSize.addEventListener('input', (event) => {
   const widget = selectedWidget();
   const value = Number(event.target.value) || 12;
-  updateSelected('fontSize', widget?.type === 'time' ? win98FontSize(value) : clamp(value, 12, 72));
+  updateSelected('fontSize', widget?.type === 'time' ? win98FontSize(value) : clamp(value, 12, widget?.type === 'text' ? 120 : 72));
 });
+controls.textColor.addEventListener('input', (event) => updateSelected('textColor', event.target.value));
 controls.shadow.addEventListener('change', (event) => updateSelected('shadow', event.target.checked));
 document.querySelector('#deleteButton').addEventListener('click', () => {
   state.widgets = state.widgets.filter((item) => item.id !== state.selectedId);
@@ -606,7 +679,7 @@ document.querySelector('#bgOpacity').addEventListener('input', (event) => {
   document.querySelector('#bgOpacityValue').textContent = `${event.target.value}%`;
   stage.style.opacity = 1;
   stage.style.setProperty('--bg-opacity', state.backgroundOpacity);
-  if (state.backgroundUrl) stage.style.backgroundImage = `linear-gradient(rgba(24,34,33,${1 - state.backgroundOpacity}), rgba(24,34,33,${1 - state.backgroundOpacity})), url("${state.backgroundUrl}")`;
+  if (state.backgroundUrl) setBackground(state.backgroundUrl);
 });
 backgroundInput.addEventListener('change', (event) => {
   const [file] = event.target.files; if (!file) return;
@@ -634,6 +707,21 @@ imageInput.addEventListener('change', (event) => {
   reader.readAsDataURL(file);
 });
 document.querySelector('#uploadImageCard').addEventListener('click', () => imageInput.click());
+document.querySelector('#saveLayoutButton').addEventListener('click', async () => {
+  const button = document.querySelector('#saveLayoutButton');
+  button.disabled = true;
+  appStatus.textContent = 'SAVING...';
+  try {
+    await writeSavedLayout();
+    appStatus.textContent = 'LAYOUT SAVED';
+    button.textContent = '已保存';
+    setTimeout(() => { appStatus.textContent = 'READY'; button.textContent = '保存当前布局'; button.disabled = false; }, 1400);
+  } catch (error) {
+    console.error(error);
+    appStatus.textContent = 'SAVE FAILED';
+    button.disabled = false;
+  }
+});
 document.querySelector('#clearBackground').addEventListener('click', () => { backgroundInput.value = ''; setBackground(''); });
 document.querySelector('#exportButton').addEventListener('click', exportPoster);
 window.addEventListener('resize', fitStage);
@@ -649,7 +737,37 @@ window.addEventListener('keydown', (event) => {
   if (event.key.startsWith('Arrow')) { event.preventDefault(); renderWidget(widget); updateEditor(); }
 });
 
-fitStage();
-addWidget('lineup');
-addWidget('time');
-addWidget('address');
+async function initialize() {
+  fitStage();
+  try {
+    const saved = await readSavedLayout();
+    if (saved && Array.isArray(saved.widgets)) {
+      state = {
+        ...state,
+        ...saved,
+        selectedId: null,
+        nextId: Math.max(saved.nextId || 1, ...saved.widgets.map((widget) => Number(widget.id) + 1)),
+      };
+      document.querySelector('#ratioSelect').value = saved.ratio || '3:4';
+      document.querySelector('#gridToggle').checked = saved.grid !== false;
+      stage.classList.toggle('grid-on', saved.grid !== false);
+      document.querySelector('#snapToggle').checked = saved.snap !== false;
+      document.querySelector('#bgOpacity').value = Math.round((saved.backgroundOpacity ?? 1) * 100);
+      document.querySelector('#bgOpacityValue').textContent = `${document.querySelector('#bgOpacity').value}%`;
+      setBackground(saved.backgroundUrl || '');
+      fitStage();
+      renderAll();
+      appStatus.textContent = 'LAYOUT RESTORED';
+      setTimeout(() => { appStatus.textContent = 'READY'; }, 1400);
+      return;
+    }
+  } catch (error) {
+    console.error(error);
+    appStatus.textContent = 'RESTORE FAILED';
+  }
+  addWidget('lineup');
+  addWidget('time');
+  addWidget('address');
+}
+
+initialize();
