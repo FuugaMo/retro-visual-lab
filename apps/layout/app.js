@@ -247,6 +247,7 @@ function renderCalendar(root, widget) {
   days.className = 'calendar-days';
   const firstDay = new Date(year, month - 1, 1).getDay();
   const totalDays = new Date(year, month, 0).getDate();
+  days.style.setProperty('--calendar-week-rows', Math.ceil((firstDay + totalDays) / 7));
   for (let index = 0; index < firstDay; index += 1) days.append(document.createElement('span'));
   for (let value = 1; value <= totalDays; value += 1) {
     const cell = document.createElement('span');
