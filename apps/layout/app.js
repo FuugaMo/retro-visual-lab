@@ -20,11 +20,9 @@ const controls = {
   variantControl: document.querySelector('#variantControl'),
   variantLabel: document.querySelector('#variantLabel'),
   variantChoices: document.querySelector('#variantChoices'),
-  fontSizeChoices: document.querySelector('#fontSizeChoices'),
   titleControl: document.querySelector('#titleControl'),
   contentControl: document.querySelector('#contentControl'),
   styleControls: document.querySelector('#styleControls'),
-  fontChoicesControl: document.querySelector('#fontChoicesControl'),
   shadowControl: document.querySelector('#shadowControl'),
   themeControl: document.querySelector('#themeControl'),
   fontSizeControl: document.querySelector('#fontSizeControl'),
@@ -55,12 +53,6 @@ const presets = {
 };
 
 const variantSets = {};
-
-const fontSizeSets = {
-  time: [22, 33],
-  text: [22, 33, 44, 55, 66, 77, 88, 99, 110, 120],
-  default: [14, 18, 22, 26, 32, 40, 48, 56, 64, 72],
-};
 
 const WIN98_FONT = '"Pixelated MS Sans Serif", "MS Sans Serif", sans-serif';
 const posterFontFamilies = {
@@ -444,7 +436,7 @@ function updateEditor() {
   }
   const isImage = widget.type === 'image';
   const isText = widget.type === 'text';
-  [controls.titleControl, controls.contentControl, controls.styleControls, controls.fontChoicesControl, controls.shadowControl]
+  [controls.titleControl, controls.contentControl, controls.styleControls, controls.shadowControl]
     .forEach((control) => { control.hidden = isImage; });
   controls.titleControl.hidden = isImage || isText;
   controls.themeControl.hidden = isText;
@@ -459,7 +451,6 @@ function updateEditor() {
   controls.shadow.checked = widget.shadow;
   controls.textColor.value = widget.textColor || '#ffe744';
   renderVariantChoices(widget);
-  renderFontSizeChoices(widget);
   renderTypographyEditor(widget);
   selectionStatus.textContent = `${widget.type.toUpperCase()} · X ${widget.x} · Y ${widget.y} · ${widget.w} × ${widget.h}`;
 }
@@ -487,7 +478,7 @@ function renderTypographyEditor(widget) {
   controls.partFontWeight.value = Number.isFinite(setting.fontWeight) ? String(setting.fontWeight) : '';
 }
 
-function updateTypographySetting(key, value) {
+function updateTypographySetting(key, value, refreshEditor = true) {
   const widget = selectedWidget();
   if (!widget || !activeTypographyPart) return;
   widget.typography ||= {};
@@ -496,7 +487,7 @@ function updateTypographySetting(key, value) {
   else widget.typography[activeTypographyPart][key] = value;
   if (Object.keys(widget.typography[activeTypographyPart]).length === 0) delete widget.typography[activeTypographyPart];
   renderWidget(widget);
-  renderTypographyEditor(widget);
+  if (refreshEditor) renderTypographyEditor(widget);
 }
 
 function renderVariantChoices(widget) {
@@ -517,26 +508,6 @@ function renderVariantChoices(widget) {
       renderVariantChoices(widget);
     });
     controls.variantChoices.append(button);
-  });
-}
-
-function renderFontSizeChoices(widget) {
-  const sizes = ['time', 'calendar'].includes(widget.type) ? fontSizeSets.time : fontSizeSets[widget.type] || fontSizeSets.default;
-  controls.fontSizeChoices.replaceChildren();
-  sizes.forEach((size) => {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `size-choice${Number(widget.fontSize) === size ? ' active' : ''}`;
-    button.textContent = size;
-    button.title = `${size}px`;
-    button.addEventListener('click', () => {
-      widget.fontSize = size;
-      controls.fontSize.value = size;
-      renderWidget(widget);
-      renderFontSizeChoices(widget);
-      updateEditor();
-    });
-    controls.fontSizeChoices.append(button);
   });
 }
 
@@ -889,8 +860,22 @@ controls.content.addEventListener('input', (event) => updateSelected('content', 
 controls.theme.addEventListener('change', (event) => updateSelected('theme', event.target.value));
 controls.fontSize.addEventListener('input', (event) => {
   const widget = selectedWidget();
-  const value = Number(event.target.value) || 12;
-  updateSelected('fontSize', ['time', 'calendar'].includes(widget?.type) ? win98FontSize(value) : clamp(value, 12, widget?.type === 'text' ? 120 : 72));
+  if (!widget || event.target.value === '') return;
+  const value = Number(event.target.value);
+  const min = ['time', 'calendar'].includes(widget.type) ? 22 : 12;
+  const max = ['time', 'calendar'].includes(widget.type) ? 33 : widget.type === 'text' ? 120 : 72;
+  if (!Number.isFinite(value) || value < min || value > max) return;
+  widget.fontSize = ['time', 'calendar'].includes(widget.type) ? win98FontSize(value) : value;
+  renderWidget(widget);
+});
+controls.fontSize.addEventListener('change', (event) => {
+  const widget = selectedWidget();
+  if (!widget) return;
+  const min = ['time', 'calendar'].includes(widget.type) ? 22 : 12;
+  const max = ['time', 'calendar'].includes(widget.type) ? 33 : widget.type === 'text' ? 120 : 72;
+  const entered = Number(event.target.value);
+  const value = Number.isFinite(entered) ? clamp(entered, min, max) : widget.fontSize;
+  updateSelected('fontSize', ['time', 'calendar'].includes(widget.type) ? win98FontSize(value) : value);
 });
 controls.textColor.addEventListener('input', (event) => updateSelected('textColor', event.target.value));
 controls.shadow.addEventListener('change', (event) => updateSelected('shadow', event.target.checked));
@@ -901,8 +886,17 @@ controls.typographyPart.addEventListener('change', (event) => {
 });
 controls.partFontFamily.addEventListener('change', (event) => updateTypographySetting('fontFamily', event.target.value));
 controls.partFontSize.addEventListener('input', (event) => {
-  const value = event.target.value === '' ? '' : clamp(Number(event.target.value), 8, 120);
-  updateTypographySetting('fontSize', value);
+  if (event.target.value === '') return;
+  const value = Number(event.target.value);
+  if (!Number.isFinite(value) || value < 8 || value > 120) return;
+  updateTypographySetting('fontSize', value, false);
+});
+controls.partFontSize.addEventListener('change', (event) => {
+  if (event.target.value === '') {
+    updateTypographySetting('fontSize', '');
+    return;
+  }
+  updateTypographySetting('fontSize', clamp(Number(event.target.value), 8, 120));
 });
 controls.partFontWeight.addEventListener('change', (event) => {
   updateTypographySetting('fontWeight', event.target.value === '' ? '' : Number(event.target.value));

@@ -210,9 +210,6 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
   white-space: pre-line;
 }
 .variant-choice.active { color: #fff; background: #000080; box-shadow: inset 2px 2px #17173d, inset -2px -2px #fff; }
-.size-choices { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
-.size-choice { min-height: 30px; padding: 4px 2px; border: 0; background: #d4d4d4; box-shadow: inset 2px 2px #fff, inset -2px -2px #111; cursor: pointer; font: 700 11px "Courier New", monospace; }
-.size-choice.active { color: #fff; background: #000080; box-shadow: inset 2px 2px #17173d, inset -2px -2px #fff; }
 .empty-state { border: 1px dashed #7a7a7a; padding: 13px; color: #555; font-size: 12px; line-height: 1.45; background: rgba(255,255,255,.28); }
 
 .stage-column { display: grid; grid-template-rows: 44px minmax(0, 1fr); min-width: 0; min-height: 0; gap: 10px; }
