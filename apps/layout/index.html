@@ -83,7 +83,10 @@
             <label for="fontFamilySelect">全局字体</label>
             <select id="fontFamilySelect" class="win-input">
               <option value="pingfang">PingFang SC</option>
-              <option value="fusion-pixel">Fusion Pixel 中文像素</option>
+              <option value="fusion-8-prop">Fusion Pixel 8px 比例</option>
+              <option value="fusion-10-prop">Fusion Pixel 10px 比例</option>
+              <option value="fusion-pixel">Fusion Pixel 12px 比例</option>
+              <option value="fusion-12-mono">Fusion Pixel 12px 等宽</option>
               <option value="pixel">Pixelated MS Sans Serif</option>
             </select>
           </div>
@@ -129,7 +132,7 @@
                 </select>
               </label>
               <label class="field-stack" id="fontSizeControl">
-                <span>字号</span>
+                <span>基础字号</span>
                 <input id="fontSizeInput" class="win-input" type="number" min="12" max="72" />
               </label>
             </div>
@@ -138,8 +141,42 @@
               <input id="textColorInput" class="win-input color-input" type="color" value="#ffe744" />
             </label>
             <div class="field-stack" id="fontChoicesControl">
-              <span>字号档位</span>
+              <span>基础字号档位</span>
               <div id="fontSizeChoices" class="size-choices"></div>
+            </div>
+            <div class="field-stack typography-controls" id="typographyControl">
+              <span>分区字体设置</span>
+              <select id="typographyPartSelect" class="win-input" aria-label="文字分区"></select>
+              <div class="typography-grid">
+                <label class="field-stack">
+                  <span>字体</span>
+                  <select id="partFontFamily" class="win-input">
+                    <option value="">跟随全局</option>
+                    <option value="pingfang">PingFang SC</option>
+                    <option value="fusion-8-prop">Fusion Pixel 8px</option>
+                    <option value="fusion-10-prop">Fusion Pixel 10px</option>
+                    <option value="fusion-pixel">Fusion Pixel 12px</option>
+                    <option value="fusion-12-mono">Fusion Pixel 12px 等宽</option>
+                    <option value="pixel">Pixelated MS Sans Serif</option>
+                  </select>
+                </label>
+                <label class="field-stack">
+                  <span>字号</span>
+                  <input id="partFontSize" class="win-input" type="number" min="8" max="120" placeholder="默认" />
+                </label>
+                <label class="field-stack">
+                  <span>字重</span>
+                  <select id="partFontWeight" class="win-input">
+                    <option value="">默认</option>
+                    <option value="400">常规 400</option>
+                    <option value="500">中等 500</option>
+                    <option value="600">半粗 600</option>
+                    <option value="700">粗体 700</option>
+                    <option value="800">特粗 800</option>
+                  </select>
+                </label>
+              </div>
+              <button class="win-button typography-reset" id="resetTypographyButton" type="button">恢复此分区默认</button>
             </div>
             <label class="check-row" id="shadowControl">
               <input id="shadowInput" type="checkbox" checked />

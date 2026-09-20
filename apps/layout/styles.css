@@ -16,6 +16,30 @@
 }
 
 @font-face {
+  font-family: "Fusion Pixel 8px Proportional";
+  src: url("./assets/fonts/fusion-pixel-8px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fusion Pixel 10px Proportional";
+  src: url("./assets/fonts/fusion-pixel-10px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fusion Pixel 12px Monospaced";
+  src: url("./assets/fonts/fusion-pixel-12px-monospaced-zh_hans.otf.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
   font-family: "Pixelated MS Sans Serif";
   src: url("./assets/fonts/ms_sans_serif_bold.woff2") format("woff2"),
        url("./assets/fonts/ms_sans_serif_bold.woff") format("woff");
@@ -169,6 +193,10 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .range-row { grid-template-columns: 52px 1fr 42px; }
 .range-row output { font: 11px "Courier New", monospace; }
 .two-col { display: grid; grid-template-columns: 1fr 76px; gap: 8px; }
+.typography-controls { margin: 12px 0; padding: 9px; background: #b7b7b7; box-shadow: inset 1px 1px #777, inset -1px -1px #fff; }
+.typography-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.typography-grid > :first-child { grid-column: 1 / -1; }
+.typography-reset { width: 100%; min-height: 29px; margin-top: 2px; padding-block: 4px; }
 .button-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
 .variant-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
 .variant-choice {

@@ -30,6 +30,12 @@ const controls = {
   fontSizeControl: document.querySelector('#fontSizeControl'),
   textColorControl: document.querySelector('#textColorControl'),
   textColor: document.querySelector('#textColorInput'),
+  typographyControl: document.querySelector('#typographyControl'),
+  typographyPart: document.querySelector('#typographyPartSelect'),
+  partFontFamily: document.querySelector('#partFontFamily'),
+  partFontSize: document.querySelector('#partFontSize'),
+  partFontWeight: document.querySelector('#partFontWeight'),
+  resetTypography: document.querySelector('#resetTypographyButton'),
 };
 
 const dimensions = {
@@ -59,8 +65,41 @@ const fontSizeSets = {
 const WIN98_FONT = '"Pixelated MS Sans Serif", "MS Sans Serif", sans-serif';
 const posterFontFamilies = {
   pingfang: '"PingFang SC", "Hiragino Sans GB", sans-serif',
+  'fusion-8-prop': '"Fusion Pixel 8px Proportional", sans-serif',
+  'fusion-10-prop': '"Fusion Pixel 10px Proportional", sans-serif',
   'fusion-pixel': '"Fusion Pixel 12px Proportional", sans-serif',
+  'fusion-12-mono': '"Fusion Pixel 12px Monospaced", monospace',
   pixel: '"Pixelated MS Sans Serif", "MS Sans Serif", "SimSun", sans-serif',
+};
+
+const typographyPartsByType = {
+  lineup: [
+    { key: 'title', label: '标题栏', selector: '.widget-titlebar', defaultSize: 18, defaultWeight: 700 },
+    { key: 'content', label: '阵容文字', selector: '.widget-lines', defaultWeight: 700, usesWidgetSize: true },
+  ],
+  time: [
+    { key: 'title', label: '标题栏', selector: '.widget-titlebar', defaultSize: 18, defaultWeight: 700 },
+    { key: 'date', label: '日期', selector: '.date-chip', defaultSize: 33, defaultWeight: 700 },
+    { key: 'time', label: '时间', selector: '.big-time', defaultSize: 33, defaultWeight: 700 },
+    { key: 'weekday', label: '星期', selector: '.weekday-label', defaultSize: 22, defaultWeight: 700 },
+    { key: 'venue', label: '场地信息', selector: '.venue-status', defaultSize: 22, defaultWeight: 700 },
+  ],
+  calendar: [
+    { key: 'title', label: '标题栏', selector: '.widget-titlebar', defaultSize: 18, defaultWeight: 700 },
+    { key: 'date', label: '日期与星期', selector: '.month-selectors', defaultSize: 18, defaultWeight: 700 },
+    { key: 'weekdays', label: '星期缩写', selector: '.calendar-weekdays', defaultSize: 14, defaultWeight: 700 },
+    { key: 'days', label: '日期数字', selector: '.calendar-days', defaultSize: 16, defaultWeight: 700 },
+    { key: 'time', label: '时间', selector: '.calendar-digital-time', defaultSize: 18, defaultWeight: 400 },
+    { key: 'venue', label: '场地名', selector: '.calendar-venue-name', defaultSize: 22, defaultWeight: 700 },
+    { key: 'ticket', label: '票务', selector: '.calendar-ticket-badge', defaultSize: 18, defaultWeight: 700 },
+  ],
+  address: [
+    { key: 'title', label: '标题栏', selector: '.widget-titlebar', defaultSize: 18, defaultWeight: 700 },
+    { key: 'content', label: '地址文字', selector: '.address-copy', defaultWeight: 700, usesWidgetSize: true },
+  ],
+  text: [
+    { key: 'content', label: '大标题', selector: '.widget-lines', defaultWeight: 700, usesWidgetSize: true },
+  ],
 };
 const LAYOUT_DB = 'retro-visual-lab';
 const LAYOUT_STORE = 'saved-layouts';
@@ -79,6 +118,9 @@ let state = {
   widgets: [],
 };
 
+let typographyEditorWidgetId = null;
+let activeTypographyPart = null;
+
 function openLayoutDb() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(LAYOUT_DB, 1);
@@ -94,7 +136,7 @@ async function writeSavedLayout() {
   const db = await openLayoutDb();
   const snapshot = {
     ...state,
-    schemaVersion: 5,
+    schemaVersion: 6,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -128,6 +170,21 @@ function applyPosterFont() {
   const family = posterFontFamilies[state.fontFamily] || posterFontFamilies.pingfang;
   stage.style.setProperty('--poster-font-family', family);
   fontFamilySelect.value = state.fontFamily in posterFontFamilies ? state.fontFamily : 'pingfang';
+}
+
+function applyWidgetTypography(el, widget) {
+  const parts = typographyPartsByType[widget.type] || [];
+  parts.forEach((part) => {
+    const setting = widget.typography?.[part.key] || {};
+    el.querySelectorAll(part.selector).forEach((target) => {
+      if (setting.fontFamily && posterFontFamilies[setting.fontFamily]) target.style.fontFamily = posterFontFamilies[setting.fontFamily];
+      else target.style.removeProperty('font-family');
+      if (Number.isFinite(setting.fontSize)) target.style.fontSize = `${setting.fontSize}px`;
+      else if (!part.usesWidgetSize) target.style.removeProperty('font-size');
+      if (Number.isFinite(setting.fontWeight)) target.style.fontWeight = String(setting.fontWeight);
+      else target.style.removeProperty('font-weight');
+    });
+  });
 }
 
 function fitStage() {
@@ -219,6 +276,7 @@ function renderWidget(widget) {
   } else {
     lineRoot.textContent = widget.content;
   }
+  applyWidgetTypography(el, widget);
   if (widget.type === 'address') {
     const requiredHeight = clamp(Math.ceil(lineRoot.scrollHeight + 74), 110, state.height - widget.y);
     widget.minContentHeight = requiredHeight;
@@ -378,6 +436,9 @@ function updateEditor() {
   if (!widget) {
     controls.variantControl.hidden = true;
     controls.variantControl.style.display = 'none';
+    controls.typographyControl.hidden = true;
+    typographyEditorWidgetId = null;
+    activeTypographyPart = null;
     selectionStatus.textContent = 'NO WIDGET SELECTED';
     return;
   }
@@ -399,7 +460,43 @@ function updateEditor() {
   controls.textColor.value = widget.textColor || '#ffe744';
   renderVariantChoices(widget);
   renderFontSizeChoices(widget);
+  renderTypographyEditor(widget);
   selectionStatus.textContent = `${widget.type.toUpperCase()} · X ${widget.x} · Y ${widget.y} · ${widget.w} × ${widget.h}`;
+}
+
+function renderTypographyEditor(widget) {
+  const parts = typographyPartsByType[widget.type] || [];
+  controls.typographyControl.hidden = parts.length === 0;
+  if (!parts.length) return;
+  if (typographyEditorWidgetId !== widget.id || !parts.some((part) => part.key === activeTypographyPart)) {
+    typographyEditorWidgetId = widget.id;
+    activeTypographyPart = parts[0].key;
+  }
+  controls.typographyPart.replaceChildren(...parts.map((part) => {
+    const option = document.createElement('option');
+    option.value = part.key;
+    option.textContent = part.label;
+    return option;
+  }));
+  controls.typographyPart.value = activeTypographyPart;
+  const part = parts.find((item) => item.key === activeTypographyPart);
+  const setting = widget.typography?.[activeTypographyPart] || {};
+  controls.partFontFamily.value = setting.fontFamily || '';
+  controls.partFontSize.value = Number.isFinite(setting.fontSize) ? setting.fontSize : '';
+  controls.partFontSize.placeholder = `默认 ${part.usesWidgetSize ? widget.fontSize : part.defaultSize}px`;
+  controls.partFontWeight.value = Number.isFinite(setting.fontWeight) ? String(setting.fontWeight) : '';
+}
+
+function updateTypographySetting(key, value) {
+  const widget = selectedWidget();
+  if (!widget || !activeTypographyPart) return;
+  widget.typography ||= {};
+  widget.typography[activeTypographyPart] ||= {};
+  if (value === '' || value === null) delete widget.typography[activeTypographyPart][key];
+  else widget.typography[activeTypographyPart][key] = value;
+  if (Object.keys(widget.typography[activeTypographyPart]).length === 0) delete widget.typography[activeTypographyPart];
+  renderWidget(widget);
+  renderTypographyEditor(widget);
 }
 
 function renderVariantChoices(widget) {
@@ -797,13 +894,33 @@ controls.fontSize.addEventListener('input', (event) => {
 });
 controls.textColor.addEventListener('input', (event) => updateSelected('textColor', event.target.value));
 controls.shadow.addEventListener('change', (event) => updateSelected('shadow', event.target.checked));
+controls.typographyPart.addEventListener('change', (event) => {
+  activeTypographyPart = event.target.value;
+  const widget = selectedWidget();
+  if (widget) renderTypographyEditor(widget);
+});
+controls.partFontFamily.addEventListener('change', (event) => updateTypographySetting('fontFamily', event.target.value));
+controls.partFontSize.addEventListener('input', (event) => {
+  const value = event.target.value === '' ? '' : clamp(Number(event.target.value), 8, 120);
+  updateTypographySetting('fontSize', value);
+});
+controls.partFontWeight.addEventListener('change', (event) => {
+  updateTypographySetting('fontWeight', event.target.value === '' ? '' : Number(event.target.value));
+});
+controls.resetTypography.addEventListener('click', () => {
+  const widget = selectedWidget();
+  if (!widget?.typography || !activeTypographyPart) return;
+  delete widget.typography[activeTypographyPart];
+  renderWidget(widget);
+  renderTypographyEditor(widget);
+});
 document.querySelector('#deleteButton').addEventListener('click', () => {
   state.widgets = state.widgets.filter((item) => item.id !== state.selectedId);
   state.selectedId = null; renderAll();
 });
 document.querySelector('#duplicateButton').addEventListener('click', () => {
   const widget = selectedWidget(); if (!widget) return;
-  const copy = { ...widget, id: state.nextId++, x: clamp(widget.x + 32, 0, state.width - widget.w), y: clamp(widget.y + 32, 0, state.height - widget.h), z: ++state.topZ };
+  const copy = { ...widget, typography: structuredClone(widget.typography || {}), id: state.nextId++, x: clamp(widget.x + 32, 0, state.width - widget.w), y: clamp(widget.y + 32, 0, state.height - widget.h), z: ++state.topZ };
   state.widgets.push(copy); state.selectedId = copy.id; renderAll();
 });
 document.querySelector('#frontButton').addEventListener('click', () => { const widget = selectedWidget(); if (widget) { widget.z = ++state.topZ; renderAll(); } });
