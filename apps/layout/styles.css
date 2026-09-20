@@ -296,7 +296,7 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .widget-window[data-type="venue"][data-variant="building"] .widget-body::before { content: "▦"; font-family: "Courier New", monospace; }
 .widget-window[data-type="time"] .widget-body { display: block; text-align: center; padding: 7px; }
 .widget-window[data-type="time"] .widget-lines { display: none; }
-.datetime-layout { --win98-base-size: 22px; --win98-date-size: 33px; --win98-time-size: 22px; --venue-row-height: max(48px, calc(var(--win98-base-size) * 1.35 + 10px)); width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) var(--venue-row-height); gap: 0; font-family: "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; border: 2px solid #31585f; background: #dcece2; -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
+.datetime-layout { --win98-base-size: 22px; --win98-date-size: 33px; --win98-time-size: 33px; --venue-row-height: max(48px, calc(var(--win98-base-size) * 1.35 + 10px)); width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 1fr) var(--venue-row-height); gap: 0; font-family: "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; border: 2px solid #31585f; background: #dcece2; -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
 .datetime-main { min-width: 0; min-height: 0; padding: 0; background: #e9f3e8; border-bottom: 3px solid #214d57; }
 .reference-main { display: grid; grid-template-columns: 106px minmax(0, 1fr); align-items: stretch; }
 .clock-readout { display: grid; grid-template-rows: 1fr 1fr; min-width: 0; padding: 0; border-left: 3px solid #31585f; }

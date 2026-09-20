@@ -40,7 +40,7 @@ const dimensions = {
 
 const presets = {
   lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
-  time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 22, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
+  time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 33, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
   address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
   image: { title: 'IMAGE', content: '', w: 320, h: 220, fontSize: 22, theme: 'blue', imageUrl: '' },
   text: { title: 'TEXT', content: 'Before the Moon Falls', w: 820, h: 150, fontSize: 72, textColor: '#ffe744', theme: 'blue', startX: 40, startY: 24 },
@@ -86,6 +86,7 @@ async function writeSavedLayout() {
   const db = await openLayoutDb();
   const snapshot = {
     ...state,
+    schemaVersion: 2,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -180,9 +181,10 @@ function renderWidget(widget) {
   lineRoot.style.color = widget.textColor || '';
   specialRoot.replaceChildren();
   const specialFontSize = widget.type === 'time' ? win98FontSize(widget.fontSize) : widget.fontSize;
+  const secondaryFontSize = widget.type === 'time' ? Math.max(22, specialFontSize - 11) : specialFontSize;
   specialRoot.style.fontSize = `${specialFontSize}px`;
-  specialRoot.style.setProperty('--win98-base-size', `${specialFontSize}px`);
-  specialRoot.style.setProperty('--win98-date-size', `${specialFontSize + 11}px`);
+  specialRoot.style.setProperty('--win98-base-size', `${secondaryFontSize}px`);
+  specialRoot.style.setProperty('--win98-date-size', `${specialFontSize}px`);
   specialRoot.style.setProperty('--win98-time-size', `${specialFontSize}px`);
   specialRoot.hidden = !['time', 'address'].includes(widget.type);
   image.hidden = widget.type !== 'image' || !widget.imageUrl;
@@ -548,9 +550,9 @@ async function drawWidget(ctx, widget) {
     const [hour = '00', minute = '00'] = time.match(/\d+/g) || [];
     const weekdayNames = { 星期一: 'MON', 星期二: 'TUE', 星期三: 'WED', 星期四: 'THU', 星期五: 'FRI', 星期六: 'SAT', 星期日: 'SUN', 周一: 'MON', 周二: 'TUE', 周三: 'WED', 周四: 'THU', 周五: 'FRI', 周六: 'SAT', 周日: 'SUN' };
     const weekdayText = weekdayNames[weekday] || weekday.replace(/[()]/g, '');
-    const baseSize = win98FontSize(widget.fontSize);
-    const dateSize = baseSize + 11;
-    const timeSize = baseSize;
+    const dateSize = win98FontSize(widget.fontSize);
+    const timeSize = dateSize;
+    const baseSize = Math.max(22, dateSize - 11);
     const statusH = Math.max(48, Math.round(baseSize * 1.35 + 10));
     const mainX = bx + 7;
     const mainY = by + 7;
@@ -750,11 +752,17 @@ async function initialize() {
   try {
     const saved = await readSavedLayout();
     if (saved && Array.isArray(saved.widgets)) {
+      const restoredWidgets = saved.widgets.map((widget) => (
+        (saved.schemaVersion || 0) < 2 && widget.type === 'time'
+          ? { ...widget, fontSize: 33 }
+          : widget
+      ));
       state = {
         ...state,
         ...saved,
+        widgets: restoredWidgets,
         selectedId: null,
-        nextId: Math.max(saved.nextId || 1, ...saved.widgets.map((widget) => Number(widget.id) + 1)),
+        nextId: Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1)),
       };
       document.querySelector('#ratioSelect').value = saved.ratio || '3:4';
       document.querySelector('#gridToggle').checked = saved.grid !== false;
