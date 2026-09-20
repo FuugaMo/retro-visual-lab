@@ -41,6 +41,7 @@ const dimensions = {
 const presets = {
   lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
   time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 33, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
+  calendar: { title: 'DATE/TIME PROPERTIES', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免票入场', w: 300, h: 286, fontSize: 22, theme: 'gray', startXPct: .126, startYPct: .753 },
   address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
   image: { title: 'IMAGE', content: '', w: 320, h: 220, fontSize: 22, theme: 'blue', imageUrl: '' },
   text: { title: 'TEXT', content: 'Before the Moon Falls', w: 820, h: 150, fontSize: 72, textColor: '#ffe744', theme: 'blue', startX: 40, startY: 24 },
@@ -86,7 +87,7 @@ async function writeSavedLayout() {
   const db = await openLayoutDb();
   const snapshot = {
     ...state,
-    schemaVersion: 2,
+    schemaVersion: 3,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -186,10 +187,10 @@ function renderWidget(widget) {
   specialRoot.style.setProperty('--win98-base-size', `${secondaryFontSize}px`);
   specialRoot.style.setProperty('--win98-date-size', `${specialFontSize}px`);
   specialRoot.style.setProperty('--win98-time-size', `${specialFontSize}px`);
-  specialRoot.hidden = !['time', 'address'].includes(widget.type);
+  specialRoot.hidden = !['time', 'calendar', 'address'].includes(widget.type);
   image.hidden = widget.type !== 'image' || !widget.imageUrl;
   if (!image.hidden) image.src = widget.imageUrl;
-  lineRoot.hidden = ['time', 'address', 'image'].includes(widget.type);
+  lineRoot.hidden = ['time', 'calendar', 'address', 'image'].includes(widget.type);
   if (widget.type === 'lineup') {
     lineRoot.replaceChildren(...widget.content.split('\n').map((line) => {
       const span = document.createElement('span');
@@ -198,6 +199,8 @@ function renderWidget(widget) {
     }));
   } else if (widget.type === 'time') {
     renderDateTime(specialRoot, widget);
+  } else if (widget.type === 'calendar') {
+    renderCalendar(specialRoot, widget);
   } else if (widget.type === 'address') {
     renderAddress(specialRoot, widget);
   } else {
@@ -209,6 +212,56 @@ function renderWidget(widget) {
     if (widget.h < requiredHeight) widget.h = requiredHeight;
     el.style.height = `${widget.h}px`;
   }
+}
+
+function renderCalendar(root, widget) {
+  const [date = '', weekday = '星期六', time = '20:00', venue = '@浴室Live · 免票入场'] = widget.content.split('\n');
+  const [year = 2026, month = 10, day = 31] = (date.match(/\d+/g) || []).map(Number);
+  const [hour = '20', minute = '00'] = time.match(/\d+/g) || [];
+  const wrap = document.createElement('div');
+  wrap.className = 'calendar-layout';
+  const main = document.createElement('div');
+  main.className = 'calendar-main';
+  const calendar = document.createElement('section');
+  calendar.className = 'month-calendar';
+  const header = document.createElement('div');
+  header.className = 'month-selectors';
+  header.innerHTML = `<span>${year} / ${String(month).padStart(2, '0')}</span><span>${weekday}</span>`;
+  const weekdays = document.createElement('div');
+  weekdays.className = 'calendar-weekdays';
+  ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((label) => { const cell = document.createElement('span'); cell.textContent = label; weekdays.append(cell); });
+  const days = document.createElement('div');
+  days.className = 'calendar-days';
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const totalDays = new Date(year, month, 0).getDate();
+  for (let index = 0; index < firstDay; index += 1) days.append(document.createElement('span'));
+  for (let value = 1; value <= totalDays; value += 1) {
+    const cell = document.createElement('span');
+    cell.textContent = value;
+    cell.classList.toggle('selected-day', value === day);
+    days.append(cell);
+  }
+  calendar.append(header, weekdays, days);
+  const timePanel = document.createElement('section');
+  timePanel.className = 'calendar-time-panel';
+  const clock = document.createElement('div');
+  clock.className = 'analog-clock calendar-clock';
+  clock.style.setProperty('--hour-angle', `${((Number(hour) % 12) * 30) + Number(minute) * .5}deg`);
+  clock.style.setProperty('--minute-angle', `${Number(minute) * 6}deg`);
+  clock.innerHTML = '<i class="hour-hand"></i><i class="minute-hand"></i><i class="clock-pin"></i>';
+  const digital = document.createElement('div');
+  digital.className = 'calendar-digital-time';
+  digital.textContent = `${hour}:${minute}`;
+  timePanel.append(clock, digital);
+  main.append(calendar, timePanel);
+  const venueBar = document.createElement('div');
+  venueBar.className = 'calendar-venue';
+  venueBar.innerHTML = '<span>VENUE</span>';
+  const venueText = document.createElement('strong');
+  venueText.textContent = venue;
+  venueBar.append(venueText);
+  wrap.append(main, venueBar);
+  root.append(wrap);
 }
 
 function renderDateTime(root, widget) {
@@ -271,13 +324,15 @@ function renderAll() {
 function addWidget(type) {
   const preset = presets[type];
   const offset = (state.widgets.length * 32) % 180;
-  const useStartPosition = !state.widgets.some((item) => item.type === type) && Number.isFinite(preset.startX);
+  const useStartPosition = !state.widgets.some((item) => item.type === type) && (Number.isFinite(preset.startX) || Number.isFinite(preset.startXPct));
+  const startX = Number.isFinite(preset.startXPct) ? Math.round(state.width * preset.startXPct) : preset.startX;
+  const startY = Number.isFinite(preset.startYPct) ? Math.round(state.height * preset.startYPct) : preset.startY;
   const widget = {
     ...preset,
     id: state.nextId++,
     type,
-    x: snap(clamp(useStartPosition ? preset.startX : 70 + offset, 0, state.width - preset.w)),
-    y: snap(clamp(useStartPosition ? preset.startY : 90 + offset, 0, state.height - preset.h)),
+    x: Number.isFinite(preset.startXPct) ? clamp(useStartPosition ? startX : 70 + offset, 0, state.width - preset.w) : snap(clamp(useStartPosition ? startX : 70 + offset, 0, state.width - preset.w)),
+    y: Number.isFinite(preset.startYPct) ? clamp(useStartPosition ? startY : 90 + offset, 0, state.height - preset.h) : snap(clamp(useStartPosition ? startY : 90 + offset, 0, state.height - preset.h)),
     z: ++state.topZ,
     shadow: true,
   };
@@ -317,8 +372,8 @@ function updateEditor() {
   controls.content.value = widget.content;
   controls.theme.value = widget.theme;
   controls.fontSize.value = widget.fontSize;
-  controls.fontSize.min = widget.type === 'time' ? 22 : 12;
-  controls.fontSize.max = widget.type === 'time' ? 33 : widget.type === 'text' ? 120 : 72;
+  controls.fontSize.min = ['time', 'calendar'].includes(widget.type) ? 22 : 12;
+  controls.fontSize.max = ['time', 'calendar'].includes(widget.type) ? 33 : widget.type === 'text' ? 120 : 72;
   controls.shadow.checked = widget.shadow;
   controls.textColor.value = widget.textColor || '#ffe744';
   renderVariantChoices(widget);
@@ -348,7 +403,7 @@ function renderVariantChoices(widget) {
 }
 
 function renderFontSizeChoices(widget) {
-  const sizes = fontSizeSets[widget.type] || fontSizeSets.default;
+  const sizes = ['time', 'calendar'].includes(widget.type) ? fontSizeSets.time : fontSizeSets[widget.type] || fontSizeSets.default;
   controls.fontSizeChoices.replaceChildren();
   sizes.forEach((size) => {
     const button = document.createElement('button');
@@ -407,8 +462,8 @@ function bindWidgetEvents(el, id) {
     const originH = widget.h;
     const move = (moveEvent) => {
       const isFreeform = ['image', 'text'].includes(widget.type);
-      const minWidth = isFreeform ? 40 : widget.type === 'time' ? 360 : 170;
-      const minHeight = isFreeform ? 40 : widget.type === 'time' ? 210 : widget.type === 'address' ? (widget.minContentHeight || 110) : 110;
+      const minWidth = isFreeform ? 40 : widget.type === 'time' ? 360 : widget.type === 'calendar' ? 280 : 170;
+      const minHeight = isFreeform ? 40 : widget.type === 'time' ? 210 : widget.type === 'calendar' ? 250 : widget.type === 'address' ? (widget.minContentHeight || 110) : 110;
       widget.w = snap(clamp(originW + (moveEvent.clientX - startX) * state.width / rect.width, minWidth, state.width - widget.x));
       widget.h = snap(clamp(originH + (moveEvent.clientY - startY) * state.height / rect.height, minHeight, state.height - widget.y));
       renderWidget(widget);
@@ -531,7 +586,8 @@ async function drawWidget(ctx, widget) {
   if (widget.shadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(widget.x + 9, widget.y + 10, widget.w, widget.h); }
   drawBevel(ctx, widget.x, widget.y, widget.w, widget.h);
   ctx.fillStyle = titleColor; ctx.fillRect(widget.x + 4, widget.y + 4, widget.w - 8, 34);
-  ctx.fillStyle = '#fff'; ctx.font = `700 22px ${WIN98_FONT}`; ctx.textBaseline = 'middle';
+  const titleFontSize = widget.type === 'calendar' ? 14 : 22;
+  ctx.fillStyle = '#fff'; ctx.font = `700 ${titleFontSize}px ${WIN98_FONT}`; ctx.textBaseline = 'middle';
   ctx.fillText(widget.title, widget.x + 10, widget.y + 21, widget.w - 112);
   ['_', '□', '×'].forEach((label, index) => {
     const bx = widget.x + widget.w - 81 + index * 25;
@@ -591,6 +647,51 @@ async function drawWidget(ctx, widget) {
     const venueX = mainX + 53 * iconScale;
     ctx.font = `700 ${baseSize}px ${WIN98_FONT}`; ctx.fillStyle = '#071d35'; ctx.fillText(venue, venueX, statusY + statusH / 2, mainX + mainW - venueX - baseSize * .45);
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  } else if (widget.type === 'calendar') {
+    const [date = '', weekday = '星期六', time = '20:00', venue = '@浴室Live · 免票入场'] = widget.content.split('\n');
+    const [year = 2026, month = 10, day = 31] = (date.match(/\d+/g) || []).map(Number);
+    const [hour = '20', minute = '00'] = time.match(/\d+/g) || [];
+    const pad = 8;
+    const venueH = 54;
+    const mainX = bx + pad, mainY = by + pad, mainW = bw - pad * 2, mainH = bh - venueH - pad * 2;
+    const leftW = Math.round(mainW * .55);
+    const rightX = mainX + leftW + 8;
+    const rightW = mainW - leftW - 8;
+    ctx.fillStyle = '#c0c0c0'; ctx.fillRect(mainX, mainY, mainW, mainH + venueH + 4);
+    ctx.strokeStyle = '#707070'; ctx.lineWidth = 2; ctx.strokeRect(mainX, mainY, leftW, mainH);
+    ctx.strokeRect(rightX, mainY, rightW, mainH);
+    ctx.fillStyle = '#fff'; ctx.fillRect(mainX + 7, mainY + 8, leftW - 14, 28);
+    ctx.strokeStyle = '#333'; ctx.strokeRect(mainX + 7, mainY + 8, leftW - 14, 28);
+    ctx.fillStyle = '#111'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.font = `700 12px ${WIN98_FONT}`;
+    ctx.fillText(`${year} / ${String(month).padStart(2, '0')}`, mainX + 14, mainY + 22);
+    ctx.textAlign = 'right'; ctx.fillText(weekday, mainX + leftW - 14, mainY + 22);
+    const gridX = mainX + 8, gridY = mainY + 43, gridW = leftW - 16;
+    const cellW = gridW / 7, cellH = Math.max(18, (mainH - 49) / 7);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = `700 12px ${WIN98_FONT}`;
+    ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach((label, index) => ctx.fillText(label, gridX + cellW * (index + .5), gridY + cellH * .5));
+    const firstDay = new Date(year, month - 1, 1).getDay();
+    const totalDays = new Date(year, month, 0).getDate();
+    for (let value = 1; value <= totalDays; value += 1) {
+      const slot = firstDay + value - 1;
+      const col = slot % 7, row = Math.floor(slot / 7) + 1;
+      const cx = gridX + cellW * (col + .5), cy = gridY + cellH * (row + .5);
+      if (value === day) { ctx.fillStyle = '#000080'; ctx.fillRect(cx - cellW * .34, cy - cellH * .38, cellW * .68, cellH * .76); ctx.fillStyle = '#fff'; }
+      else ctx.fillStyle = '#111';
+      ctx.fillText(String(value), cx, cy);
+    }
+    const clockRadius = Math.min(45, rightW * .3, mainH * .29);
+    drawAnalogClock(ctx, rightX + rightW / 2, mainY + mainH * .43, clockRadius, hour, minute);
+    const digitalW = Math.min(118, rightW - 24), digitalH = 28;
+    const digitalX = rightX + (rightW - digitalW) / 2, digitalY = mainY + mainH - 39;
+    ctx.fillStyle = '#fff'; ctx.fillRect(digitalX, digitalY, digitalW, digitalH);
+    ctx.strokeStyle = '#333'; ctx.strokeRect(digitalX, digitalY, digitalW, digitalH);
+    ctx.fillStyle = '#111'; ctx.font = `700 18px ${WIN98_FONT}`; ctx.textAlign = 'center'; ctx.fillText(`${hour}:${minute}`, rightX + rightW / 2, digitalY + digitalH / 2);
+    const venueY = mainY + mainH + 8;
+    ctx.strokeStyle = '#707070'; ctx.strokeRect(mainX, venueY, mainW, venueH - 8);
+    ctx.fillStyle = '#c0c0c0'; ctx.fillRect(mainX + 10, venueY - 7, 58, 15);
+    ctx.fillStyle = '#111'; ctx.font = `700 12px ${WIN98_FONT}`; ctx.textAlign = 'left'; ctx.fillText('VENUE', mainX + 15, venueY);
+    ctx.font = `700 18px ${WIN98_FONT}`; ctx.fillText(venue, mainX + 14, venueY + 27, mainW - 28);
+    ctx.textBaseline = 'top';
   } else if (widget.type === 'lineup') {
     let y = by + 8;
     widget.content.split('\n').forEach((line) => {
@@ -667,7 +768,7 @@ controls.theme.addEventListener('change', (event) => updateSelected('theme', eve
 controls.fontSize.addEventListener('input', (event) => {
   const widget = selectedWidget();
   const value = Number(event.target.value) || 12;
-  updateSelected('fontSize', widget?.type === 'time' ? win98FontSize(value) : clamp(value, 12, widget?.type === 'text' ? 120 : 72));
+  updateSelected('fontSize', ['time', 'calendar'].includes(widget?.type) ? win98FontSize(value) : clamp(value, 12, widget?.type === 'text' ? 120 : 72));
 });
 controls.textColor.addEventListener('input', (event) => updateSelected('textColor', event.target.value));
 controls.shadow.addEventListener('change', (event) => updateSelected('shadow', event.target.checked));
@@ -757,6 +858,20 @@ async function initialize() {
           ? { ...widget, fontSize: 33 }
           : widget
       ));
+      if ((saved.schemaVersion || 0) < 3 && !restoredWidgets.some((widget) => widget.type === 'calendar')) {
+        const width = saved.width || state.width;
+        const height = saved.height || state.height;
+        const nextCalendarId = Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1));
+        restoredWidgets.push({
+          ...presets.calendar,
+          id: nextCalendarId,
+          type: 'calendar',
+          x: clamp(Math.round(width * .126), 0, width - presets.calendar.w),
+          y: clamp(Math.round(height * .753), 0, height - presets.calendar.h),
+          z: Math.max(0, ...restoredWidgets.map((widget) => widget.z || 0)) + 1,
+          shadow: true,
+        });
+      }
       state = {
         ...state,
         ...saved,
@@ -784,6 +899,7 @@ async function initialize() {
   addWidget('lineup');
   addWidget('time');
   addWidget('address');
+  addWidget('calendar');
 }
 
 initialize();
