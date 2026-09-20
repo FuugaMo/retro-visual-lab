@@ -364,6 +364,7 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .widget-window[data-type="text"] .widget-titlebar > * { display: none; }
 .widget-window[data-type="text"] .widget-body { inset: 0; display: grid; place-items: center; padding: 0; overflow: hidden; background: transparent; box-shadow: none; }
 .widget-window[data-type="text"] .widget-lines { width: 100%; margin: 0; color: #ffe744; font-family: "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif; font-weight: 700; line-height: 1; text-align: center; white-space: nowrap; text-shadow: 3px 4px 0 rgba(3, 23, 35, .82); overflow: hidden; text-overflow: clip; -webkit-font-smoothing: none; font-smooth: never; text-rendering: optimizeSpeed; }
+.widget-window[data-type="text"] .widget-lines::after { content: ""; display: block; width: 92%; height: max(4px, .07em); margin: .12em auto 0; background: currentColor; box-shadow: 3px 4px 0 rgba(3, 23, 35, .82); }
 .widget-window[data-type="text"] .resize-handle { z-index: 3; }
 .resize-handle { position: absolute; right: 4px; bottom: 4px; width: 22px; height: 22px; cursor: nwse-resize; background: repeating-linear-gradient(135deg, transparent 0 3px, #fff 3px 5px, #777 5px 7px); }
 

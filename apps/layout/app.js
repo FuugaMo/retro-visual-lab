@@ -511,10 +511,16 @@ async function drawWidget(ctx, widget) {
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
     ctx.font = `700 ${widget.fontSize}px ${WIN98_FONT}`;
+    const underlineY = widget.y + widget.h / 2 + widget.fontSize * .62;
+    const underlineX = widget.x + widget.w * .04;
+    const underlineW = widget.w * .92;
+    const underlineH = Math.max(4, widget.fontSize * .07);
     ctx.fillStyle = 'rgba(3, 23, 35, .82)';
     ctx.fillText(widget.content, widget.x + widget.w / 2 + 3, widget.y + widget.h / 2 + 4, widget.w);
+    ctx.fillRect(underlineX + 3, underlineY + 4, underlineW, underlineH);
     ctx.fillStyle = widget.textColor || '#ffe744';
     ctx.fillText(widget.content, widget.x + widget.w / 2, widget.y + widget.h / 2, widget.w);
+    ctx.fillRect(underlineX, underlineY, underlineW, underlineH);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     return;
