@@ -273,7 +273,7 @@ function renderCalendar(root, widget) {
   const [venueName = '', ...ticketParts] = venue.split(/\s*·\s*/);
   const venueText = document.createElement('strong');
   venueText.className = 'calendar-venue-name';
-  venueText.textContent = venueName.replace(/^@\s*/, '');
+  venueText.textContent = venueName;
   venueBar.append(venueText);
   if (ticketParts.length) {
     const ticket = document.createElement('span');
