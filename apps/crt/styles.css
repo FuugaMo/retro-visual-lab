@@ -22,7 +22,8 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   background:
     radial-gradient(circle at 50% -20%, rgba(84, 223, 210, .13), transparent 40%),
     repeating-linear-gradient(0deg, rgba(255,255,255,.018) 0 1px, transparent 1px 4px),
@@ -32,7 +33,7 @@ body {
 button, input, select { font: inherit; }
 button { color: inherit; }
 
-.app-shell { min-height: 100vh; display: grid; grid-template-rows: 78px minmax(0, 1fr) 28px; }
+.app-shell { min-height: 100vh; display: grid; grid-template-rows: 78px auto 28px; }
 
 .topbar {
   display: flex;
@@ -64,14 +65,14 @@ button { color: inherit; }
 .header-status { display: flex; align-items: center; gap: 10px; font-size: 11px; }
 .signal-dot { width: 8px; height: 8px; background: var(--amber); box-shadow: 0 0 10px var(--amber); }
 
-.workspace { min-height: 0; display: grid; grid-template-columns: 250px minmax(340px, 1fr) 310px; gap: 8px; padding: 10px; }
+.workspace { min-height: calc(100vh - 106px); display: grid; grid-template-columns: 250px minmax(340px, 1fr) 310px; align-items: stretch; gap: 8px; padding: 10px; }
 .panel {
   background: var(--panel);
   border: 0;
   box-shadow: inset 2px 2px 0 var(--panel-light), inset -2px -2px 0 #30332f, inset -4px -4px 0 var(--panel-mid);
 }
 
-.source-panel, .controls-panel { min-height: 0; padding: 13px; overflow: auto; scrollbar-color: #555 var(--panel); scrollbar-width: thin; }
+.source-panel, .controls-panel { min-height: 0; padding: 13px; overflow: visible; }
 .panel-heading { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; margin-bottom: 12px; border-bottom: 2px solid #777b75; }
 .panel-heading.compact { margin-top: 18px; }
 .panel-heading span { display: grid; place-items: center; width: 25px; height: 25px; color: #fff; background: var(--blue); font-size: 11px; }
@@ -188,7 +189,6 @@ kbd { padding: 3px 5px; color: #fff; background: #111; font: 8px Monaco, monospa
 .statusbar span { padding: 2px 6px; box-shadow: inset 1px 1px #777, inset -1px -1px #fff; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
 @media (max-width: 1050px) {
-  body { overflow: auto; }
   .app-shell { min-height: 100vh; grid-template-rows: auto auto 28px; }
   .topbar { min-height: 78px; }
   .workspace { grid-template-columns: 230px minmax(360px, 1fr); grid-template-rows: minmax(620px, 75vh) auto; }
