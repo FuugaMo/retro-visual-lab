@@ -90,7 +90,7 @@ const typographyPartsByType = {
     { key: 'weekdays', label: '星期缩写', selector: '.calendar-weekdays', defaultSize: 14, defaultWeight: 700 },
     { key: 'days', label: '日期数字', selector: '.calendar-days', defaultSize: 16, defaultWeight: 700 },
     { key: 'time', label: '时间', selector: '.calendar-digital-time', defaultSize: 18, defaultWeight: 400 },
-    { key: 'venue', label: '场地名', selector: '.calendar-venue-name', defaultSize: 22, defaultWeight: 700 },
+    { key: 'venue', label: '场地名', selector: '.calendar-venue-name', defaultSize: 27, defaultWeight: 700 },
     { key: 'ticket', label: '票务', selector: '.calendar-ticket-badge', defaultSize: 18, defaultWeight: 700 },
   ],
   address: [
