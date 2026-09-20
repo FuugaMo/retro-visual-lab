@@ -32,7 +32,10 @@ const controlSchema = [
       ['scanline', '扫描线', 0, 1, 0.01, 0.34, ''],
       ['scanDensity', '扫描密度', 0.35, 1.5, 0.01, 0.86, '×'],
       ['mask', '荧光栅格', 0, 1, 0.01, 0.16, ''],
-      ['bloom', '荧光溢出', 0, 1, 0.01, 0.16, ''],
+      ['bloom', '像素辉光', 0, 1.5, 0.01, 0.22, ''],
+      ['glowRadius', '辉光半径', 0.5, 8, 0.1, 2.4, 'px'],
+      ['glowThreshold', '高光阈值', 0.12, 0.92, 0.01, 0.48, ''],
+      ['edgeGlow', '边缘反光', 0, 1.5, 0.01, 0.34, ''],
     ],
   },
   {
@@ -47,10 +50,10 @@ const controlSchema = [
 ];
 
 const presets = {
-  studio: { curvature: .105, overscan: .035, vignette: .42, softness: .28, rgbSplit: 1.4, jitter: .35, noise: .045, roll: .08, scanline: .34, scanDensity: .86, mask: .16, bloom: .16, brightness: 1.02, contrast: 1.08, saturation: 1.08, tint: .02 },
-  consumer: { curvature: .19, overscan: .065, vignette: .62, softness: .75, rgbSplit: 2.8, jitter: .8, noise: .095, roll: .17, scanline: .5, scanDensity: .72, mask: .26, bloom: .3, brightness: .98, contrast: 1.14, saturation: .94, tint: .16 },
-  arcade: { curvature: .135, overscan: .045, vignette: .52, softness: .18, rgbSplit: 1.8, jitter: .22, noise: .035, roll: .04, scanline: .58, scanDensity: 1.18, mask: .52, bloom: .46, brightness: 1.1, contrast: 1.26, saturation: 1.48, tint: -.1 },
-  damaged: { curvature: .23, overscan: .09, vignette: .7, softness: 1.05, rgbSplit: 7.2, jitter: 4.4, noise: .22, roll: .75, scanline: .68, scanDensity: .56, mask: .35, bloom: .4, brightness: .96, contrast: 1.3, saturation: .76, tint: .3 },
+  studio: { curvature: .105, overscan: .035, vignette: .42, softness: .28, rgbSplit: 1.4, jitter: .35, noise: .045, roll: .08, scanline: .34, scanDensity: .86, mask: .16, bloom: .22, glowRadius: 2.4, glowThreshold: .48, edgeGlow: .34, brightness: 1.02, contrast: 1.08, saturation: 1.08, tint: .02 },
+  consumer: { curvature: .19, overscan: .065, vignette: .62, softness: .75, rgbSplit: 2.8, jitter: .8, noise: .095, roll: .17, scanline: .5, scanDensity: .72, mask: .26, bloom: .42, glowRadius: 3.8, glowThreshold: .42, edgeGlow: .48, brightness: .98, contrast: 1.14, saturation: .94, tint: .16 },
+  arcade: { curvature: .135, overscan: .045, vignette: .52, softness: .18, rgbSplit: 1.8, jitter: .22, noise: .035, roll: .04, scanline: .58, scanDensity: 1.18, mask: .52, bloom: .72, glowRadius: 4.6, glowThreshold: .34, edgeGlow: .88, brightness: 1.1, contrast: 1.26, saturation: 1.48, tint: -.1 },
+  damaged: { curvature: .23, overscan: .09, vignette: .7, softness: 1.05, rgbSplit: 7.2, jitter: 4.4, noise: .22, roll: .75, scanline: .68, scanDensity: .56, mask: .35, bloom: .54, glowRadius: 6.2, glowThreshold: .38, edgeGlow: .72, brightness: .96, contrast: 1.3, saturation: .76, tint: .3 },
 };
 
 const state = { ...presets.studio };
@@ -92,6 +95,9 @@ uniform float u_scanline;
 uniform float u_scanDensity;
 uniform float u_mask;
 uniform float u_bloom;
+uniform float u_glowRadius;
+uniform float u_glowThreshold;
+uniform float u_edgeGlow;
 uniform float u_brightness;
 uniform float u_contrast;
 uniform float u_saturation;
@@ -117,7 +123,8 @@ vec2 warpedUv(vec2 uv) {
 }
 
 vec3 sampleSignal(vec2 uv) {
-  float px = 1.0 / u_resolution.x;
+  vec2 pixel = 1.0 / u_resolution;
+  float px = pixel.x;
   float line = floor(uv.y * u_resolution.y * 0.32);
   float burst = sin(line * 1.73 + u_time * 7.0) * sin(line * 0.071 - u_time * 2.1);
   float jitter = burst * u_jitter * px;
@@ -131,15 +138,35 @@ vec3 sampleSignal(vec2 uv) {
   float b = texture2D(u_image, uv - radial).b;
   vec3 color = vec3(r, g, b);
 
-  if (u_softness > 0.01 || u_bloom > 0.01) {
-    vec2 blur = vec2(px * (1.0 + u_softness), 1.0 / u_resolution.y * (1.0 + u_softness));
-    vec3 halo = texture2D(u_image, uv + vec2(blur.x, 0.0)).rgb;
-    halo += texture2D(u_image, uv - vec2(blur.x, 0.0)).rgb;
-    halo += texture2D(u_image, uv + vec2(0.0, blur.y)).rgb;
-    halo += texture2D(u_image, uv - vec2(0.0, blur.y)).rgb;
-    halo *= .25;
-    color = mix(color, halo, min(.45, u_softness * .18));
-    color += max(halo - .58, 0.0) * u_bloom * .65;
+  if (u_softness > 0.01 || u_bloom > 0.01 || u_edgeGlow > 0.01) {
+    // Keep the sampling offsets locked to source pixels so the halo remains blocky.
+    vec2 nearStep = pixel * max(1.0, floor(u_glowRadius * .5 + .5));
+    vec2 farStep = pixel * max(1.0, floor(u_glowRadius + .5));
+    vec3 left = texture2D(u_image, uv - vec2(nearStep.x, 0.0)).rgb;
+    vec3 right = texture2D(u_image, uv + vec2(nearStep.x, 0.0)).rgb;
+    vec3 up = texture2D(u_image, uv - vec2(0.0, nearStep.y)).rgb;
+    vec3 down = texture2D(u_image, uv + vec2(0.0, nearStep.y)).rgb;
+    vec3 halo = left + right + up + down;
+    halo += texture2D(u_image, uv + vec2(farStep.x, farStep.y)).rgb;
+    halo += texture2D(u_image, uv + vec2(-farStep.x, farStep.y)).rgb;
+    halo += texture2D(u_image, uv + vec2(farStep.x, -farStep.y)).rgb;
+    halo += texture2D(u_image, uv - farStep).rgb;
+    halo *= .125;
+
+    float haloLuma = dot(halo, vec3(.299, .587, .114));
+    float brightMask = smoothstep(u_glowThreshold, min(1.0, u_glowThreshold + .24), haloLuma);
+    vec3 phosphorHalo = halo * vec3(.92, 1.04, 1.08);
+    color += phosphorHalo * brightMask * u_bloom * .72;
+
+    float centerLuma = dot(texture2D(u_image, uv).rgb, vec3(.299, .587, .114));
+    float horizontalEdge = abs(dot(right - left, vec3(.299, .587, .114)));
+    float verticalEdge = abs(dot(down - up, vec3(.299, .587, .114)));
+    float edge = smoothstep(.035, .42, horizontalEdge + verticalEdge);
+    float highlightEdge = smoothstep(u_glowThreshold * .72, 1.0, max(centerLuma, haloLuma));
+    vec3 rimColor = mix(vec3(.08, .62, .68), vec3(1.0, .82, .18), clamp(centerLuma * 1.3, 0.0, 1.0));
+    color += rimColor * edge * highlightEdge * u_edgeGlow * .42;
+
+    color = mix(color, halo, min(.38, u_softness * .16));
   }
   return color;
 }
