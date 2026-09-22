@@ -175,6 +175,15 @@ kbd { padding: 3px 5px; color: #fff; background: #111; font: 8px Monaco, monospa
 .control-row label { font-size: 10px; }
 .control-row input[type="range"] { width: 100%; accent-color: var(--blue); }
 .control-row output { padding: 3px 4px; background: #e9ebe6; box-shadow: inset 1px 1px #737670, inset -1px -1px #fff; text-align: right; font-size: 9px; }
+.color-control-row { grid-template-columns: 78px minmax(70px, 1fr) 48px 57px; gap: 5px; min-height: 38px; }
+.color-picker-tools { min-width: 0; display: grid; grid-template-columns: 34px minmax(38px, 1fr); gap: 4px; }
+.color-picker-tools input[type="color"] { width: 34px; height: 25px; padding: 2px; border: 0; background: #e9ebe6; box-shadow: inset 1px 1px #737670, inset -1px -1px #fff; cursor: pointer; }
+.color-picker-tools button { min-width: 0; height: 25px; padding: 0 4px; border: 0; background: var(--panel); box-shadow: inset 2px 2px #fff, inset -2px -2px #222; font-size: 9px; cursor: pointer; }
+.color-picker-tools button:active { box-shadow: inset 2px 2px #222, inset -2px -2px #fff; }
+.color-picker-tools button:disabled { opacity: .45; cursor: not-allowed; }
+.color-lock { display: flex; align-items: center; justify-content: center; gap: 2px; font-size: 8px !important; cursor: pointer; }
+.color-lock input { width: 13px; height: 13px; margin: 0; accent-color: var(--blue); }
+.color-control-row output { overflow: hidden; white-space: nowrap; }
 .toggle-row { display: grid; grid-template-columns: 1fr 42px; gap: 9px; align-items: center; padding-top: 12px; border-top: 2px solid #777; cursor: pointer; }
 .toggle-row span { display: grid; gap: 2px; }
 .toggle-row b { font-size: 10px; }
