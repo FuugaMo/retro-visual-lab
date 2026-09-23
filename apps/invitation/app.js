@@ -250,7 +250,7 @@ function drawInvitationCard() {
   sourceContext.drawImage(posterImage, 0, 0, WIDTH, HEIGHT);
 
   const x = 32;
-  const y = 448;
+  const y = 520;
   const w = 440;
   const h = 176;
   sourceContext.fillStyle = 'rgba(0,0,0,.48)';
@@ -282,7 +282,9 @@ function drawInvitationCard() {
   sourceContext.font = '400 29px "Fusion Pixel 10px Proportional", sans-serif';
   sourceContext.fillText('诚邀：', bx + 18, by + 57);
   sourceContext.font = '400 43px "Fusion Pixel 10px Proportional", sans-serif';
-  sourceContext.fillText(invitee, bx + 120, by + 52, bw - 142);
+  sourceContext.textAlign = 'center';
+  sourceContext.fillText(invitee, bx + 118 + (bw - 140) / 2, by + 52, bw - 142);
+  sourceContext.textAlign = 'left';
   sourceContext.fillStyle = '#071d35';
   sourceContext.fillRect(bx + 118, by + 84, bw - 140, 4);
   sourceContext.fillStyle = '#ffe744';
