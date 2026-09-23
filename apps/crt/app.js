@@ -11,19 +11,19 @@ const controlSchema = [
   {
     title: 'OPTICS / 镜头畸变',
     controls: [
-      ['curvature', '桶形弯曲', 0, 0.34, 0.005, 0.105, ''],
-      ['overscan', '过扫描', 0, 0.16, 0.002, 0.035, ''],
-      ['vignette', '暗角', 0, 1, 0.01, 0.42, ''],
+      ['curvature', '桶形弯曲', 0, 0.34, 0.005, 0, ''],
+      ['overscan', '过扫描', 0, 0.16, 0.002, 0, ''],
+      ['vignette', '暗角', 0, 1, 0.01, 0.16, ''],
       ['softness', '边缘柔化', 0, 2, 0.01, 0.28, 'px'],
     ],
   },
   {
     title: 'SIGNAL / 模拟信号',
     controls: [
-      ['rgbSplit', 'RGB 分离', 0, 12, 0.1, 1.4, 'px'],
-      ['jitter', '水平抖动', 0, 8, 0.1, 0.35, 'px'],
-      ['noise', '信号噪点', 0, 0.35, 0.005, 0.045, ''],
-      ['roll', '滚动干扰', 0, 1, 0.01, 0.08, ''],
+      ['rgbSplit', 'RGB 分离', 0, 12, 0.1, 1.2, 'px'],
+      ['jitter', '水平抖动', 0, 8, 0.1, 0.1, 'px'],
+      ['noise', '信号噪点', 0, 0.35, 0.005, 0.195, ''],
+      ['roll', '滚动干扰', 0, 1, 0.01, 0.16, ''],
     ],
   },
   {
@@ -33,9 +33,9 @@ const controlSchema = [
       ['scanDensity', '扫描密度', 0.35, 1.5, 0.01, 0.86, '×'],
       ['mask', '荧光栅格', 0, 1, 0.01, 0.16, ''],
       ['bloom', '像素辉光', 0, 1.5, 0.01, 0.22, ''],
-      ['glowRadius', '辉光半径', 0.5, 8, 0.1, 2.4, 'px'],
-      ['glowThreshold', '高光阈值', 0.12, 0.92, 0.01, 0.48, ''],
-      ['glowColorTolerance', '颜色容差', 0.01, 0.6, 0.01, 0.12, ''],
+      ['glowRadius', '辉光半径', 0.5, 8, 0.1, 3.5, 'px'],
+      ['glowThreshold', '高光阈值', 0.12, 0.92, 0.01, 0.22, ''],
+      ['glowColorTolerance', '颜色容差', 0.01, 0.6, 0.01, 0.34, ''],
       ['edgeGlow', '边缘反光', 0, 1.5, 0.01, 0.34, ''],
     ],
   },
@@ -43,7 +43,7 @@ const controlSchema = [
     title: 'COLOR / 色彩',
     controls: [
       ['brightness', '亮度', 0.55, 1.5, 0.01, 1.02, '×'],
-      ['contrast', '对比度', 0.5, 1.8, 0.01, 1.08, '×'],
+      ['contrast', '对比度', 0.5, 1.8, 0.01, 1.01, '×'],
       ['saturation', '饱和度', 0, 2, 0.01, 1.08, '×'],
       ['tint', '冷暖偏色', -1, 1, 0.01, 0.02, ''],
     ],
@@ -51,7 +51,7 @@ const controlSchema = [
 ];
 
 const presets = {
-  studio: { curvature: .105, overscan: .035, vignette: .42, softness: .28, rgbSplit: 1.4, jitter: .35, noise: .045, roll: .08, scanline: .34, scanDensity: .86, mask: .16, bloom: .22, glowRadius: 2.4, glowThreshold: .48, glowColorTolerance: .12, edgeGlow: .34, brightness: 1.02, contrast: 1.08, saturation: 1.08, tint: .02 },
+  studio: { curvature: 0, overscan: 0, vignette: .16, softness: .28, rgbSplit: 1.2, jitter: .1, noise: .195, roll: .16, scanline: .34, scanDensity: .86, mask: .16, bloom: .22, glowRadius: 3.5, glowThreshold: .22, glowColorTolerance: .34, edgeGlow: .34, brightness: 1.02, contrast: 1.01, saturation: 1.08, tint: .02, glowColor: [0.9804, 0.8588, 0.0078], glowColorEnabled: 1 },
   consumer: { curvature: .19, overscan: .065, vignette: .62, softness: .75, rgbSplit: 2.8, jitter: .8, noise: .095, roll: .17, scanline: .5, scanDensity: .72, mask: .26, bloom: .42, glowRadius: 3.8, glowThreshold: .42, glowColorTolerance: .14, edgeGlow: .48, brightness: .98, contrast: 1.14, saturation: .94, tint: .16 },
   arcade: { curvature: .135, overscan: .045, vignette: .52, softness: .18, rgbSplit: 1.8, jitter: .22, noise: .035, roll: .04, scanline: .58, scanDensity: 1.18, mask: .52, bloom: .72, glowRadius: 4.6, glowThreshold: .34, glowColorTolerance: .16, edgeGlow: .88, brightness: 1.1, contrast: 1.26, saturation: 1.48, tint: -.1 },
   damaged: { curvature: .23, overscan: .09, vignette: .7, softness: 1.05, rgbSplit: 7.2, jitter: 4.4, noise: .22, roll: .75, scanline: .68, scanDensity: .56, mask: .35, bloom: .54, glowRadius: 6.2, glowThreshold: .38, glowColorTolerance: .2, edgeGlow: .72, brightness: .96, contrast: 1.3, saturation: .76, tint: .3 },
@@ -59,9 +59,8 @@ const presets = {
 
 const state = {
   ...presets.studio,
-  glowColor: [1, 0.894, 0.231],
-  glowColorEnabled: 0,
 };
+const CRT_SNAPSHOT_PREFIX = 'retro-visual-lab-crt-snapshot-';
 let gl;
 let program;
 let texture;
@@ -436,6 +435,63 @@ function syncControls() {
   render();
 }
 
+function captureParameterSnapshot() {
+  return {
+    schemaVersion: 1,
+    state: JSON.parse(JSON.stringify(state)),
+    animate,
+    fitMode,
+    exportScale: document.querySelector('#exportScale').value,
+    savedAt: Date.now(),
+  };
+}
+
+function applyParameterSnapshot(snapshot) {
+  if (!snapshot?.state) return false;
+  const controlKeys = new Set(controlSchema.flatMap((group) => group.controls.map(([key]) => key)));
+  controlKeys.forEach((key) => {
+    if (Number.isFinite(snapshot.state[key])) state[key] = snapshot.state[key];
+  });
+  if (Array.isArray(snapshot.state.glowColor) && snapshot.state.glowColor.length === 3) {
+    state.glowColor = snapshot.state.glowColor.map((value) => clampNumber(value, 0, 1));
+  }
+  state.glowColorEnabled = snapshot.state.glowColorEnabled > 0.5 ? 1 : 0;
+  animate = snapshot.animate !== false;
+  fitMode = snapshot.fitMode !== false;
+  document.querySelector('#animateToggle').checked = animate;
+  document.querySelector('#exportScale').value = snapshot.exportScale || '1';
+  document.querySelector('#fitButton').classList.toggle('active', fitMode);
+  document.querySelector('#actualButton').classList.toggle('active', !fitMode);
+  syncControls();
+  updateFrameSize();
+  clearPresetSelection();
+  return true;
+}
+
+function clampNumber(value, min, max) {
+  return Math.min(max, Math.max(min, Number(value)));
+}
+
+function saveParameterSnapshot(slot) {
+  localStorage.setItem(`${CRT_SNAPSHOT_PREFIX}${slot}`, JSON.stringify(captureParameterSnapshot()));
+  document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} SAVED`;
+}
+
+function loadParameterSnapshot(slot) {
+  try {
+    const raw = localStorage.getItem(`${CRT_SNAPSHOT_PREFIX}${slot}`);
+    if (!raw) {
+      document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} EMPTY`;
+      return;
+    }
+    if (!applyParameterSnapshot(JSON.parse(raw))) throw new Error('Invalid snapshot');
+    document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} LOADED`;
+  } catch (error) {
+    console.error(error);
+    document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} LOAD FAILED`;
+  }
+}
+
 function clearPresetSelection() {
   document.querySelectorAll('.preset').forEach((button) => button.classList.remove('active'));
 }
@@ -537,6 +593,7 @@ async function exportImage() {
 }
 
 buildControls();
+syncGlowColorControl();
 initWebGL();
 makeDemoImage();
 requestAnimationFrame(animationLoop);
@@ -550,6 +607,12 @@ document.querySelector('#presetGrid').addEventListener('click', (event) => {
   if (button) applyPreset(button.dataset.preset);
 });
 document.querySelector('#resetButton').addEventListener('click', () => applyPreset('studio'));
+document.querySelectorAll('[data-save-snapshot]').forEach((button) => button.addEventListener('click', () => {
+  saveParameterSnapshot(button.dataset.saveSnapshot);
+}));
+document.querySelectorAll('[data-load-snapshot]').forEach((button) => button.addEventListener('click', () => {
+  loadParameterSnapshot(button.dataset.loadSnapshot);
+}));
 document.querySelector('#randomButton').addEventListener('click', () => {
   controlSchema.flatMap((group) => group.controls).forEach(([key, , min, max, step]) => {
     const steps = Math.round((max - min) / step);

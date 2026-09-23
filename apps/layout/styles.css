@@ -283,6 +283,10 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 .check-row input { width: 16px; height: 16px; accent-color: #000080; }
 .range-row { grid-template-columns: 52px 1fr 42px; }
 .range-row output { font: 11px "Courier New", monospace; }
+.snapshot-panel { display: grid; gap: 6px; margin-top: 11px; padding-top: 10px; border-top: 1px solid #777; }
+.snapshot-row { display: grid; grid-template-columns: 1fr 62px 62px; align-items: center; gap: 6px; }
+.snapshot-row strong { font: 700 11px/1 "Courier New", monospace; }
+.snapshot-row .win-button { min-height: 27px; padding: 4px 6px; }
 .two-col { display: grid; grid-template-columns: 1fr 76px; gap: 8px; }
 .typography-controls { margin: 12px 0; padding: 9px; background: #b7b7b7; box-shadow: inset 1px 1px #777, inset -1px -1px #fff; }
 .typography-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }

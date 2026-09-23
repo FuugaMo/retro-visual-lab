@@ -45,12 +45,12 @@ const dimensions = {
 };
 
 const presets = {
-  lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 430, h: 198, fontSize: 27, theme: 'blue', startX: 40, startY: 100 },
-  time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 500, h: 250, fontSize: 33, theme: 'blue', variant: 'segmented', startX: 390, startY: 620 },
+  lineup: { title: 'LINE-UP.EXE', content: '夜间疾走\nRunning in the 00s\nTouch Grass', w: 336, h: 176, fontSize: 24, theme: 'teal', startX: 32, startY: 248 },
+  time: { title: 'TIME.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免费入场', w: 416, h: 224, fontSize: 33, theme: 'teal', variant: 'segmented', startX: 480, startY: 768, typography: { venue: { fontFamily: 'fusion-10-prop', fontSize: 26 } } },
   calendar: { title: 'DATE.VENUE', content: '2026 / 10 / 31\n星期六\n20:00\n@浴室Live · 免票入场', w: 300, h: 286, fontSize: 22, theme: 'gray', startXPct: .126, startYPct: .753 },
-  address: { title: 'ADDRESS.LOCATION', content: '中国广东省珠海市金湾区\n敏德巷1号', w: 470, h: 164, fontSize: 24, theme: 'blue', startX: 420, startY: 980 },
+  address: { title: 'LOCATION.ADDRESS', content: '中国广东省珠海市金湾区敏德巷1号', w: 480, h: 112, fontSize: 18, theme: 'teal', startX: 376, startY: 1064 },
   image: { title: 'IMAGE', content: '', w: 320, h: 220, fontSize: 22, theme: 'blue', imageUrl: '' },
-  text: { title: 'TEXT', content: 'Before the Moon Falls', w: 820, h: 150, fontSize: 72, textColor: '#ffe744', theme: 'blue', startX: 40, startY: 24 },
+  text: { title: 'TEXT', content: 'Before the Moon Falls', w: 896, h: 136, fontSize: 77, textColor: '#ffe744', theme: 'blue', startX: 8, startY: 48 },
 };
 
 const variantSets = {};
@@ -114,6 +114,7 @@ const typographyPartsByType = {
 const LAYOUT_DB = 'retro-visual-lab';
 const LAYOUT_STORE = 'saved-layouts';
 const LAYOUT_KEY = 'current-layout';
+const LAYOUT_SNAPSHOT_KEYS = ['layout-snapshot-1', 'layout-snapshot-2'];
 
 let state = {
   width: 900,
@@ -125,7 +126,7 @@ let state = {
   topZ: 4,
   snap: true,
   latinFontFamily: 'pixel',
-  cjkFontFamily: 'pingfang',
+  cjkFontFamily: 'fusion-10-prop',
   widgets: [],
 };
 
@@ -143,29 +144,33 @@ function openLayoutDb() {
   });
 }
 
-async function writeSavedLayout() {
-  const db = await openLayoutDb();
-  const snapshot = {
-    ...state,
+function createLayoutSnapshot() {
+  return {
+    ...structuredClone(state),
     schemaVersion: 7,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
     savedAt: Date.now(),
   };
+}
+
+async function writeSavedLayout(key = LAYOUT_KEY) {
+  const db = await openLayoutDb();
+  const snapshot = createLayoutSnapshot();
   await new Promise((resolve, reject) => {
     const transaction = db.transaction(LAYOUT_STORE, 'readwrite');
-    transaction.objectStore(LAYOUT_STORE).put(snapshot, LAYOUT_KEY);
+    transaction.objectStore(LAYOUT_STORE).put(snapshot, key);
     transaction.oncomplete = resolve;
     transaction.onerror = () => reject(transaction.error);
   });
   db.close();
 }
 
-async function readSavedLayout() {
+async function readSavedLayout(key = LAYOUT_KEY) {
   const db = await openLayoutDb();
   const snapshot = await new Promise((resolve, reject) => {
-    const request = db.transaction(LAYOUT_STORE, 'readonly').objectStore(LAYOUT_STORE).get(LAYOUT_KEY);
+    const request = db.transaction(LAYOUT_STORE, 'readonly').objectStore(LAYOUT_STORE).get(key);
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
@@ -421,7 +426,7 @@ function addWidget(type) {
   const startX = Number.isFinite(preset.startXPct) ? Math.round(state.width * preset.startXPct) : preset.startX;
   const startY = Number.isFinite(preset.startYPct) ? Math.round(state.height * preset.startYPct) : preset.startY;
   const widget = {
-    ...preset,
+    ...structuredClone(preset),
     id: state.nextId++,
     type,
     x: Number.isFinite(preset.startXPct) ? clamp(useStartPosition ? startX : 70 + offset, 0, state.width - preset.w) : snap(clamp(useStartPosition ? startX : 70 + offset, 0, state.width - preset.w)),
@@ -999,6 +1004,35 @@ document.querySelector('#saveLayoutButton').addEventListener('click', async () =
     button.disabled = false;
   }
 });
+document.querySelectorAll('[data-save-snapshot]').forEach((button) => button.addEventListener('click', async () => {
+  const slot = Number(button.dataset.saveSnapshot);
+  button.disabled = true;
+  try {
+    await writeSavedLayout(LAYOUT_SNAPSHOT_KEYS[slot - 1]);
+    appStatus.textContent = `SNAPSHOT ${slot} SAVED`;
+  } catch (error) {
+    console.error(error);
+    appStatus.textContent = `SNAPSHOT ${slot} SAVE FAILED`;
+  } finally {
+    button.disabled = false;
+  }
+}));
+document.querySelectorAll('[data-load-snapshot]').forEach((button) => button.addEventListener('click', async () => {
+  const slot = Number(button.dataset.loadSnapshot);
+  try {
+    const saved = await readSavedLayout(LAYOUT_SNAPSHOT_KEYS[slot - 1]);
+    if (!saved) {
+      appStatus.textContent = `SNAPSHOT ${slot} EMPTY`;
+      return;
+    }
+    applySavedLayout(saved);
+    await writeSavedLayout();
+    appStatus.textContent = `SNAPSHOT ${slot} LOADED`;
+  } catch (error) {
+    console.error(error);
+    appStatus.textContent = `SNAPSHOT ${slot} LOAD FAILED`;
+  }
+}));
 document.querySelector('#clearBackground').addEventListener('click', () => { backgroundInput.value = ''; setBackground(''); });
 document.querySelector('#exportButton').addEventListener('click', exportPoster);
 window.addEventListener('resize', fitStage);
@@ -1014,50 +1048,55 @@ window.addEventListener('keydown', (event) => {
   if (event.key.startsWith('Arrow')) { event.preventDefault(); renderWidget(widget); updateEditor(); }
 });
 
+function applySavedLayout(saved) {
+  if (!saved || !Array.isArray(saved.widgets)) return false;
+  const restoredWidgets = saved.widgets.map((widget) => {
+    if ((saved.schemaVersion || 0) < 2 && widget.type === 'time') return { ...widget, fontSize: 33 };
+    if ((saved.schemaVersion || 0) < 4 && widget.type === 'calendar') return { ...widget, title: 'DATE.VENUE' };
+    return widget;
+  });
+  if ((saved.schemaVersion || 0) < 3 && !restoredWidgets.some((widget) => widget.type === 'calendar')) {
+    const width = saved.width || state.width;
+    const height = saved.height || state.height;
+    const nextCalendarId = Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1));
+    restoredWidgets.push({
+      ...presets.calendar,
+      id: nextCalendarId,
+      type: 'calendar',
+      x: clamp(Math.round(width * .126), 0, width - presets.calendar.w),
+      y: clamp(Math.round(height * .753), 0, height - presets.calendar.h),
+      z: Math.max(0, ...restoredWidgets.map((widget) => widget.z || 0)) + 1,
+      shadow: true,
+    });
+  }
+  state = {
+    ...state,
+    ...saved,
+    latinFontFamily: saved.latinFontFamily || saved.fontFamily || 'pixel',
+    cjkFontFamily: saved.cjkFontFamily || (saved.fontFamily === 'pixel' ? 'pingfang' : saved.fontFamily) || 'pingfang',
+    widgets: restoredWidgets,
+    selectedId: null,
+    nextId: Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1)),
+  };
+  document.querySelector('#ratioSelect').value = saved.ratio || '3:4';
+  applyPosterFont();
+  document.querySelector('#gridToggle').checked = saved.grid !== false;
+  stage.classList.toggle('grid-on', saved.grid !== false);
+  document.querySelector('#snapToggle').checked = saved.snap !== false;
+  document.querySelector('#bgOpacity').value = Math.round((saved.backgroundOpacity ?? 1) * 100);
+  document.querySelector('#bgOpacityValue').textContent = `${document.querySelector('#bgOpacity').value}%`;
+  setBackground(saved.backgroundUrl || '');
+  fitStage();
+  renderAll();
+  return true;
+}
+
 async function initialize() {
   applyPosterFont();
   fitStage();
   try {
     const saved = await readSavedLayout();
-    if (saved && Array.isArray(saved.widgets)) {
-      const restoredWidgets = saved.widgets.map((widget) => {
-        if ((saved.schemaVersion || 0) < 2 && widget.type === 'time') return { ...widget, fontSize: 33 };
-        if ((saved.schemaVersion || 0) < 4 && widget.type === 'calendar') return { ...widget, title: 'DATE.VENUE' };
-        return widget;
-      });
-      if ((saved.schemaVersion || 0) < 3 && !restoredWidgets.some((widget) => widget.type === 'calendar')) {
-        const width = saved.width || state.width;
-        const height = saved.height || state.height;
-        const nextCalendarId = Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1));
-        restoredWidgets.push({
-          ...presets.calendar,
-          id: nextCalendarId,
-          type: 'calendar',
-          x: clamp(Math.round(width * .126), 0, width - presets.calendar.w),
-          y: clamp(Math.round(height * .753), 0, height - presets.calendar.h),
-          z: Math.max(0, ...restoredWidgets.map((widget) => widget.z || 0)) + 1,
-          shadow: true,
-        });
-      }
-      state = {
-        ...state,
-        ...saved,
-        latinFontFamily: saved.latinFontFamily || saved.fontFamily || 'pixel',
-        cjkFontFamily: saved.cjkFontFamily || (saved.fontFamily === 'pixel' ? 'pingfang' : saved.fontFamily) || 'pingfang',
-        widgets: restoredWidgets,
-        selectedId: null,
-        nextId: Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1)),
-      };
-      document.querySelector('#ratioSelect').value = saved.ratio || '3:4';
-      applyPosterFont();
-      document.querySelector('#gridToggle').checked = saved.grid !== false;
-      stage.classList.toggle('grid-on', saved.grid !== false);
-      document.querySelector('#snapToggle').checked = saved.snap !== false;
-      document.querySelector('#bgOpacity').value = Math.round((saved.backgroundOpacity ?? 1) * 100);
-      document.querySelector('#bgOpacityValue').textContent = `${document.querySelector('#bgOpacity').value}%`;
-      setBackground(saved.backgroundUrl || '');
-      fitStage();
-      renderAll();
+    if (applySavedLayout(saved)) {
       appStatus.textContent = 'LAYOUT RESTORED';
       setTimeout(() => { appStatus.textContent = 'READY'; }, 1400);
       return;
@@ -1069,7 +1108,7 @@ async function initialize() {
   addWidget('lineup');
   addWidget('time');
   addWidget('address');
-  addWidget('calendar');
+  addWidget('text');
 }
 
 initialize();

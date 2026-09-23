@@ -108,6 +108,10 @@ button { color: inherit; }
 .preset.active { color: #fff; background: var(--blue); box-shadow: inset 2px 2px #111, inset -2px -2px #fff; }
 .preset.active i { background: var(--phosphor); }
 .source-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 12px; }
+.snapshot-panel { display: grid; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #777; }
+.snapshot-row { display: grid; grid-template-columns: 1fr 54px 54px; align-items: center; gap: 5px; }
+.snapshot-row strong { font-size: 9px; letter-spacing: .4px; }
+.snapshot-row .button { min-height: 27px; padding: 4px; font-size: 9px; }
 .privacy-note { margin: 18px 0 0; padding-top: 10px; border-top: 1px solid #777; color: #41443f; font-size: 9px; line-height: 1.5; }
 
 .button, .tool-button, .compare-button {
