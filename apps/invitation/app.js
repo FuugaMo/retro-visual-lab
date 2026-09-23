@@ -251,8 +251,8 @@ function drawInvitationCard() {
 
   const x = 32;
   const y = 520;
-  const w = 440;
-  const h = 176;
+  const w = 392;
+  const h = 152;
   sourceContext.fillStyle = 'rgba(0,0,0,.48)';
   sourceContext.fillRect(x + 9, y + 10, w, h);
   drawBevel(sourceContext, x, y, w, h);
@@ -279,16 +279,16 @@ function drawInvitationCard() {
   sourceContext.fillStyle = '#071d35';
   sourceContext.textBaseline = 'middle';
   sourceContext.textAlign = 'left';
-  sourceContext.font = '400 29px "Fusion Pixel 10px Proportional", sans-serif';
-  sourceContext.fillText('诚邀：', bx + 18, by + 57);
-  sourceContext.font = '400 43px "Fusion Pixel 10px Proportional", sans-serif';
+  sourceContext.font = '400 26px "Fusion Pixel 10px Proportional", sans-serif';
+  sourceContext.fillText('诚邀：', bx + 16, by + 46);
+  sourceContext.font = '400 36px "Fusion Pixel 10px Proportional", sans-serif';
   sourceContext.textAlign = 'center';
-  sourceContext.fillText(invitee, bx + 118 + (bw - 140) / 2, by + 52, bw - 142);
+  sourceContext.fillText(invitee, bx + 105 + (bw - 125) / 2, by + 43, bw - 127);
   sourceContext.textAlign = 'left';
   sourceContext.fillStyle = '#071d35';
-  sourceContext.fillRect(bx + 118, by + 84, bw - 140, 4);
+  sourceContext.fillRect(bx + 103, by + 70, bw - 123, 4);
   sourceContext.fillStyle = '#ffe744';
-  sourceContext.fillRect(bx + 118, by + 80, bw - 140, 3);
+  sourceContext.fillRect(bx + 103, by + 66, bw - 123, 3);
 
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
