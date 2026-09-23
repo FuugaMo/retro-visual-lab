@@ -65,7 +65,7 @@ button { font: inherit; color: inherit; }
 }
 
 .lab-tab {
-  min-width: 184px;
+  min-width: 168px;
   min-height: 48px;
   display: grid;
   grid-template-columns: 28px 1fr;
@@ -101,7 +101,7 @@ button { font: inherit; color: inherit; }
   .lab-brand small, .lab-status { display: none; }
   .lab-brand strong { font-size: 18px; }
   .brand-glyph { width: 32px; height: 32px; }
-  .lab-tabs { justify-self: end; align-self: center; }
+  .lab-tabs { min-width: 0; justify-self: end; align-self: center; overflow-x: auto; }
   .lab-tab { min-width: 0; min-height: 40px; grid-template-columns: 22px auto; padding: 5px 8px; }
   .lab-tab small { display: none; }
   .tab-index { width: 20px; height: 20px; }

@@ -61,6 +61,9 @@ const state = {
   ...presets.studio,
 };
 const CRT_SNAPSHOT_PREFIX = 'retro-visual-lab-crt-snapshot-';
+const CRT_DB = 'retro-visual-lab-crt';
+const CRT_STORE = 'snapshots';
+const DEFAULT_SOURCE_URL = new URL('../../assets/default-poster.png', window.location.href).href;
 let gl;
 let program;
 let texture;
@@ -72,6 +75,29 @@ let comparing = false;
 let animate = true;
 let fitMode = true;
 let startTime = performance.now();
+let sourceDescriptor = {
+  url: DEFAULT_SOURCE_URL,
+  dataUrl: '',
+  name: 'BEFORE_THE_MOON_FALLS.PNG',
+  isDefault: true,
+};
+
+function createDefaultCrtSnapshot() {
+  return {
+    schemaVersion: 2,
+    state: structuredClone(presets.studio),
+    animate: true,
+    fitMode: true,
+    exportScale: '1',
+    activePreset: 'studio',
+    source: {
+      url: DEFAULT_SOURCE_URL,
+      dataUrl: '',
+      name: 'BEFORE_THE_MOON_FALLS.PNG',
+      isDefault: true,
+    },
+  };
+}
 
 const vertexShaderSource = `
 attribute vec2 a_position;
@@ -282,11 +308,12 @@ function animationLoop(now) {
   requestAnimationFrame(animationLoop);
 }
 
-function uploadTexture(image, name, isDemo = false) {
+function uploadTexture(image, name, isDemo = false, descriptor = null) {
   sourceImage = image;
   imageWidth = image.naturalWidth || image.width;
   imageHeight = image.naturalHeight || image.height;
   imageName = (name || 'crt-output').replace(/\.[^.]+$/, '');
+  if (descriptor) sourceDescriptor = structuredClone(descriptor);
   canvas.width = imageWidth;
   canvas.height = imageHeight;
   gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -437,16 +464,34 @@ function syncControls() {
 
 function captureParameterSnapshot() {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     state: JSON.parse(JSON.stringify(state)),
     animate,
     fitMode,
     exportScale: document.querySelector('#exportScale').value,
+    activePreset: document.querySelector('.preset.active')?.dataset.preset || '',
+    source: structuredClone(sourceDescriptor),
     savedAt: Date.now(),
   };
 }
 
-function applyParameterSnapshot(snapshot) {
+function loadSourceDescriptor(descriptor) {
+  return new Promise((resolve, reject) => {
+    if (!descriptor?.url && !descriptor?.dataUrl) {
+      resolve();
+      return;
+    }
+    const image = new Image();
+    image.onload = () => {
+      uploadTexture(image, descriptor.name || 'CRT_SOURCE.PNG', false, descriptor);
+      resolve();
+    };
+    image.onerror = reject;
+    image.src = descriptor.dataUrl || descriptor.url;
+  });
+}
+
+async function applyParameterSnapshot(snapshot) {
   if (!snapshot?.state) return false;
   const controlKeys = new Set(controlSchema.flatMap((group) => group.controls.map(([key]) => key)));
   controlKeys.forEach((key) => {
@@ -462,9 +507,13 @@ function applyParameterSnapshot(snapshot) {
   document.querySelector('#exportScale').value = snapshot.exportScale || '1';
   document.querySelector('#fitButton').classList.toggle('active', fitMode);
   document.querySelector('#actualButton').classList.toggle('active', !fitMode);
+  if (snapshot.source) await loadSourceDescriptor(snapshot.source);
   syncControls();
   updateFrameSize();
   clearPresetSelection();
+  if (snapshot.activePreset && presets[snapshot.activePreset]) {
+    document.querySelector(`[data-preset="${snapshot.activePreset}"]`)?.classList.add('active');
+  }
   return true;
 }
 
@@ -472,19 +521,56 @@ function clampNumber(value, min, max) {
   return Math.min(max, Math.max(min, Number(value)));
 }
 
-function saveParameterSnapshot(slot) {
-  localStorage.setItem(`${CRT_SNAPSHOT_PREFIX}${slot}`, JSON.stringify(captureParameterSnapshot()));
+function openCrtDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(CRT_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains(CRT_STORE)) request.result.createObjectStore(CRT_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function writeParameterSnapshot(slot, snapshot) {
+  const db = await openCrtDb();
+  await new Promise((resolve, reject) => {
+    const transaction = db.transaction(CRT_STORE, 'readwrite');
+    transaction.objectStore(CRT_STORE).put(snapshot, String(slot));
+    transaction.oncomplete = resolve;
+    transaction.onerror = () => reject(transaction.error);
+  });
+  db.close();
+}
+
+async function readParameterSnapshot(slot) {
+  const db = await openCrtDb();
+  const snapshot = await new Promise((resolve, reject) => {
+    const request = db.transaction(CRT_STORE, 'readonly').objectStore(CRT_STORE).get(String(slot));
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return snapshot;
+}
+
+async function saveParameterSnapshot(slot) {
+  await writeParameterSnapshot(slot, captureParameterSnapshot());
   document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} SAVED`;
 }
 
-function loadParameterSnapshot(slot) {
+async function loadParameterSnapshot(slot) {
   try {
-    const raw = localStorage.getItem(`${CRT_SNAPSHOT_PREFIX}${slot}`);
-    if (!raw) {
+    let snapshot = await readParameterSnapshot(slot);
+    if (!snapshot) {
+      const raw = localStorage.getItem(`${CRT_SNAPSHOT_PREFIX}${slot}`);
+      snapshot = raw ? JSON.parse(raw) : null;
+    }
+    if (!snapshot) {
       document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} EMPTY`;
       return;
     }
-    if (!applyParameterSnapshot(JSON.parse(raw))) throw new Error('Invalid snapshot');
+    if (!await applyParameterSnapshot(snapshot)) throw new Error('Invalid snapshot');
     document.querySelector('#statusMessage').textContent = `SNAPSHOT ${slot} LOADED`;
   } catch (error) {
     console.error(error);
@@ -509,45 +595,25 @@ function loadFile(file) {
     document.querySelector('#statusMessage').textContent = 'UNSUPPORTED FILE';
     return;
   }
-  const url = URL.createObjectURL(file);
-  const image = new Image();
-  image.onload = () => {
-    uploadTexture(image, file.name, false);
-    URL.revokeObjectURL(url);
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = String(reader.result);
+    const image = new Image();
+    image.onload = () => uploadTexture(image, file.name, false, {
+      url: '', dataUrl, name: file.name, isDefault: false,
+    });
+    image.onerror = () => { document.querySelector('#statusMessage').textContent = 'IMAGE DECODE FAILED'; };
+    image.src = dataUrl;
   };
-  image.onerror = () => {
-    URL.revokeObjectURL(url);
-    document.querySelector('#statusMessage').textContent = 'IMAGE DECODE FAILED';
-  };
-  image.src = url;
+  reader.onerror = () => { document.querySelector('#statusMessage').textContent = 'IMAGE READ FAILED'; };
+  reader.readAsDataURL(file);
 }
 
-function makeDemoImage() {
-  const demo = document.createElement('canvas');
-  demo.width = 1600;
-  demo.height = 1000;
-  const ctx = demo.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, demo.width, demo.height);
-  gradient.addColorStop(0, '#132834');
-  gradient.addColorStop(.5, '#ad554a');
-  gradient.addColorStop(1, '#e9c95f');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, demo.width, demo.height);
-  ctx.fillStyle = '#0b1518';
-  ctx.fillRect(90, 80, 1420, 840);
-  const bars = ['#e4504d', '#edb444', '#54c59c', '#4e79c7', '#d36bb1', '#e9e6d8'];
-  bars.forEach((color, index) => {
-    ctx.fillStyle = color;
-    ctx.fillRect(130 + index * 223, 130, 223, 480);
-  });
-  ctx.fillStyle = '#e9e6d8';
-  ctx.font = '900 96px monospace';
-  ctx.fillText('NO SIGNAL', 175, 745);
-  ctx.font = '36px monospace';
-  ctx.fillText('UPLOAD IMAGE / CRT SIGNAL LAB', 180, 820);
+function loadDefaultSource() {
   const image = new Image();
-  image.onload = () => uploadTexture(image, 'DEMO_SIGNAL.PNG', true);
-  image.src = demo.toDataURL('image/png');
+  image.onload = () => uploadTexture(image, sourceDescriptor.name, false, sourceDescriptor);
+  image.onerror = () => { document.querySelector('#statusMessage').textContent = 'DEFAULT IMAGE FAILED'; };
+  image.src = DEFAULT_SOURCE_URL;
 }
 
 function setComparing(value) {
@@ -595,7 +661,7 @@ async function exportImage() {
 buildControls();
 syncGlowColorControl();
 initWebGL();
-makeDemoImage();
+loadDefaultSource();
 requestAnimationFrame(animationLoop);
 
 fileInput.addEventListener('change', () => loadFile(fileInput.files[0]));
@@ -606,12 +672,25 @@ document.querySelector('#presetGrid').addEventListener('click', (event) => {
   const button = event.target.closest('[data-preset]');
   if (button) applyPreset(button.dataset.preset);
 });
-document.querySelector('#resetButton').addEventListener('click', () => applyPreset('studio'));
-document.querySelectorAll('[data-save-snapshot]').forEach((button) => button.addEventListener('click', () => {
-  saveParameterSnapshot(button.dataset.saveSnapshot);
+document.querySelector('#resetButton').addEventListener('click', async () => {
+  try {
+    await applyParameterSnapshot(createDefaultCrtSnapshot());
+    document.querySelector('#statusMessage').textContent = 'DEFAULT STATE RESTORED';
+  } catch (error) {
+    console.error(error);
+    document.querySelector('#statusMessage').textContent = 'DEFAULT RESTORE FAILED';
+  }
+});
+document.querySelectorAll('[data-save-snapshot]').forEach((button) => button.addEventListener('click', async () => {
+  try {
+    await saveParameterSnapshot(button.dataset.saveSnapshot);
+  } catch (error) {
+    console.error(error);
+    document.querySelector('#statusMessage').textContent = `SNAPSHOT ${button.dataset.saveSnapshot} SAVE FAILED`;
+  }
 }));
-document.querySelectorAll('[data-load-snapshot]').forEach((button) => button.addEventListener('click', () => {
-  loadParameterSnapshot(button.dataset.loadSnapshot);
+document.querySelectorAll('[data-load-snapshot]').forEach((button) => button.addEventListener('click', async () => {
+  await loadParameterSnapshot(button.dataset.loadSnapshot);
 }));
 document.querySelector('#randomButton').addEventListener('click', () => {
   controlSchema.flatMap((group) => group.controls).forEach(([key, , min, max, step]) => {

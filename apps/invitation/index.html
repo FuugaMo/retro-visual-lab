@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Win98 Invitation Maker</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="brand-icon" aria-hidden="true"></span>
+        <div>
+          <p class="eyebrow">WIN98 PERSONAL INVITATION TERMINAL</p>
+          <h1>Invitation Maker</h1>
+        </div>
+      </div>
+      <button class="win-button primary" id="exportButton" type="button">导出邀请函 PNG</button>
+    </header>
+
+    <main class="workspace">
+      <aside class="control-panel win-panel">
+        <div class="section-title">01 / 邀请对象</div>
+        <label class="field-stack" for="inviteeInput">
+          <span>受邀人姓名</span>
+          <input
+            id="inviteeInput"
+            class="win-input invitee-input"
+            type="text"
+            maxlength="24"
+            placeholder="输入姓名或称呼"
+            autocomplete="off"
+          />
+        </label>
+
+        <div class="card-diagram" aria-hidden="true">
+          <div class="diagram-title">INVITATION.WIN</div>
+          <div class="diagram-body"><span>诚邀：</span><strong>________</strong></div>
+        </div>
+
+        <p class="help-copy">邀请卡固定在 LINE-UP 下方。输入后会即时套用 CRT PROCESSOR 的默认参数。</p>
+        <button class="win-button" id="resetButton" type="button">恢复默认</button>
+      </aside>
+
+      <section class="preview-column">
+        <div class="preview-toolbar win-panel">
+          <span><i></i> 900 × 1200 / CRT DEFAULT</span>
+          <span id="renderStatus">RENDERING</span>
+        </div>
+        <div class="preview-viewport" id="previewViewport">
+          <div class="screen-frame" id="screenFrame">
+            <canvas id="glCanvas" width="900" height="1200" aria-label="邀请函 CRT 预览"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="status-bar">
+      <span id="statusMessage">LOADING DEFAULT POSTER</span>
+      <span>LIVE CRT / LOCAL ONLY</span>
+    </footer>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

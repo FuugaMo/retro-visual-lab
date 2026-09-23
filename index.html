@@ -43,6 +43,18 @@
             <span class="tab-index">02</span>
             <span><b>CRT PROCESSOR</b><small>图像风格化</small></span>
           </button>
+          <button
+            class="lab-tab"
+            id="invitationTab"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="invitationPanel"
+            data-tab="invitation"
+          >
+            <span class="tab-index">03</span>
+            <span><b>INVITATION</b><small>邀请函制作</small></span>
+          </button>
         </nav>
 
         <div class="lab-status"><i></i><span>LOCAL / NO UPLOAD</span></div>
@@ -60,6 +72,13 @@
           <iframe
             title="CRT 图片风格化工具"
             src="./apps/crt/index.html"
+            loading="eager"
+          ></iframe>
+        </section>
+        <section class="tool-panel" id="invitationPanel" role="tabpanel" aria-labelledby="invitationTab" hidden>
+          <iframe
+            title="Win98 邀请函制作工具"
+            src="./apps/invitation/index.html"
             loading="eager"
           ></iframe>
         </section>

@@ -2,6 +2,7 @@ const tabs = [...document.querySelectorAll('[data-tab]')];
 const panels = {
   layout: document.querySelector('#layoutPanel'),
   crt: document.querySelector('#crtPanel'),
+  invitation: document.querySelector('#invitationPanel'),
 };
 
 function selectTab(name, updateHash = true) {

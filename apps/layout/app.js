@@ -115,6 +115,63 @@ const LAYOUT_DB = 'retro-visual-lab';
 const LAYOUT_STORE = 'saved-layouts';
 const LAYOUT_KEY = 'current-layout';
 const LAYOUT_SNAPSHOT_KEYS = ['layout-snapshot-1', 'layout-snapshot-2'];
+const DEFAULT_BACKGROUND_URL = new URL('./assets/defaults/poster-background.png', window.location.href).href;
+const DEFAULT_OVERLAY_URL = new URL('./assets/defaults/organizer-mark.png', window.location.href).href;
+
+function createDefaultLayout() {
+  return {
+    width: 900,
+    height: 1200,
+    backgroundUrl: DEFAULT_BACKGROUND_URL,
+    backgroundOpacity: 1,
+    selectedId: null,
+    nextId: 8,
+    topZ: 77,
+    snap: true,
+    latinFontFamily: 'pixel',
+    cjkFontFamily: 'fusion-10-prop',
+    grid: true,
+    ratio: '3:4',
+    schemaVersion: 8,
+    widgets: [
+      { ...structuredClone(presets.lineup), id: 1, type: 'lineup', x: 32, y: 248, z: 74, shadow: true },
+      {
+        ...structuredClone(presets.time),
+        id: 2,
+        type: 'time',
+        x: 480,
+        y: 768,
+        z: 77,
+        shadow: true,
+        typography: { venue: { fontFamily: 'fusion-pixel', fontSize: 24 } },
+      },
+      {
+        ...structuredClone(presets.address),
+        id: 3,
+        type: 'address',
+        x: 376,
+        y: 1064,
+        z: 76,
+        shadow: true,
+        minContentHeight: 110,
+        typography: { content: { fontFamily: 'fusion-10-prop' } },
+      },
+      { ...structuredClone(presets.text), id: 4, type: 'text', x: 8, y: 48, z: 75, shadow: true },
+      {
+        ...structuredClone(presets.image),
+        id: 6,
+        type: 'image',
+        x: 8,
+        y: 1080,
+        w: 96,
+        h: 120,
+        z: 32,
+        shadow: false,
+        imageUrl: DEFAULT_OVERLAY_URL,
+      },
+    ],
+  };
+}
 
 let state = {
   width: 900,
@@ -147,7 +204,7 @@ function openLayoutDb() {
 function createLayoutSnapshot() {
   return {
     ...structuredClone(state),
-    schemaVersion: 7,
+    schemaVersion: 8,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -1004,6 +1061,20 @@ document.querySelector('#saveLayoutButton').addEventListener('click', async () =
     button.disabled = false;
   }
 });
+document.querySelector('#restoreDefaultButton').addEventListener('click', async () => {
+  const button = document.querySelector('#restoreDefaultButton');
+  button.disabled = true;
+  try {
+    applySavedLayout(createDefaultLayout());
+    await writeSavedLayout();
+    appStatus.textContent = 'DEFAULT TEMPLATE RESTORED';
+  } catch (error) {
+    console.error(error);
+    appStatus.textContent = 'DEFAULT RESTORE FAILED';
+  } finally {
+    button.disabled = false;
+  }
+});
 document.querySelectorAll('[data-save-snapshot]').forEach((button) => button.addEventListener('click', async () => {
   const slot = Number(button.dataset.saveSnapshot);
   button.disabled = true;
@@ -1105,10 +1176,7 @@ async function initialize() {
     console.error(error);
     appStatus.textContent = 'RESTORE FAILED';
   }
-  addWidget('lineup');
-  addWidget('time');
-  addWidget('address');
-  addWidget('text');
+  applySavedLayout(createDefaultLayout());
 }
 
 initialize();
