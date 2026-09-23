@@ -7,6 +7,97 @@
   font-display: swap;
 }
 
+/* Range-limited aliases let mixed text use independent Latin and CJK choices. */
+@font-face {
+  font-family: "Latin Pixelated MS Sans Serif";
+  src: url("./assets/fonts/ms_sans_serif.woff2") format("woff2"),
+       url("./assets/fonts/ms_sans_serif.woff") format("woff");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "Latin Pixelated MS Sans Serif";
+  src: url("./assets/fonts/ms_sans_serif_bold.woff2") format("woff2"),
+       url("./assets/fonts/ms_sans_serif_bold.woff") format("woff");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "Latin PingFang SC";
+  src: local("PingFang SC");
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "CJK PingFang SC";
+  src: local("PingFang SC");
+  font-display: swap;
+  unicode-range: U+2E80-2FFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Latin Fusion Pixel 8px Proportional";
+  src: url("./assets/fonts/fusion-pixel-8px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "CJK Fusion Pixel 8px Proportional";
+  src: url("./assets/fonts/fusion-pixel-8px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+2E80-2FFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Latin Fusion Pixel 10px Proportional";
+  src: url("./assets/fonts/fusion-pixel-10px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "CJK Fusion Pixel 10px Proportional";
+  src: url("./assets/fonts/fusion-pixel-10px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+2E80-2FFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Latin Fusion Pixel 12px Proportional";
+  src: url("./assets/fonts/fusion-pixel-12px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "CJK Fusion Pixel 12px Proportional";
+  src: url("./assets/fonts/fusion-pixel-12px-proportional-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+2E80-2FFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
+@font-face {
+  font-family: "Latin Fusion Pixel 12px Monospaced";
+  src: url("./assets/fonts/fusion-pixel-12px-monospaced-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "CJK Fusion Pixel 12px Monospaced";
+  src: url("./assets/fonts/fusion-pixel-12px-monospaced-zh_hans.otf.woff2") format("woff2");
+  font-display: swap;
+  unicode-range: U+2E80-2FFF, U+3000-303F, U+31C0-31EF, U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+FF00-FFEF;
+}
+
 @font-face {
   font-family: "Fusion Pixel 12px Proportional";
   src: url("./assets/fonts/fusion-pixel-12px-proportional-zh_hans.otf.woff2") format("woff2");
@@ -236,7 +327,7 @@ textarea.win-input { resize: vertical; line-height: 1.4; }
 
 .stage-scaler { position: relative; flex: none; transform-origin: center; }
 .poster-stage {
-  --poster-font-family: "PingFang SC", "Hiragino Sans GB", sans-serif;
+  --poster-font-family: "Latin Pixelated MS Sans Serif", "CJK PingFang SC", sans-serif;
   position: relative;
   width: 900px;
   height: 1200px;

@@ -7,7 +7,8 @@ const emptyCanvasMessage = document.querySelector('#emptyCanvasMessage');
 const canvasStatus = document.querySelector('#canvasStatus');
 const selectionStatus = document.querySelector('#selectionStatus');
 const appStatus = document.querySelector('#appStatus');
-const fontFamilySelect = document.querySelector('#fontFamilySelect');
+const latinFontSelect = document.querySelector('#latinFontSelect');
+const cjkFontSelect = document.querySelector('#cjkFontSelect');
 
 const controls = {
   empty: document.querySelector('#emptySelection'),
@@ -64,6 +65,23 @@ const posterFontFamilies = {
   pixel: '"Pixelated MS Sans Serif", "MS Sans Serif", "SimSun", sans-serif',
 };
 
+const posterLatinFontFamilies = {
+  pingfang: '"Latin PingFang SC"',
+  'fusion-8-prop': '"Latin Fusion Pixel 8px Proportional"',
+  'fusion-10-prop': '"Latin Fusion Pixel 10px Proportional"',
+  'fusion-pixel': '"Latin Fusion Pixel 12px Proportional"',
+  'fusion-12-mono': '"Latin Fusion Pixel 12px Monospaced"',
+  pixel: '"Latin Pixelated MS Sans Serif"',
+};
+
+const posterCjkFontFamilies = {
+  pingfang: '"CJK PingFang SC"',
+  'fusion-8-prop': '"CJK Fusion Pixel 8px Proportional"',
+  'fusion-10-prop': '"CJK Fusion Pixel 10px Proportional"',
+  'fusion-pixel': '"CJK Fusion Pixel 12px Proportional"',
+  'fusion-12-mono': '"CJK Fusion Pixel 12px Monospaced"',
+};
+
 const typographyPartsByType = {
   lineup: [
     { key: 'title', label: '标题栏', selector: '.widget-titlebar', defaultSize: 18, defaultWeight: 700 },
@@ -106,7 +124,8 @@ let state = {
   nextId: 1,
   topZ: 4,
   snap: true,
-  fontFamily: 'pingfang',
+  latinFontFamily: 'pixel',
+  cjkFontFamily: 'pingfang',
   widgets: [],
 };
 
@@ -128,7 +147,7 @@ async function writeSavedLayout() {
   const db = await openLayoutDb();
   const snapshot = {
     ...state,
-    schemaVersion: 6,
+    schemaVersion: 7,
     selectedId: null,
     grid: document.querySelector('#gridToggle').checked,
     ratio: document.querySelector('#ratioSelect').value,
@@ -159,9 +178,12 @@ function win98FontSize(value) { return Number(value) < 28 ? 22 : 33; }
 function snap(value) { return state.snap ? Math.round(value / 8) * 8 : Math.round(value); }
 
 function applyPosterFont() {
-  const family = posterFontFamilies[state.fontFamily] || posterFontFamilies.pingfang;
+  const latinKey = state.latinFontFamily in posterLatinFontFamilies ? state.latinFontFamily : 'pixel';
+  const cjkKey = state.cjkFontFamily in posterCjkFontFamilies ? state.cjkFontFamily : 'pingfang';
+  const family = `${posterLatinFontFamilies[latinKey]}, ${posterCjkFontFamilies[cjkKey]}, sans-serif`;
   stage.style.setProperty('--poster-font-family', family);
-  fontFamilySelect.value = state.fontFamily in posterFontFamilies ? state.fontFamily : 'pingfang';
+  latinFontSelect.value = latinKey;
+  cjkFontSelect.value = cjkKey;
 }
 
 function applyWidgetTypography(el, widget) {
@@ -919,8 +941,12 @@ document.querySelector('#duplicateButton').addEventListener('click', () => {
 });
 document.querySelector('#frontButton').addEventListener('click', () => { const widget = selectedWidget(); if (widget) { widget.z = ++state.topZ; renderAll(); } });
 document.querySelector('#ratioSelect').addEventListener('change', (event) => setRatio(event.target.value));
-fontFamilySelect.addEventListener('change', (event) => {
-  state.fontFamily = event.target.value;
+latinFontSelect.addEventListener('change', (event) => {
+  state.latinFontFamily = event.target.value;
+  applyPosterFont();
+});
+cjkFontSelect.addEventListener('change', (event) => {
+  state.cjkFontFamily = event.target.value;
   applyPosterFont();
 });
 document.querySelector('#gridToggle').addEventListener('change', (event) => stage.classList.toggle('grid-on', event.target.checked));
@@ -1016,6 +1042,8 @@ async function initialize() {
       state = {
         ...state,
         ...saved,
+        latinFontFamily: saved.latinFontFamily || saved.fontFamily || 'pixel',
+        cjkFontFamily: saved.cjkFontFamily || (saved.fontFamily === 'pixel' ? 'pingfang' : saved.fontFamily) || 'pingfang',
         widgets: restoredWidgets,
         selectedId: null,
         nextId: Math.max(saved.nextId || 1, ...restoredWidgets.map((widget) => Number(widget.id) + 1)),
