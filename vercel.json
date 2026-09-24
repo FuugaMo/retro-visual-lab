@@ -1,4 +1,10 @@
 {
   "cleanUrls": false,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/invitation",
+      "destination": "/apps/invitation/index.html"
+    }
+  ]
 }

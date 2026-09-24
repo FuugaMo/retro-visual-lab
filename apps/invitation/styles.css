@@ -13,6 +13,22 @@
 }
 
 @font-face {
+  font-family: "Latin Pixelated MS Sans Serif";
+  src: url("../layout/assets/fonts/ms_sans_serif.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
+  font-family: "Latin Pixelated MS Sans Serif";
+  src: url("../layout/assets/fonts/ms_sans_serif_bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0000-024F, U+1E00-1EFF;
+}
+
+@font-face {
   font-family: "Fusion Pixel 10px Proportional";
   src: url("../layout/assets/fonts/fusion-pixel-10px-proportional-zh_hans.otf.woff2") format("woff2");
   font-display: swap;
