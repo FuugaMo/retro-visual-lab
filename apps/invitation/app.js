@@ -262,7 +262,7 @@ function drawInvitationCard() {
   sourceContext.font = '700 18px "Latin Pixelated MS Sans Serif", monospace';
   sourceContext.textAlign = 'left';
   sourceContext.textBaseline = 'middle';
-  sourceContext.fillText('INVITATION.WIN', x + 10, y + 21);
+  sourceContext.fillText('WELCOME.MSG', x + 10, y + 21);
   ['_', '□', '×'].forEach((label, index) => drawButton(sourceContext, x + w - 81 + index * 25, y + 8, label));
 
   const bx = x + 10;
