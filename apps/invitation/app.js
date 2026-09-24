@@ -259,7 +259,7 @@ function drawInvitationCard() {
   sourceContext.fillStyle = '#007c7c';
   sourceContext.fillRect(x + 4, y + 4, w - 8, 34);
   sourceContext.fillStyle = '#fff';
-  sourceContext.font = '700 22px "Pixelated MS Sans Serif", monospace';
+  sourceContext.font = '700 18px "Pixelated MS Sans Serif", monospace';
   sourceContext.textAlign = 'left';
   sourceContext.textBaseline = 'middle';
   sourceContext.fillText('INVITATION.WIN', x + 10, y + 21);
