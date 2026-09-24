@@ -287,8 +287,6 @@ function drawInvitationCard() {
   sourceContext.textAlign = 'left';
   sourceContext.fillStyle = '#071d35';
   sourceContext.fillRect(bx + 103, by + 70, bw - 123, 4);
-  sourceContext.fillStyle = '#ffe744';
-  sourceContext.fillRect(bx + 103, by + 66, bw - 123, 3);
 
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
