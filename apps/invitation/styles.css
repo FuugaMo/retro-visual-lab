@@ -86,6 +86,8 @@ button, input { font: inherit; color: inherit; }
 }
 .brand-icon::before { content: "@"; position: absolute; inset: 7px; color: #fff; font: 700 26px/1 monospace; }
 
+.header-actions { display: flex; align-items: center; gap: 10px; }
+
 .win-button,
 .win-input {
   border: 0;
@@ -96,7 +98,9 @@ button, input { font: inherit; color: inherit; }
 
 .win-button { min-height: 36px; padding: 8px 14px; cursor: pointer; }
 .win-button:active { padding-top: 10px; padding-bottom: 6px; box-shadow: inset 2px 2px var(--chrome-dark), inset -2px -2px var(--chrome-light); }
-.win-button.primary { background: var(--acid); }
+.win-button.primary { color: #111; background: var(--acid); }
+.win-button.live { color: #111; background: #ff8fcf; }
+.win-button:disabled { cursor: wait; filter: grayscale(.45); }
 
 .workspace {
   height: calc(100vh - 112px);
@@ -138,6 +142,7 @@ button, input { font: inherit; color: inherit; }
 @media (max-width: 780px) {
   body { overflow: auto; }
   .app-header { height: auto; align-items: flex-start; }
+  .header-actions { flex-direction: column; align-items: stretch; }
   .brand-block h1 { font-size: 22px; }
   .eyebrow { display: none; }
   .workspace { height: auto; min-height: calc(100vh - 112px); grid-template-columns: 1fr; }

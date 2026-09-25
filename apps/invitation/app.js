@@ -3,12 +3,17 @@ const sourceCanvas = document.createElement('canvas');
 const sourceContext = sourceCanvas.getContext('2d');
 const inviteeInput = document.querySelector('#inviteeInput');
 const exportButton = document.querySelector('#exportButton');
+const exportLiveButton = document.querySelector('#exportLiveButton');
 const statusMessage = document.querySelector('#statusMessage');
 const renderStatus = document.querySelector('#renderStatus');
 const POSTER_URL = new URL('../../assets/default-poster.png', window.location.href).href;
 const STORAGE_KEY = 'retro-visual-lab-invitee';
 const WIDTH = 900;
 const HEIGHT = 1200;
+const MOV_WIDTH = 1080;
+const MOV_HEIGHT = 1440;
+const MOV_FRAME_RATE = 24;
+const MOV_DURATION_SECONDS = 3;
 
 const crtDefaults = {
   curvature: 0,
@@ -170,6 +175,7 @@ let program;
 let texture;
 let posterImage;
 let startTime = performance.now();
+let exportingMov = false;
 
 function createShader(type, source) {
   const shader = gl.createShader(type);
@@ -329,6 +335,112 @@ function loadPoster() {
   posterImage.src = POSTER_URL;
 }
 
+function getMovMimeType() {
+  if (!window.MediaRecorder || typeof MediaRecorder.isTypeSupported !== 'function') return '';
+  return [
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4;codecs=avc1',
+    'video/mp4;codecs=h264',
+    'video/mp4',
+  ].find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+function safeInviteeName() {
+  return inviteeInput.value.trim().replace(/[\\/:*?"<>|]/g, '-') || 'blank';
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function rebrandMp4AsMov(blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  if (bytes.length >= 12 && String.fromCharCode(...bytes.slice(4, 8)) === 'ftyp') {
+    bytes.set([0x71, 0x74, 0x20, 0x20], 8);
+  }
+  return new Blob([bytes], { type: 'video/quicktime' });
+}
+
+async function exportMov() {
+  const mimeType = getMovMimeType();
+  if (!posterImage || exportingMov) return;
+  if (!mimeType || !HTMLCanvasElement.prototype.captureStream) {
+    statusMessage.textContent = 'MOV EXPORT REQUIRES SAFARI OR H.264 MEDIARECORDER';
+    return;
+  }
+
+  exportingMov = true;
+  exportButton.disabled = true;
+  exportLiveButton.disabled = true;
+  exportLiveButton.textContent = 'PREPARING MOV...';
+  statusMessage.textContent = 'PREPARING 1080P MOV';
+
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = MOV_WIDTH;
+  exportCanvas.height = MOV_HEIGHT;
+  const exportContext = exportCanvas.getContext('2d', { alpha: false });
+  exportContext.imageSmoothingEnabled = true;
+  exportContext.imageSmoothingQuality = 'high';
+  const stream = exportCanvas.captureStream(MOV_FRAME_RATE);
+  const recorder = new MediaRecorder(stream, {
+    mimeType,
+    videoBitsPerSecond: 12_000_000,
+  });
+  const chunks = [];
+  recorder.addEventListener('dataavailable', (event) => {
+    if (event.data.size) chunks.push(event.data);
+  });
+
+  try {
+    const recording = new Promise((resolve, reject) => {
+      recorder.addEventListener('stop', resolve, { once: true });
+      recorder.addEventListener('error', () => reject(recorder.error || new Error('MOV export failed')), { once: true });
+    });
+    recorder.start(250);
+    const captureStart = performance.now();
+
+    await new Promise((resolve) => {
+      const captureFrame = (now) => {
+        const elapsed = Math.min((now - captureStart) / 1000, MOV_DURATION_SECONDS);
+        render(captureStart + elapsed * 1000);
+        exportContext.drawImage(canvas, 0, 0, MOV_WIDTH, MOV_HEIGHT);
+        exportLiveButton.textContent = `REC ${elapsed.toFixed(1)} / ${MOV_DURATION_SECONDS.toFixed(1)}s`;
+        statusMessage.textContent = `RECORDING 1080P MOV ${Math.round(elapsed / MOV_DURATION_SECONDS * 100)}%`;
+        if (elapsed < MOV_DURATION_SECONDS) requestAnimationFrame(captureFrame);
+        else resolve();
+      };
+      requestAnimationFrame(captureFrame);
+    });
+
+    recorder.stop();
+    await recording;
+    const mp4Blob = new Blob(chunks, { type: mimeType });
+    if (!mp4Blob.size) throw new Error('Empty MOV export');
+    statusMessage.textContent = 'FINALIZING MOV';
+    exportLiveButton.textContent = 'FINALIZING...';
+    const movBlob = await rebrandMp4AsMov(mp4Blob);
+    downloadBlob(movBlob, `invitation-${safeInviteeName()}-1080p.mov`);
+    statusMessage.textContent = '1080P MOV EXPORTED';
+  } catch (error) {
+    console.error(error);
+    if (recorder.state !== 'inactive') recorder.stop();
+    statusMessage.textContent = 'MOV EXPORT FAILED';
+  } finally {
+    stream.getTracks().forEach((track) => track.stop());
+    exportingMov = false;
+    exportButton.disabled = false;
+    exportLiveButton.disabled = false;
+    exportLiveButton.textContent = '导出 1080P MOV';
+  }
+}
+
 inviteeInput.value = localStorage.getItem(STORAGE_KEY) || '';
 inviteeInput.addEventListener('input', () => {
   localStorage.setItem(STORAGE_KEY, inviteeInput.value);
@@ -350,19 +462,15 @@ exportButton.addEventListener('click', async () => {
   render();
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
   if (blob) {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    const safeName = inviteeInput.value.trim().replace(/[\\/:*?"<>|]/g, '-') || 'blank';
-    link.download = `invitation-${safeName}.png`;
-    link.href = url;
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadBlob(blob, `invitation-${safeInviteeName()}.png`);
     statusMessage.textContent = 'PNG EXPORTED';
   } else {
     statusMessage.textContent = 'EXPORT FAILED';
   }
   exportButton.disabled = false;
 });
+
+exportLiveButton.addEventListener('click', exportMov);
 
 sourceCanvas.width = WIDTH;
 sourceCanvas.height = HEIGHT;
