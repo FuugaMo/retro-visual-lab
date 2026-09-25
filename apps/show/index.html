@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#005c62" />
+    <title>Before the Moon Falls — Live Desktop</title>
+    <script>
+      if (window.location.protocol !== 'file:') {
+        const base = document.createElement('base');
+        base.href = '/apps/show/';
+        document.head.appendChild(base);
+      }
+    </script>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="desktop" id="desktop">
+      <div class="desktop-noise" aria-hidden="true"></div>
+
+      <header class="show-mark">
+        <span>透明酚酞呈现</span>
+        <h1>BEFORE THE<br />MOON FALLS</h1>
+        <p>INDIE / EMO LIVE ARCHIVE</p>
+      </header>
+
+      <nav class="desktop-icons" aria-label="演出桌面文件">
+        <button class="desktop-icon" data-open="welcome">
+          <span class="icon icon-mail" aria-hidden="true"></span>
+          <b>WELCOME.MSG</b>
+        </button>
+        <button class="desktop-icon" data-open="bands">
+          <span class="icon icon-folder" aria-hidden="true"></span>
+          <b>BANDS</b>
+        </button>
+        <button class="desktop-icon" data-open="showinfo">
+          <span class="icon icon-calendar" aria-hidden="true">31</span>
+          <b>SHOW_INFO</b>
+        </button>
+        <button class="desktop-icon" data-open="poster">
+          <span class="icon icon-image" aria-hidden="true"></span>
+          <b>POSTER.BMP</b>
+        </button>
+        <button class="desktop-icon" data-open="player">
+          <span class="icon icon-audio" aria-hidden="true">♪</span>
+          <b>MIXTAPE.WAV</b>
+        </button>
+      </nav>
+
+      <section class="window welcome-window active" data-window="welcome" style="--x: 15%; --y: 12%; --w: 410px">
+        <div class="titlebar">
+          <span>WELCOME.MSG</span>
+          <div class="window-buttons"><i></i><i></i><button data-close="welcome" aria-label="关闭">×</button></div>
+        </div>
+        <div class="window-body message-body">
+          <div class="message-icon">!</div>
+          <div>
+            <p>10 月 31 日，我们在珠海浴室见。</p>
+            <p>三支乐队，一场入夜后的 Indie / Emo 拼盘演出。</p>
+            <button class="win-button primary" data-open="bands">打开乐队档案</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="window bands-window active" data-window="bands" style="--x: 36%; --y: 28%; --w: 530px">
+        <div class="titlebar">
+          <span>C:\LIVE\BANDS</span>
+          <div class="window-buttons"><i></i><i></i><button data-close="bands" aria-label="关闭">×</button></div>
+        </div>
+        <div class="explorer-toolbar"><button>←</button><button>→</button><span>Address</span><strong>C:\LIVE\BANDS</strong></div>
+        <div class="band-tabs" role="tablist">
+          <button class="active" data-band="touch">TOUCH GRASS</button>
+          <button data-band="night">夜间疾走</button>
+          <button data-band="running">RUNNING IN THE 00S</button>
+        </div>
+        <article class="band-profile" id="bandProfile">
+          <div class="band-art touch" aria-hidden="true"><span>TOUCH<br />GRASS</span></div>
+          <div class="band-copy">
+            <small>FILE 01 / HOST BAND</small>
+            <h2>Touch Grass</h2>
+            <p>把卧室里的噪音、迟到的情绪和吉他反馈带到现场。今晚不解决问题，只把它放大。</p>
+            <dl><dt>MOOD</dt><dd>indie rock / emo</dd><dt>STATUS</dt><dd>LIVE · 20:00</dd></dl>
+          </div>
+        </article>
+      </section>
+
+      <section class="window info-window" data-window="showinfo" style="--x: 55%; --y: 8%; --w: 360px" hidden>
+        <div class="titlebar"><span>SHOW_INFO.EXE</span><div class="window-buttons"><i></i><i></i><button data-close="showinfo" aria-label="关闭">×</button></div></div>
+        <div class="window-body info-body">
+          <div class="date-block"><b>OCT</b><strong>31</strong><span>SAT / 2026</span></div>
+          <div class="show-details"><p><b>20:00</b> START</p><p><b>珠海浴室</b><br />Bathroom Live</p><p class="free">FREE ENTRY</p></div>
+          <address>中国广东省珠海市金湾区敏德巷 1 号</address>
+        </div>
+      </section>
+
+      <section class="window poster-window" data-window="poster" style="--x: 8%; --y: 7%; --w: 330px" hidden>
+        <div class="titlebar"><span>POSTER.BMP</span><div class="window-buttons"><i></i><i></i><button data-close="poster" aria-label="关闭">×</button></div></div>
+        <figure><img src="../../assets/default-poster.png" alt="Before the Moon Falls 演出海报" /><figcaption>900 × 1200 · CRT COLOR</figcaption></figure>
+      </section>
+
+      <section class="window player-window" data-window="player" style="--x: 62%; --y: 58%; --w: 330px" hidden>
+        <div class="titlebar dark"><span>MIXTAPE.WAV</span><div class="window-buttons"><i></i><button data-close="player" aria-label="关闭">×</button></div></div>
+        <div class="player-screen"><span id="trackNumber">01</span><strong id="trackName">TOUCH GRASS — LIVE DEMO</strong><em id="playerTime">00:00</em></div>
+        <div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="player-controls"><button id="previousTrack">|◀</button><button id="playButton">▶</button><button id="nextTrack">▶|</button><div class="progress"><i id="playerProgress"></i></div></div>
+      </section>
+
+      <section class="window venue-note" data-window="venue" style="--x: 18%; --y: 68%; --w: 350px" hidden>
+        <div class="titlebar"><span>VENUE.TXT</span><div class="window-buttons"><i></i><button data-close="venue" aria-label="关闭">×</button></div></div>
+        <div class="window-body"><p><b>@ 珠海浴室 Bathroom Live</b></p><p>免票入场，欢迎来看。请关注公众号菜单获取最新演出信息。</p></div>
+      </section>
+
+      <div class="start-menu" id="startMenu" hidden>
+        <div class="start-rail">BEFORE THE MOON FALLS</div>
+        <div class="start-items">
+          <button data-open="bands"><span>📁</span>乐队档案</button>
+          <button data-open="showinfo"><span>📅</span>演出信息</button>
+          <button data-open="poster"><span>🖼</span>查看海报</button>
+          <button data-open="player"><span>♫</span>模拟播放器</button>
+          <button data-open="venue"><span>📍</span>场地地址</button>
+          <hr />
+          <button data-open="welcome"><span>💬</span>欢迎信息</button>
+        </div>
+      </div>
+
+      <footer class="taskbar">
+        <button class="start-button" id="startButton"><span class="mini-logo">◆</span> Start</button>
+        <div class="task-buttons" id="taskButtons"></div>
+        <button class="tray"><span>♫</span> 20:00</button>
+      </footer>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
