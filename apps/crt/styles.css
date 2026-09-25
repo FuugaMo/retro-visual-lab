@@ -125,6 +125,9 @@ button { color: inherit; }
 .button:active, .tool-button:active, .compare-button:active { box-shadow: inset 2px 2px #171917, inset -2px -2px #fff; transform: translate(1px, 1px); }
 .button:disabled { opacity: .45; cursor: not-allowed; }
 .button-accent { color: #111; background: var(--phosphor); }
+.button-live { color: #fff; background: #a53d77; }
+.button-live.recording { color: #111; background: #ffcf33; animation: live-pulse .55s steps(2, end) infinite; }
+@keyframes live-pulse { 50% { filter: brightness(.72); } }
 
 .preview-column { min-width: 0; min-height: 0; display: grid; grid-template-rows: 42px minmax(0, 1fr) 34px; gap: 7px; }
 .preview-toolbar, .preview-footer { display: flex; align-items: center; padding: 5px 8px; }

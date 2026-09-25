@@ -4,6 +4,7 @@ const screenFrame = document.querySelector('#screenFrame');
 const fileInput = document.querySelector('#fileInput');
 const dropZone = document.querySelector('#dropZone');
 const exportButton = document.querySelector('#exportButton');
+const exportLiveButton = document.querySelector('#exportLiveButton');
 const compareButton = document.querySelector('#compareButton');
 const emptyOverlay = document.querySelector('#emptyOverlay');
 
@@ -75,6 +76,7 @@ let comparing = false;
 let animate = true;
 let fitMode = true;
 let startTime = performance.now();
+let exportingLive = false;
 let sourceDescriptor = {
   url: DEFAULT_SOURCE_URL,
   dataUrl: '',
@@ -89,6 +91,7 @@ function createDefaultCrtSnapshot() {
     animate: true,
     fitMode: true,
     exportScale: '1',
+    liveDuration: '3',
     activePreset: 'studio',
     source: {
       url: DEFAULT_SOURCE_URL,
@@ -326,6 +329,7 @@ function uploadTexture(image, name, isDemo = false, descriptor = null) {
   document.querySelector('#statusMessage').textContent = isDemo ? 'DEMO SIGNAL ACTIVE' : `${name} LOADED`;
   emptyOverlay.hidden = !isDemo;
   exportButton.disabled = isDemo;
+  exportLiveButton.disabled = isDemo || !window.MediaRecorder || !canvas.captureStream;
   compareButton.disabled = false;
   updateFrameSize();
   render();
@@ -469,6 +473,7 @@ function captureParameterSnapshot() {
     animate,
     fitMode,
     exportScale: document.querySelector('#exportScale').value,
+    liveDuration: document.querySelector('#liveDuration').value,
     activePreset: document.querySelector('.preset.active')?.dataset.preset || '',
     source: structuredClone(sourceDescriptor),
     savedAt: Date.now(),
@@ -505,6 +510,7 @@ async function applyParameterSnapshot(snapshot) {
   fitMode = snapshot.fitMode !== false;
   document.querySelector('#animateToggle').checked = animate;
   document.querySelector('#exportScale').value = snapshot.exportScale || '1';
+  document.querySelector('#liveDuration').value = snapshot.liveDuration || '3';
   document.querySelector('#fitButton').classList.toggle('active', fitMode);
   document.querySelector('#actualButton').classList.toggle('active', !fitMode);
   if (snapshot.source) await loadSourceDescriptor(snapshot.source);
@@ -658,6 +664,89 @@ async function exportImage() {
   document.querySelector('#statusMessage').textContent = 'PNG EXPORTED';
 }
 
+function getLiveMimeType() {
+  if (!window.MediaRecorder) return '';
+  return [
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+  ].find((type) => MediaRecorder.isTypeSupported(type)) || '';
+}
+
+async function exportLiveVideo() {
+  if (!sourceImage || exportLiveButton.disabled || exportingLive) return;
+  const mimeType = getLiveMimeType();
+  if (!mimeType || !canvas.captureStream) {
+    document.querySelector('#statusMessage').textContent = 'LIVE EXPORT UNSUPPORTED';
+    return;
+  }
+
+  exportingLive = true;
+  exportButton.disabled = true;
+  exportLiveButton.disabled = true;
+  exportLiveButton.classList.add('recording');
+  exportLiveButton.textContent = 'RECORDING...';
+
+  const scale = Number(document.querySelector('#exportScale').value);
+  const durationSeconds = Number(document.querySelector('#liveDuration').value);
+  const originalW = canvas.width;
+  const originalH = canvas.height;
+  canvas.width = Math.max(1, Math.round(imageWidth * scale));
+  canvas.height = Math.max(1, Math.round(imageHeight * scale));
+  render();
+
+  const stream = canvas.captureStream(24);
+  const chunks = [];
+  const pixelsPerSecond = canvas.width * canvas.height * 24;
+  const videoBitsPerSecond = Math.round(Math.min(16000000, Math.max(4000000, pixelsPerSecond * .24)));
+  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond });
+
+  try {
+    const blob = await new Promise((resolve, reject) => {
+      recorder.addEventListener('dataavailable', (event) => {
+        if (event.data.size) chunks.push(event.data);
+      });
+      recorder.addEventListener('error', () => reject(recorder.error || new Error('Live export failed')));
+      recorder.addEventListener('stop', () => resolve(new Blob(chunks, { type: mimeType })));
+      recorder.start(250);
+      const startedAt = performance.now();
+      const updateProgress = () => {
+        if (recorder.state === 'inactive') return;
+        const elapsed = Math.min(durationSeconds, (performance.now() - startedAt) / 1000);
+        exportLiveButton.textContent = `REC ${elapsed.toFixed(1)} / ${durationSeconds}s`;
+        document.querySelector('#statusMessage').textContent = `RECORDING LIVE ${Math.round(elapsed / durationSeconds * 100)}%`;
+        if (elapsed >= durationSeconds) recorder.stop();
+        else requestAnimationFrame(updateProgress);
+      };
+      requestAnimationFrame(updateProgress);
+    });
+
+    if (!blob.size) throw new Error('Empty live export');
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `${imageName}-crt-live.webm`;
+    link.href = url;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    document.querySelector('#statusMessage').textContent = `LIVE WEBM EXPORTED / ${durationSeconds}s`;
+  } catch (error) {
+    console.error(error);
+    document.querySelector('#statusMessage').textContent = 'LIVE EXPORT FAILED';
+  } finally {
+    stream.getTracks().forEach((track) => track.stop());
+    canvas.width = originalW;
+    canvas.height = originalH;
+    render();
+    exportingLive = false;
+    exportButton.disabled = false;
+    exportLiveButton.disabled = false;
+    exportLiveButton.classList.remove('recording');
+    exportLiveButton.textContent = 'EXPORT LIVE';
+  }
+}
+
 buildControls();
 syncGlowColorControl();
 initWebGL();
@@ -719,4 +808,5 @@ window.addEventListener('pointerup', () => setComparing(false));
 window.addEventListener('keydown', (event) => { if (event.code === 'Space' && !event.repeat) { event.preventDefault(); setComparing(true); } });
 window.addEventListener('keyup', (event) => { if (event.code === 'Space') setComparing(false); });
 exportButton.addEventListener('click', exportImage);
+exportLiveButton.addEventListener('click', exportLiveVideo);
 window.addEventListener('resize', updateFrameSize);

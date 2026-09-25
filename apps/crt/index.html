@@ -21,6 +21,7 @@
           <span class="signal-dot"></span>
           <span id="renderStatus">NO SIGNAL</span>
           <button class="button button-accent" id="exportButton" disabled>EXPORT PNG</button>
+          <button class="button button-live" id="exportLiveButton" disabled>EXPORT LIVE</button>
         </div>
       </header>
 
@@ -112,6 +113,13 @@
                 <option value="1">100%</option>
                 <option value="0.75">75%</option>
                 <option value="0.5">50%</option>
+              </select>
+            </label>
+            <label>
+              LIVE LENGTH
+              <select id="liveDuration">
+                <option value="3">3 SEC</option>
+                <option value="5">5 SEC</option>
               </select>
             </label>
           </div>
