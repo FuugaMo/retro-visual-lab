@@ -3,6 +3,7 @@ const panels = {
   layout: document.querySelector('#layoutPanel'),
   crt: document.querySelector('#crtPanel'),
   invitation: document.querySelector('#invitationPanel'),
+  wechat: document.querySelector('#wechatPanel'),
 };
 
 function selectTab(name, updateHash = true) {

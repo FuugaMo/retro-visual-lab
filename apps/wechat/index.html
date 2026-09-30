@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WeChat Asset Factory</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-block">
+        <span class="brand-icon" aria-hidden="true"><i></i></span>
+        <div>
+          <p class="eyebrow">EDITORIAL ASSET WORKBENCH</p>
+          <h1>WeChat Asset Factory</h1>
+        </div>
+      </div>
+      <div class="header-meta"><i></i> 1080PX / LOCAL RENDER</div>
+    </header>
+
+    <main class="workspace">
+      <aside class="control-panel win-panel">
+        <div class="asset-tabs" role="tablist" aria-label="素材类型">
+          <button class="asset-tab active" data-asset="background" type="button"><b>01</b><span>底图<small>NOISE PAPER</small></span></button>
+          <button class="asset-tab" data-asset="notepad" type="button"><b>02</b><span>记事本<small>NOTEPAD 98</small></span></button>
+          <button class="asset-tab" data-asset="divider" type="button"><b>03</b><span>分割线<small>DIVIDERS</small></span></button>
+        </div>
+
+        <section class="control-section" data-controls="background">
+          <div class="section-title">01 / 浅白彩噪底图</div>
+          <label class="field-stack"><span>底色</span><input id="paperColor" class="win-input color-input" type="color" value="#f7f4ed" /></label>
+          <label class="field-stack"><span>彩色噪点强度 <output id="noiseValue">18%</output></span><input id="noiseAmount" type="range" min="0" max="50" value="18" /></label>
+          <label class="field-stack"><span>颗粒尺寸 <output id="grainValue">2px</output></span><input id="grainSize" type="range" min="1" max="5" value="2" /></label>
+          <label class="field-stack"><span>柔和彩晕 <output id="washValue">28%</output></span><input id="washAmount" type="range" min="0" max="60" value="28" /></label>
+          <button class="win-button" id="rerollNoise" type="button">重新生成噪点</button>
+        </section>
+
+        <section class="control-section" data-controls="notepad" hidden>
+          <div class="section-title">02 / Notepad 98</div>
+          <label class="field-stack"><span>窗口标题</span><input id="noteTitle" class="win-input" type="text" value="untitled.txt - Notepad" /></label>
+          <label class="field-stack"><span>正文</span><textarea id="noteContent" class="win-input note-input" rows="7">透明酚酞 / TRANSPARENT PHENOLPHTHALEIN
+
+声音经过身体，留下没有名字的颜色。
+我们把它们收集在这里。</textarea></label>
+          <div class="two-col">
+            <label class="field-stack"><span>字体</span><select id="noteFont" class="win-input"><option value="pixel">Fusion Pixel</option><option value="sans">苹方 / Sans</option><option value="serif">宋体 / Serif</option><option value="mono">等宽 / Mono</option></select></label>
+            <label class="field-stack"><span>字号</span><input id="noteSize" class="win-input" type="number" min="18" max="72" value="34" /></label>
+            <label class="field-stack"><span>字重</span><select id="noteWeight" class="win-input"><option value="400">常规</option><option value="600">半粗</option><option value="700">粗体</option></select></label>
+            <label class="field-stack"><span>对齐</span><select id="noteAlign" class="win-input"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
+            <label class="field-stack"><span>行距</span><input id="noteLineHeight" class="win-input" type="number" min="1" max="2.4" step="0.05" value="1.45" /></label>
+            <label class="field-stack"><span>字距</span><input id="noteLetterSpacing" class="win-input" type="number" min="-2" max="12" step="0.5" value="0" /></label>
+            <label class="field-stack"><span>文字色</span><input id="noteColor" class="win-input color-input" type="color" value="#111111" /></label>
+            <label class="field-stack"><span>标题栏</span><input id="titlebarColor" class="win-input color-input" type="color" value="#000080" /></label>
+          </div>
+          <div class="format-buttons" aria-label="文字格式">
+            <button class="win-button toggle" id="boldToggle" type="button" aria-pressed="false"><b>B</b></button>
+            <button class="win-button toggle" id="italicToggle" type="button" aria-pressed="false"><i>I</i></button>
+            <button class="win-button toggle" id="underlineToggle" type="button" aria-pressed="false"><u>U</u></button>
+          </div>
+          <label class="field-stack"><span>窗口宽度 <output id="noteWidthValue">900px</output></span><input id="noteWidth" type="range" min="560" max="1040" step="10" value="900" /></label>
+          <label class="field-stack"><span>正文留白 <output id="notePaddingValue">48px</output></span><input id="notePadding" type="range" min="20" max="100" step="2" value="48" /></label>
+          <label class="check-row"><input id="noteShadow" type="checkbox" checked /><span>保留像素投影</span></label>
+        </section>
+
+        <section class="control-section" data-controls="divider" hidden>
+          <div class="section-title">03 / 分割线素材</div>
+          <div class="divider-presets">
+            <button class="preset active" data-divider="signal" type="button"><span class="mini-signal"></span>SIGNAL</button>
+            <button class="preset" data-divider="pixel" type="button"><span class="mini-pixel"></span>PIXEL</button>
+            <button class="preset" data-divider="spectrum" type="button"><span class="mini-spectrum"></span>SPECTRUM</button>
+            <button class="preset" data-divider="chrome" type="button"><span class="mini-chrome"></span>CHROME</button>
+          </div>
+          <label class="field-stack"><span>中间文字（可留空）</span><input id="dividerLabel" class="win-input" type="text" value="TRANSPARENT PHENOLPHTHALEIN" /></label>
+          <div class="two-col">
+            <label class="field-stack"><span>主色</span><input id="dividerColor" class="win-input color-input" type="color" value="#1d4f86" /></label>
+            <label class="field-stack"><span>强调色</span><input id="dividerAccent" class="win-input color-input" type="color" value="#ec6f91" /></label>
+          </div>
+          <label class="field-stack"><span>线条粗细 <output id="dividerThicknessValue">4px</output></span><input id="dividerThickness" type="range" min="1" max="12" value="4" /></label>
+        </section>
+
+        <div class="export-box">
+          <div><strong id="exportName">NOISE-PAPER.PNG</strong><small id="exportHint">1080 × 540 · 不透明背景</small></div>
+          <button class="win-button primary" id="exportButton" type="button">导出 PNG</button>
+        </div>
+      </aside>
+
+      <section class="preview-column">
+        <div class="preview-toolbar win-panel">
+          <span><i></i> LIVE PREVIEW</span>
+          <span id="previewDimensions">1080 × 540</span>
+        </div>
+        <div class="preview-viewport" id="previewViewport">
+          <div class="stage-scaler" id="stageScaler">
+            <div class="asset-artboard paper-artboard" id="exportStage" aria-label="素材预览"></div>
+          </div>
+        </div>
+        <div class="transparency-key"><i></i> 棋盘格仅用于表示透明区域，不会出现在导出图片中</div>
+      </section>
+    </main>
+
+    <footer class="status-bar"><span id="appStatus">READY</span><span>ALL PROCESSING STAYS IN YOUR BROWSER</span></footer>
+    <script src="../layout/vendor/html-to-image.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
