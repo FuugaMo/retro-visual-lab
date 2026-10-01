@@ -1,6 +1,9 @@
 @font-face { font-family: "Pixelated MS Sans Serif"; src: url("../layout/assets/fonts/ms_sans_serif.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "Pixelated MS Sans Serif"; src: url("../layout/assets/fonts/ms_sans_serif_bold.woff2") format("woff2"); font-weight: 700; font-display: swap; }
-@font-face { font-family: "Fusion Pixel"; src: url("../layout/assets/fonts/fusion-pixel-10px-proportional-zh_hans.otf.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Fusion Pixel 8"; src: url("../layout/assets/fonts/fusion-pixel-8px-proportional-zh_hans.otf.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Fusion Pixel 10"; src: url("../layout/assets/fonts/fusion-pixel-10px-proportional-zh_hans.otf.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Fusion Pixel 12"; src: url("../layout/assets/fonts/fusion-pixel-12px-proportional-zh_hans.otf.woff2") format("woff2"); font-display: swap; }
+@font-face { font-family: "Fusion Pixel 12 Mono"; src: url("../layout/assets/fonts/fusion-pixel-12px-monospaced-zh_hans.otf.woff2") format("woff2"); font-display: swap; }
 
 :root { --shell:#0e1714; --chrome:#c0c0c0; --light:#fff; --mid:#7b7b7b; --dark:#111; --blue:#1d4f86; --acid:#c5ff4a; --teal:#4bd5c6; font-family:"Pixelated MS Sans Serif","MS Sans Serif",sans-serif; color:#111; background:var(--shell); }
 * { box-sizing:border-box; }
@@ -37,6 +40,16 @@ textarea.win-input { resize:vertical; line-height:1.45; }
 .color-input { height:33px; padding:4px; }
 input[type="range"] { width:100%; accent-color:var(--blue); }
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 9px; }
+.font-section { margin:0 0 13px; padding:10px; background:#d5d5d5; box-shadow:inset 2px 2px #777,inset -2px -2px #fff; }
+.font-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.font-heading strong { font:700 11px "Courier New",monospace; }
+.font-heading small,.local-hint { color:#555; font-size:9px; }
+.upload-grid { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:8px; }
+.file-button { display:grid; place-items:center; font-size:10px; text-align:center; }
+.font-preview { display:grid; gap:3px; min-height:58px; padding:8px 9px; color:#111; background:#fff; box-shadow:inset 2px 2px #777,inset -2px -2px #fff; overflow:hidden; }
+.font-preview .cjk-sample { font-size:19px; white-space:nowrap; }
+.font-preview .latin-sample { color:#284b6f; font-size:15px; white-space:nowrap; }
+.local-hint { margin:7px 0 0; line-height:1.35; }
 .check-row { display:flex; gap:8px; align-items:center; margin:4px 0 13px; font-size:12px; }
 .win-button { min-height:32px; padding:6px 11px; border:0; background:var(--chrome); box-shadow:inset 2px 2px #fff,inset -2px -2px #111,inset -3px -3px #777; }
 .win-button:active,.win-button.pressed { box-shadow:inset 2px 2px #111,inset -2px -2px #fff; transform:translate(1px,1px); }
@@ -61,8 +74,8 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .preview-viewport { min-height:0; display:grid; place-items:center; overflow:hidden; margin:9px 0; background-color:#88918b; background-image:linear-gradient(45deg,#aab1ac 25%,transparent 25%),linear-gradient(-45deg,#aab1ac 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#aab1ac 75%),linear-gradient(-45deg,transparent 75%,#aab1ac 75%); background-size:24px 24px; background-position:0 0,0 12px,12px -12px,-12px 0; box-shadow:inset 2px 2px #050705,inset -2px -2px #667069; }
 .stage-scaler { position:relative; transform-origin:center center; }
 .asset-artboard { position:absolute; left:0; top:0; overflow:visible; }
-.paper-artboard { width:1080px; height:540px; background-color:#f7f4ed; background-size:cover; }
-.paper-artboard::after { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 18% 26%,rgba(255,196,205,var(--wash-alpha,.16)),transparent 30%),radial-gradient(circle at 78% 22%,rgba(94,205,205,var(--wash-alpha,.16)),transparent 34%),radial-gradient(circle at 58% 84%,rgba(150,135,224,var(--wash-alpha,.12)),transparent 30%); mix-blend-mode:multiply; }
+.paper-artboard { width:1080px; height:1440px; background:#f7f4ed; }
+.paper-render { display:block; width:100%; height:100%; object-fit:cover; }
 .note-artboard { width:1080px; min-height:500px; display:flex; align-items:center; justify-content:center; padding:76px 20px; }
 .notepad-window { width:900px; background:#c0c0c0; padding:4px; box-shadow:14px 14px 0 rgba(10,17,13,.25),inset 3px 3px #fff,inset -3px -3px #111; }
 .notepad-titlebar { height:44px; display:flex; align-items:center; gap:10px; padding:5px 7px; color:#fff; background:#000080; font:700 22px/1 "Pixelated MS Sans Serif",sans-serif; }
@@ -73,7 +86,7 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .window-button { width:29px; height:27px; display:grid; place-items:center; color:#111; background:#c0c0c0; box-shadow:inset 2px 2px #fff,inset -2px -2px #111; font:700 18px/1 Arial,sans-serif; }
 .notepad-menu { height:35px; display:flex; align-items:center; gap:28px; padding:0 12px; font:18px/1 "Pixelated MS Sans Serif",sans-serif; }
 .notepad-menu u { text-underline-offset:2px; }
-.notepad-body { min-height:280px; margin:0 4px 4px; padding:48px; overflow:hidden; color:#111; background:#fff; box-shadow:inset 3px 3px #777,inset -3px -3px #fff; white-space:pre-wrap; overflow-wrap:anywhere; font:400 34px/1.45 "Fusion Pixel",sans-serif; }
+.notepad-body { min-height:280px; margin:0 4px 4px; padding:48px; overflow:hidden; color:#111; background:#fff; box-shadow:inset 3px 3px #777,inset -3px -3px #fff; white-space:pre-wrap; overflow-wrap:anywhere; font:400 34px/1.45 "Fusion Pixel 10",sans-serif; }
 .divider-artboard { width:1080px; height:180px; display:grid; place-items:center; padding:28px 60px; }
 .divider-wrap { width:100%; display:flex; align-items:center; gap:23px; color:#1d4f86; }
 .divider-label { flex:none; max-width:52%; color:currentColor; font:700 21px/1 "Pixelated MS Sans Serif",sans-serif; letter-spacing:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

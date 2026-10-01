@@ -32,7 +32,7 @@
           <label class="field-stack"><span>彩色噪点强度 <output id="noiseValue">18%</output></span><input id="noiseAmount" type="range" min="0" max="50" value="18" /></label>
           <label class="field-stack"><span>颗粒尺寸 <output id="grainValue">2px</output></span><input id="grainSize" type="range" min="1" max="5" value="2" /></label>
           <label class="field-stack"><span>柔和彩晕 <output id="washValue">28%</output></span><input id="washAmount" type="range" min="0" max="60" value="28" /></label>
-          <button class="win-button" id="rerollNoise" type="button">重新生成噪点</button>
+          <button class="win-button" id="rerollNoise" type="button">随机噪点与彩晕位置</button>
         </section>
 
         <section class="control-section" data-controls="notepad" hidden>
@@ -42,8 +42,26 @@
 
 声音经过身体，留下没有名字的颜色。
 我们把它们收集在这里。</textarea></label>
+          <div class="font-section">
+            <div class="font-heading"><strong>字体组合</strong><small>中文与拉丁字符独立设置</small></div>
+            <label class="field-stack"><span>中文字体</span><select id="noteCjkFont" class="win-input">
+              <optgroup label="像素 / PIXEL"><option value="fusion8">Fusion Pixel 8</option><option value="fusion10" selected>Fusion Pixel 10</option><option value="fusion12">Fusion Pixel 12</option><option value="fusion12mono">Fusion Pixel 12 等宽</option></optgroup>
+              <optgroup label="现代 / SANS"><option value="pingfang">苹方 PingFang</option><option value="heiti">黑体 Heiti</option></optgroup>
+              <optgroup label="编辑 / SERIF"><option value="songti">宋体 Songti</option><option value="kaiti">楷体 Kaiti</option><option value="fangsong">仿宋 FangSong</option></optgroup>
+            </select></label>
+            <label class="field-stack"><span>英文 / 数字字体</span><select id="noteLatinFont" class="win-input">
+              <optgroup label="复古 / PIXEL"><option value="pixelms" selected>Pixelated MS Sans</option><option value="fusion8">Fusion Pixel 8</option><option value="fusion10">Fusion Pixel 10</option><option value="fusion12">Fusion Pixel 12</option><option value="fusion12mono">Fusion Pixel 12 Mono</option></optgroup>
+              <optgroup label="等宽 / MONO"><option value="monaco">Monaco</option><option value="courier">Courier New</option></optgroup>
+              <optgroup label="编辑 / DISPLAY"><option value="helvetica">Helvetica</option><option value="georgia">Georgia</option><option value="impact">Impact</option></optgroup>
+            </select></label>
+            <div class="upload-grid">
+              <label class="win-button file-button">上传中文字体<input id="cjkFontUpload" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden /></label>
+              <label class="win-button file-button">上传英文字体<input id="latinFontUpload" type="file" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden /></label>
+            </div>
+            <div class="font-preview" id="fontPreview"><span class="cjk-sample">声音经过身体</span><span class="latin-sample">TYPE / 1998 / SIGNAL</span></div>
+            <p class="local-hint" id="fontUploadStatus">字体文件仅在当前浏览器会话中使用，不会上传。</p>
+          </div>
           <div class="two-col">
-            <label class="field-stack"><span>字体</span><select id="noteFont" class="win-input"><option value="pixel">Fusion Pixel</option><option value="sans">苹方 / Sans</option><option value="serif">宋体 / Serif</option><option value="mono">等宽 / Mono</option></select></label>
             <label class="field-stack"><span>字号</span><input id="noteSize" class="win-input" type="number" min="18" max="72" value="34" /></label>
             <label class="field-stack"><span>字重</span><select id="noteWeight" class="win-input"><option value="400">常规</option><option value="600">半粗</option><option value="700">粗体</option></select></label>
             <label class="field-stack"><span>对齐</span><select id="noteAlign" class="win-input"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
@@ -79,7 +97,7 @@
         </section>
 
         <div class="export-box">
-          <div><strong id="exportName">NOISE-PAPER.PNG</strong><small id="exportHint">1080 × 540 · 不透明背景</small></div>
+          <div><strong id="exportName">NOISE-PAPER.PNG</strong><small id="exportHint">1080 × 1440 · 不透明背景</small></div>
           <button class="win-button primary" id="exportButton" type="button">导出 PNG</button>
         </div>
       </aside>
@@ -87,7 +105,7 @@
       <section class="preview-column">
         <div class="preview-toolbar win-panel">
           <span><i></i> LIVE PREVIEW</span>
-          <span id="previewDimensions">1080 × 540</span>
+          <span id="previewDimensions">1080 × 1440</span>
         </div>
         <div class="preview-viewport" id="previewViewport">
           <div class="stage-scaler" id="stageScaler">
