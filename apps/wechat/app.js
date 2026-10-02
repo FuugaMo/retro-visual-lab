@@ -16,7 +16,7 @@ const backgroundPresets = {
   signalGhost: { paperColor: '#030611', noiseAmount: 22, grainSize: 1, washAmount: 68, scanlineAmount: 28, rgbSplit: 8, bloomAmount: 48, vignetteAmount: 34, tearAmount: 5, safeCenter: false },
   liquidChrome: { paperColor: '#f5f4ef', noiseAmount: 13, grainSize: 1, washAmount: 82, scanlineAmount: 8, rgbSplit: 10, bloomAmount: 28, vignetteAmount: 3, tearAmount: 1, safeCenter: false },
   tubeBloom: { paperColor: '#141217', noiseAmount: 9, grainSize: 2, washAmount: 58, scanlineAmount: 25, rgbSplit: 8, bloomAmount: 58, vignetteAmount: 40, tearAmount: 2, safeCenter: false },
-  tvStatic: { paperColor: '#777777', noiseAmount: 42, grainSize: 1, washAmount: 76, scanlineAmount: 22, rgbSplit: 0, bloomAmount: 18, vignetteAmount: 36, tearAmount: 4, safeCenter: false },
+  tvStatic: { paperColor: '#808080', noiseAmount: 50, grainSize: 1, washAmount: 0, scanlineAmount: 0, rgbSplit: 0, bloomAmount: 0, vignetteAmount: 0, tearAmount: 0, safeCenter: false },
 };
 const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless', tvStatic: 'tv-static-seamless' };
 const noteLayoutDefaults = {
@@ -264,19 +264,28 @@ function drawTubeBloom(context) {
 }
 
 function drawTvStatic(context) {
-  const strength = Number(state.washAmount) / 100;
-  const base = hexToRgb(state.paperColor).reduce((sum, value) => sum + value, 0) / 3;
-  paintField(context, (x, y, phase, random) => {
-    const loop = Math.PI * (y + 1);
-    const averagedNoise = (random() + random() + random()) / 3;
-    const saltAndPepper = random() < .16 ? (random() < .5 ? -1 : 1) * (75 + random() * 105) : 0;
-    const horizontalDrift = Math.sin(loop * 43 + x * 17 + phase) * 17 * strength;
-    const broadInterference = Math.sin(loop * 7 - x * 4 + phase * .6) * 23 * strength;
-    const syncBands = periodicGaussian(y, -.52, .025) * -88 + periodicGaussian(y, .41, .018) * 76;
-    const level = base * (1 - strength * .28) + averagedNoise * 255 * (.48 + strength * .42)
-      + saltAndPepper * strength + horizontalDrift + broadInterference + syncBands;
-    return [level, level, level];
-  }, false);
+  const { width, height } = context.canvas;
+  const image = context.createImageData(width, height);
+  const random = seededRandom(state.noiseSeed + state.washSeed * 31);
+  const grain = Math.max(1, Number(state.grainSize));
+  const contrast = .35 + Number(state.noiseAmount) / 50 * .65;
+  for (let y = 0; y < height; y += grain) {
+    for (let x = 0; x < width; x += grain) {
+      const gray = Math.round(127.5 + (random() * 255 - 127.5) * contrast);
+      const maxY = Math.min(height, y + grain);
+      const maxX = Math.min(width, x + grain);
+      for (let fillY = y; fillY < maxY; fillY += 1) {
+        for (let fillX = x; fillX < maxX; fillX += 1) {
+          const offset = (fillY * width + fillX) * 4;
+          image.data[offset] = gray;
+          image.data[offset + 1] = gray;
+          image.data[offset + 2] = gray;
+          image.data[offset + 3] = 255;
+        }
+      }
+    }
+  }
+  context.putImageData(image, 0, 0);
 }
 
 function addNoise(context, width, height) {
@@ -396,8 +405,12 @@ function makePaperDataUrl() {
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext('2d');
-  if (state.backgroundPreset === 'tvStatic') drawTvStatic(context);
-  else if (state.backgroundPreset === 'liquidChrome') drawLiquidChrome(context);
+  if (state.backgroundPreset === 'tvStatic') {
+    drawTvStatic(context);
+    rotateToSeamlessVerticalTile(context, width, height);
+    return canvas.toDataURL('image/png');
+  }
+  if (state.backgroundPreset === 'liquidChrome') drawLiquidChrome(context);
   else if (state.backgroundPreset === 'tubeBloom') drawTubeBloom(context);
   else drawSignalGhost(context);
   addNoise(context, width, height);
@@ -573,6 +586,10 @@ function updateOutputs() {
     if ($(`#${id}`).value !== String(state[id])) $(`#${id}`).value = state[id];
   });
   $('#safeCenter').checked = state.safeCenter;
+  const isUniformStatic = state.backgroundPreset === 'tvStatic';
+  ['paperColor','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','safeCenter'].forEach((id) => {
+    $(`#${id}`).disabled = isUniformStatic;
+  });
   $$('[data-note-structured]').forEach((element) => { element.hidden = state.noteLayout === 'editorial'; });
   $('#noteContentLabel').textContent = state.noteLayout === 'lineup' ? '乐队名单（每行一个）' : state.noteLayout === 'bandIndex' ? '填充乐队名（每行一个）' : '正文';
   ['noteTitle','noteNumber','noteHeading','noteContent'].forEach((id) => {
