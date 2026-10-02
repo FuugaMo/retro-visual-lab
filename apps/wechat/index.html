@@ -27,11 +27,24 @@
         </div>
 
         <section class="control-section" data-controls="background">
-          <div class="section-title">01 / 浅白彩噪底图</div>
+          <div class="section-title">01 / CRT 千禧年底图</div>
+          <div class="background-presets" aria-label="背景预设">
+            <button class="background-preset active" data-background-preset="bleached" type="button"><b>BLEACHED CRT</b><small>漂白信号纸</small></button>
+            <button class="background-preset" data-background-preset="pearl" type="button"><b>Y2K PEARL</b><small>珍珠塑料</small></button>
+            <button class="background-preset" data-background-preset="badSignal" type="button"><b>BAD SIGNAL</b><small>故障录像</small></button>
+          </div>
           <label class="field-stack"><span>底色</span><input id="paperColor" class="win-input color-input" type="color" value="#f7f4ed" /></label>
           <label class="field-stack"><span>彩色噪点强度 <output id="noiseValue">18%</output></span><input id="noiseAmount" type="range" min="0" max="50" value="18" /></label>
           <label class="field-stack"><span>颗粒尺寸 <output id="grainValue">2px</output></span><input id="grainSize" type="range" min="1" max="5" value="2" /></label>
           <label class="field-stack"><span>柔和彩晕 <output id="washValue">28%</output></span><input id="washAmount" type="range" min="0" max="60" value="28" /></label>
+          <div class="two-col crt-controls">
+            <label class="field-stack"><span>扫描线 <output id="scanlineValue">10%</output></span><input id="scanlineAmount" type="range" min="0" max="30" value="10" /></label>
+            <label class="field-stack"><span>RGB 分离 <output id="rgbSplitValue">2px</output></span><input id="rgbSplit" type="range" min="0" max="12" value="2" /></label>
+            <label class="field-stack"><span>Bloom <output id="bloomValue">12%</output></span><input id="bloomAmount" type="range" min="0" max="60" value="12" /></label>
+            <label class="field-stack"><span>暗角 <output id="vignetteValue">7%</output></span><input id="vignetteAmount" type="range" min="0" max="40" value="7" /></label>
+          </div>
+          <label class="field-stack"><span>横向信号撕裂 <output id="tearValue">1</output></span><input id="tearAmount" type="range" min="0" max="8" value="1" /></label>
+          <label class="check-row"><input id="safeCenter" type="checkbox" checked /><span>保留中央正文安全区</span></label>
           <button class="win-button" id="rerollNoise" type="button">随机噪点与彩晕位置</button>
         </section>
 

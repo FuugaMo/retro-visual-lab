@@ -32,6 +32,12 @@ button { cursor:pointer; }
 .asset-tab small { opacity:.7; font:8px "Courier New",monospace; }
 .control-section { padding:13px 3px 15px; border-top:1px solid #777; }
 .section-title { margin-bottom:14px; font:700 12px "Courier New",monospace; letter-spacing:1px; }
+.background-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:0 0 14px; }
+.background-preset { min-height:59px; display:grid; align-content:center; gap:4px; padding:6px 5px; border:0; background:#d7d7d7; box-shadow:inset 2px 2px #fff,inset -2px -2px #111; text-align:left; }
+.background-preset b { font:700 9px/1 "Courier New",monospace; white-space:nowrap; }
+.background-preset small { color:#555; font-size:9px; }
+.background-preset.active { color:#fff; background:var(--blue); box-shadow:inset 2px 2px #7da0c9,inset -2px -2px #071527; }
+.background-preset.active small { color:#dceeff; }
 .field-stack { display:grid; gap:6px; margin-bottom:12px; font-size:12px; }
 .field-stack > span { display:flex; justify-content:space-between; align-items:center; }
 .field-stack output { color:#3c4e45; font:10px "Courier New",monospace; }
@@ -40,6 +46,9 @@ textarea.win-input { resize:vertical; line-height:1.45; }
 .color-input { height:33px; padding:4px; }
 input[type="range"] { width:100%; accent-color:var(--blue); }
 .two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 9px; }
+.crt-controls { margin-top:3px; padding-top:10px; border-top:1px dotted #777; }
+.crt-controls .field-stack { min-width:0; }
+.crt-controls .field-stack > span { align-items:flex-start; gap:4px; }
 .font-section { margin:0 0 13px; padding:10px; background:#d5d5d5; box-shadow:inset 2px 2px #777,inset -2px -2px #fff; }
 .font-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:10px; }
 .font-heading strong { font:700 11px "Courier New",monospace; }
