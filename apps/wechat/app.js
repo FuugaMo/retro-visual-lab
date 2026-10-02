@@ -17,8 +17,9 @@ const backgroundPresets = {
   liquidChrome: { paperColor: '#f5f4ef', noiseAmount: 13, grainSize: 1, washAmount: 82, scanlineAmount: 8, rgbSplit: 10, bloomAmount: 28, vignetteAmount: 3, tearAmount: 1, safeCenter: false },
   tubeBloom: { paperColor: '#141217', noiseAmount: 9, grainSize: 2, washAmount: 58, scanlineAmount: 25, rgbSplit: 8, bloomAmount: 58, vignetteAmount: 40, tearAmount: 2, safeCenter: false },
   tvStatic: { paperColor: '#808080', noiseAmount: 50, grainSize: 1, washAmount: 0, scanlineAmount: 0, rgbSplit: 0, bloomAmount: 0, vignetteAmount: 0, tearAmount: 0, safeCenter: false },
+  blueBreath: { paperColor: '#f2eff8', noiseAmount: 32, grainSize: 2, washAmount: 68, scanlineAmount: 0, rgbSplit: 4, bloomAmount: 16, vignetteAmount: 0, tearAmount: 0, safeCenter: false },
 };
-const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless', tvStatic: 'tv-static-seamless' };
+const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless', tvStatic: 'tv-static-seamless', blueBreath: 'blue-breath-seamless' };
 const noteLayoutDefaults = {
   editorial: {
     title: 'untitled.txt - Notepad',
@@ -288,6 +289,72 @@ function drawTvStatic(context) {
   context.putImageData(image, 0, 0);
 }
 
+function drawBlueBreath(context) {
+  const { width, height } = context.canvas;
+  const base = hexToRgb(state.paperColor);
+  const random = seededRandom(state.washSeed + 1709);
+  const phase = random() * Math.PI * 2;
+  const spacingX = 12;
+  const spacingY = 10;
+  const dotScale = .68 + Number(state.grainSize) * .16;
+  const density = .58 + Number(state.noiseAmount) / 100 * .72;
+  const waveDepth = .35 + Number(state.washAmount) / 100 * .65;
+  const split = Number(state.rgbSplit) / 12;
+
+  context.fillStyle = `rgb(${base.join(',')})`;
+  context.fillRect(0, 0, width, height);
+
+  // Integer wave cycles and a grid that divides the canvas height keep the tile seamless.
+  const rows = height / spacingY;
+  for (let y = 0; y <= height; y += spacingY) {
+    const ny = y / height;
+    const row = Math.round(y / spacingY);
+    for (let x = 0; x < width; x += spacingX) {
+      const column = Math.round(x / spacingX);
+      const nx = x / width;
+      const breathe = .5 + .5 * Math.sin(
+        Math.PI * 2 * (ny * 4 + .34 * Math.sin(Math.PI * 2 * nx * 2 + phase))
+      );
+      const crossWave = .5 + .5 * Math.cos(
+        Math.PI * 2 * (ny * 2 - nx * 3) - phase * .7
+      );
+      const pulse = clamp((breathe * .72 + crossWave * .28) * waveDepth + (1 - waveDepth) * .5, 0, 1);
+      const jitterSeed = Math.sin((column + 1) * 12.9898 + (row % rows + 1) * 78.233 + phase) * 43758.5453;
+      const jitter = (jitterSeed - Math.floor(jitterSeed) - .5) * .18;
+      const radius = Math.max(.75, (1.2 + pulse * 2.25 + jitter) * dotScale);
+      const offsetX = row % 2 ? spacingX / 2 : 0;
+      const drawX = x + offsetX;
+      if (drawX >= width) continue;
+
+      if (split > 0) {
+        context.beginPath();
+        context.fillStyle = `rgba(157,112,220,${(.055 + pulse * .07) * split * density})`;
+        context.arc(drawX - 1.15 * split, y, radius * 1.18, 0, Math.PI * 2);
+        context.fill();
+        context.beginPath();
+        context.fillStyle = `rgba(70,218,232,${(.045 + pulse * .065) * split * density})`;
+        context.arc(drawX + 1.15 * split, y, radius * 1.12, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      context.beginPath();
+      context.fillStyle = `rgba(47,79,158,${(.16 + pulse * .48) * density})`;
+      context.arc(drawX, y, radius, 0, Math.PI * 2);
+      context.fill();
+    }
+  }
+
+  const bloom = Number(state.bloomAmount) / 100;
+  if (bloom > 0) {
+    const veil = context.createLinearGradient(0, 0, width, 0);
+    veil.addColorStop(0, `rgba(255,255,255,${bloom * .34})`);
+    veil.addColorStop(.47, `rgba(215,228,255,${bloom * .08})`);
+    veil.addColorStop(1, `rgba(255,255,255,${bloom * .29})`);
+    context.fillStyle = veil;
+    context.fillRect(0, 0, width, height);
+  }
+}
+
 function addNoise(context, width, height) {
   const size = Math.max(1, Number(state.grainSize));
   const random = seededRandom(state.noiseSeed);
@@ -408,6 +475,10 @@ function makePaperDataUrl() {
   if (state.backgroundPreset === 'tvStatic') {
     drawTvStatic(context);
     rotateToSeamlessVerticalTile(context, width, height);
+    return canvas.toDataURL('image/png');
+  }
+  if (state.backgroundPreset === 'blueBreath') {
+    drawBlueBreath(context);
     return canvas.toDataURL('image/png');
   }
   if (state.backgroundPreset === 'liquidChrome') drawLiquidChrome(context);
