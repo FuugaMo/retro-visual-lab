@@ -9,27 +9,28 @@ const $$ = (selector) => [...document.querySelectorAll(selector)];
 const saved = JSON.parse(localStorage.getItem('wechat-asset-factory') || '{}');
 
 const backgroundPresets = {
-  bleached: { paperColor: '#f4f2ea', noiseAmount: 13, grainSize: 2, washAmount: 25, scanlineAmount: 10, rgbSplit: 2, bloomAmount: 12, vignetteAmount: 7, tearAmount: 1, safeCenter: true },
-  pearl: { paperColor: '#edf2f1', noiseAmount: 7, grainSize: 2, washAmount: 44, scanlineAmount: 4, rgbSplit: 3, bloomAmount: 30, vignetteAmount: 5, tearAmount: 0, safeCenter: true },
-  badSignal: { paperColor: '#dfe2da', noiseAmount: 28, grainSize: 2, washAmount: 17, scanlineAmount: 24, rgbSplit: 8, bloomAmount: 8, vignetteAmount: 22, tearAmount: 5, safeCenter: false },
+  signalGhost: { paperColor: '#030611', noiseAmount: 22, grainSize: 1, washAmount: 68, scanlineAmount: 28, rgbSplit: 8, bloomAmount: 48, vignetteAmount: 34, tearAmount: 5, safeCenter: false },
+  liquidChrome: { paperColor: '#f5f4ef', noiseAmount: 13, grainSize: 1, washAmount: 82, scanlineAmount: 8, rgbSplit: 10, bloomAmount: 28, vignetteAmount: 3, tearAmount: 1, safeCenter: false },
+  tubeBloom: { paperColor: '#141217', noiseAmount: 9, grainSize: 2, washAmount: 58, scanlineAmount: 25, rgbSplit: 8, bloomAmount: 58, vignetteAmount: 40, tearAmount: 2, safeCenter: false },
 };
-const backgroundPresetSlugs = { bleached: 'bleached-crt', pearl: 'y2k-pearl', badSignal: 'bad-signal' };
-const initialBackgroundPreset = backgroundPresets[saved.backgroundPreset] ? saved.backgroundPreset : 'bleached';
+const backgroundPresetSlugs = { signalGhost: 'signal-ghost', liquidChrome: 'liquid-chrome', tubeBloom: 'tube-bloom' };
+const hasValidSavedBackground = Boolean(backgroundPresets[saved.backgroundPreset]);
+const initialBackgroundPreset = hasValidSavedBackground ? saved.backgroundPreset : 'signalGhost';
 const initialBackground = backgroundPresets[initialBackgroundPreset];
 
 const state = {
   asset: saved.asset || 'background',
   backgroundPreset: initialBackgroundPreset,
-  paperColor: saved.backgroundPreset ? (saved.paperColor || initialBackground.paperColor) : initialBackground.paperColor,
-  noiseAmount: saved.backgroundPreset ? (saved.noiseAmount ?? initialBackground.noiseAmount) : initialBackground.noiseAmount,
-  grainSize: saved.backgroundPreset ? (saved.grainSize ?? initialBackground.grainSize) : initialBackground.grainSize,
-  washAmount: saved.backgroundPreset ? (saved.washAmount ?? initialBackground.washAmount) : initialBackground.washAmount,
-  scanlineAmount: saved.backgroundPreset ? (saved.scanlineAmount ?? initialBackground.scanlineAmount) : initialBackground.scanlineAmount,
-  rgbSplit: saved.backgroundPreset ? (saved.rgbSplit ?? initialBackground.rgbSplit) : initialBackground.rgbSplit,
-  bloomAmount: saved.backgroundPreset ? (saved.bloomAmount ?? initialBackground.bloomAmount) : initialBackground.bloomAmount,
-  vignetteAmount: saved.backgroundPreset ? (saved.vignetteAmount ?? initialBackground.vignetteAmount) : initialBackground.vignetteAmount,
-  tearAmount: saved.backgroundPreset ? (saved.tearAmount ?? initialBackground.tearAmount) : initialBackground.tearAmount,
-  safeCenter: saved.backgroundPreset ? (saved.safeCenter ?? initialBackground.safeCenter) : initialBackground.safeCenter,
+  paperColor: hasValidSavedBackground ? (saved.paperColor || initialBackground.paperColor) : initialBackground.paperColor,
+  noiseAmount: hasValidSavedBackground ? (saved.noiseAmount ?? initialBackground.noiseAmount) : initialBackground.noiseAmount,
+  grainSize: hasValidSavedBackground ? (saved.grainSize ?? initialBackground.grainSize) : initialBackground.grainSize,
+  washAmount: hasValidSavedBackground ? (saved.washAmount ?? initialBackground.washAmount) : initialBackground.washAmount,
+  scanlineAmount: hasValidSavedBackground ? (saved.scanlineAmount ?? initialBackground.scanlineAmount) : initialBackground.scanlineAmount,
+  rgbSplit: hasValidSavedBackground ? (saved.rgbSplit ?? initialBackground.rgbSplit) : initialBackground.rgbSplit,
+  bloomAmount: hasValidSavedBackground ? (saved.bloomAmount ?? initialBackground.bloomAmount) : initialBackground.bloomAmount,
+  vignetteAmount: hasValidSavedBackground ? (saved.vignetteAmount ?? initialBackground.vignetteAmount) : initialBackground.vignetteAmount,
+  tearAmount: hasValidSavedBackground ? (saved.tearAmount ?? initialBackground.tearAmount) : initialBackground.tearAmount,
+  safeCenter: hasValidSavedBackground ? (saved.safeCenter ?? initialBackground.safeCenter) : initialBackground.safeCenter,
   noiseSeed: saved.noiseSeed || Math.floor(Math.random() * 1000000),
   washSeed: saved.washSeed || Math.floor(Math.random() * 1000000),
   noteTitle: saved.noteTitle || 'untitled.txt - Notepad',
@@ -95,213 +96,233 @@ function hexToRgb(hex) {
   return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
 }
 
-function drawPearlSurface(context, width, height, random) {
-  context.save();
-  context.globalCompositeOperation = 'screen';
-  const sheen = context.createLinearGradient(0, 0, width, height);
-  sheen.addColorStop(0, 'rgba(108,220,222,.05)');
-  sheen.addColorStop(.32, 'rgba(255,255,255,.42)');
-  sheen.addColorStop(.58, 'rgba(205,152,255,.12)');
-  sheen.addColorStop(.82, 'rgba(255,172,204,.18)');
-  sheen.addColorStop(1, 'rgba(113,210,220,.08)');
-  context.fillStyle = sheen;
-  context.fillRect(0, 0, width, height);
-  for (let index = 0; index < 7; index += 1) {
-    const x = random() < .5 ? random() * 230 : width - random() * 230;
-    const y = 80 + random() * (height - 160);
-    const radius = 45 + random() * 120;
-    const bubble = context.createRadialGradient(x - radius * .28, y - radius * .28, 4, x, y, radius);
-    bubble.addColorStop(0, 'rgba(255,255,255,.32)');
-    bubble.addColorStop(.45, 'rgba(116,224,218,.07)');
-    bubble.addColorStop(.78, 'rgba(232,126,203,.10)');
-    bubble.addColorStop(1, 'rgba(255,255,255,0)');
-    context.fillStyle = bubble;
-    context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fill();
-    context.strokeStyle = 'rgba(255,255,255,.26)';
-    context.lineWidth = 2;
-    context.stroke();
-  }
-  context.restore();
-
-  const chrome = context.createLinearGradient(width - 105, 0, width, 0);
-  chrome.addColorStop(0, 'rgba(255,255,255,0)');
-  chrome.addColorStop(.28, 'rgba(116,168,174,.10)');
-  chrome.addColorStop(.48, 'rgba(255,255,255,.72)');
-  chrome.addColorStop(.62, 'rgba(91,103,121,.18)');
-  chrome.addColorStop(.78, 'rgba(255,255,255,.52)');
-  chrome.addColorStop(1, 'rgba(158,112,192,.12)');
-  context.fillStyle = chrome;
-  context.fillRect(width - 105, 0, 105, height);
+function clamp(value, min = 0, max = 255) {
+  return Math.max(min, Math.min(max, value));
 }
 
-function drawSignalMarkers(context, width, height) {
-  context.save();
-  context.font = '18px Monaco, monospace';
-  context.textBaseline = 'top';
-  if (state.backgroundPreset === 'badSignal') {
-    context.fillStyle = 'rgba(16,30,28,.55)';
-    context.fillText('PLAY  ▶    SP', 48, 42);
-    context.fillText('00:12:48', width - 164, 42);
-    context.fillText('TRACKING // CH-03', 48, height - 74);
-    context.fillRect(48, height - 42, width - 96, 3);
-  } else if (state.backgroundPreset === 'pearl') {
-    context.fillStyle = 'rgba(54,86,95,.22)';
-    context.fillText('LIQUID DATA / 2000', 48, 42);
-    context.fillText('OPTICAL MEMORY', width - 206, height - 68);
-  } else {
-    context.fillStyle = 'rgba(27,67,75,.24)';
-    context.fillText('RGB SIGNAL / CH-01', 48, 42);
-    context.fillText('PHOSPHOR MEMORY', width - 210, height - 68);
-    context.strokeStyle = 'rgba(32,90,96,.18)';
-    context.lineWidth = 2;
-    [[32,32],[width-32,32],[32,height-32],[width-32,height-32]].forEach(([x,y]) => {
-      context.beginPath(); context.moveTo(x - 12, y); context.lineTo(x + 12, y); context.moveTo(x, y - 12); context.lineTo(x, y + 12); context.stroke();
-    });
+function smoothstep(edge0, edge1, value) {
+  const t = clamp((value - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function hsvToRgb(hue, saturation, value) {
+  const h = ((hue % 360) + 360) % 360 / 60;
+  const chroma = value * saturation;
+  const x = chroma * (1 - Math.abs(h % 2 - 1));
+  const match = value - chroma;
+  const table = h < 1 ? [chroma,x,0] : h < 2 ? [x,chroma,0] : h < 3 ? [0,chroma,x] : h < 4 ? [0,x,chroma] : h < 5 ? [x,0,chroma] : [chroma,0,x];
+  return table.map((channel) => (channel + match) * 255);
+}
+
+function gaussian(value, center, spread) {
+  return Math.exp(-((value - center) ** 2) / (2 * spread * spread));
+}
+
+function paintField(context, renderer) {
+  const field = document.createElement('canvas');
+  field.width = 360;
+  field.height = 480;
+  const fieldContext = field.getContext('2d');
+  const image = fieldContext.createImageData(field.width, field.height);
+  const random = seededRandom(state.washSeed);
+  const phase = random() * Math.PI * 2;
+  for (let py = 0; py < field.height; py += 1) {
+    const y = py / (field.height - 1) * 2 - 1;
+    for (let px = 0; px < field.width; px += 1) {
+      const x = px / (field.width - 1) * 2 - 1;
+      const color = renderer(x, y, phase, random);
+      const offset = (py * field.width + px) * 4;
+      image.data[offset] = clamp(color[0]);
+      image.data[offset + 1] = clamp(color[1]);
+      image.data[offset + 2] = clamp(color[2]);
+      image.data[offset + 3] = 255;
+    }
   }
+  fieldContext.putImageData(image, 0, 0);
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = 'high';
+  context.drawImage(field, 0, 0, context.canvas.width, context.canvas.height);
+}
+
+function drawSignalGhost(context) {
+  const strength = Number(state.washAmount) / 100;
+  const base = hexToRgb(state.paperColor);
+  const bands = [
+    [-.82, .13, 38, .95, -.10], [-.60, .08, 320, .78, .08], [-.34, .18, 184, .72, -.04],
+    [-.03, .22, 42, .98, .02], [.30, .16, 196, .68, -.12], [.60, .11, 28, .80, .14], [.87, .14, 350, .92, 0],
+  ];
+  paintField(context, (x, y, phase, random) => {
+    let r = base[0] + 2;
+    let g = base[1] + 5;
+    let b = base[2] + 15;
+    const column = gaussian(x, 0, .43) * (.35 + .22 * Math.cos(y * 7 + phase));
+    r += 14 * column; g += 42 * column; b += 78 * column;
+    for (const [cy, sy, hue, power, skew] of bands) {
+      const shiftedX = x - skew * Math.sin((y - cy) * 9 + phase);
+      const glow = gaussian(y, cy, sy) * gaussian(shiftedX, 0, .52 + sy) * power * strength;
+      const spectral = hsvToRgb(hue + x * 95 + y * 24, .78, 1);
+      r += spectral[0] * glow;
+      g += spectral[1] * glow;
+      b += spectral[2] * glow;
+      const whiteCore = Math.max(0, glow - .44) * 280;
+      r += whiteCore; g += whiteCore; b += whiteCore;
+    }
+    const granular = (random() - .5) * 14;
+    const edge = Math.max(0, Math.abs(x) - .62) * 150;
+    return [r + granular - edge, g + granular - edge, b + granular - edge * .7];
+  });
+}
+
+function drawLiquidChrome(context) {
+  const strength = Number(state.washAmount) / 100;
+  const base = hexToRgb(state.paperColor);
+  paintField(context, (x, y, phase, random) => {
+    const warpX = x + (.20 + strength * .17) * Math.sin(y * 3.2 + Math.sin(x * 2.1 + phase)) + .07 * Math.sin(y * 9 - phase);
+    const warpY = y + (.14 + strength * .12) * Math.sin(x * 2.7 - Math.cos(y * 2.6 - phase)) + .06 * Math.cos(x * 8 + phase);
+    const field = Math.sin(warpX * 3.35 + 2.35 * Math.sin(warpY * 2.25 + phase))
+      + .66 * Math.sin(warpY * 4.1 - 1.9 * Math.cos(warpX * 2.5 - phase));
+    const dark = smoothstep(.18, .72, field);
+    const boundary = Math.exp(-Math.abs(field - .12) * 2.75);
+    const innerBand = Math.exp(-Math.abs(field - .54) * 8.5);
+    const stripe = (.45 + .55 * Math.sin(field * 42 + x * 6 - y * 4 + phase)) * boundary;
+    const contour = (.5 + .5 * Math.cos((field - .12) * 34)) * Math.exp(-Math.abs(field - .28) * 1.45);
+    const spectral = hsvToRgb(190 + (field - .12) * 520 + y * 85 + phase * 18, .88, 1);
+    const shadow = [15, 20, 42];
+    const iridescence = clamp(boundary * .52 + innerBand * .86 + stripe * .34 + contour * .48, 0, 1);
+    const paper = 1 - dark;
+    const dither = (random() - .5) * (9 + Number(state.noiseAmount) * .45);
+    return [
+      base[0] * paper + shadow[0] * dark + spectral[0] * iridescence + dither,
+      base[1] * paper + shadow[1] * dark + spectral[1] * iridescence + dither,
+      base[2] * paper + shadow[2] * dark + spectral[2] * iridescence + dither,
+    ];
+  });
+}
+
+function drawTubeBloom(context) {
+  const strength = Number(state.washAmount) / 100;
+  const base = hexToRgb(state.paperColor);
+  const bands = [[-.78,24,.15],[-.52,170,.13],[-.27,320,.11],[-.02,48,.18],[.26,195,.15],[.51,310,.12],[.76,32,.17]];
+  paintField(context, (x, y, phase, random) => {
+    const curveY = y + .19 * x * x + .025 * Math.sin(x * 7 + phase);
+    const tube = Math.max(0, 1 - Math.abs(x) ** 2.2);
+    let r = base[0] * .45 + 10;
+    let g = base[1] * .45 + 8;
+    let b = base[2] * .45 + 12;
+    for (const [cy, hue, spread] of bands) {
+      const glow = gaussian(curveY, cy, spread) * (.58 + .42 * tube) * strength;
+      const spectral = hsvToRgb(hue + x * 72, .55, 1);
+      r += spectral[0] * glow;
+      g += spectral[1] * glow;
+      b += spectral[2] * glow;
+      const core = Math.max(0, glow - .35) * 185;
+      r += core; g += core; b += core;
+    }
+    const centralBloom = gaussian(x, 0, .48) * (.20 + .18 * Math.cos(curveY * 10 + phase));
+    r += 155 * centralBloom; g += 170 * centralBloom; b += 145 * centralBloom;
+    const sideFalloff = Math.pow(Math.abs(x), 2.2) * 190;
+    const grain = (random() - .5) * 11;
+    return [r - sideFalloff + grain, g - sideFalloff + grain, b - sideFalloff + grain];
+  });
+}
+
+function addNoise(context, width, height) {
+  const size = Math.max(1, Number(state.grainSize));
+  const random = seededRandom(state.noiseSeed);
+  const palette = [[242,59,151],[36,225,215],[96,113,255],[255,220,75],[255,255,255],[3,4,12]];
+  const count = Math.round(width * height / (size * size) * Number(state.noiseAmount) / 100 * .18);
+  for (let index = 0; index < count; index += 1) {
+    const color = palette[Math.floor(random() * palette.length)];
+    const x = Math.floor(random() * width / size) * size;
+    const y = Math.floor(random() * height / size) * size;
+    if (state.safeCenter && x > width * .16 && x < width * .84 && y > height * .1 && y < height * .9 && random() < .72) continue;
+    const alpha = state.backgroundPreset === 'liquidChrome' ? .08 + random() * .17 : .06 + random() * .24;
+    context.fillStyle = `rgba(${color.join(',')},${alpha})`;
+    context.fillRect(x, y, size, size);
+  }
+}
+
+function addTears(context, width, height) {
+  const tearCount = Number(state.tearAmount);
+  if (!tearCount) return;
+  const source = document.createElement('canvas');
+  source.width = width; source.height = height;
+  source.getContext('2d').drawImage(context.canvas, 0, 0);
+  const random = seededRandom(state.washSeed + 887);
+  for (let index = 0; index < tearCount; index += 1) {
+    const y = Math.floor(random() * (height - 45));
+    const bandHeight = 3 + Math.floor(random() * 26);
+    const offset = Math.round((random() - .5) * (50 + Number(state.rgbSplit) * 12));
+    context.drawImage(source, 0, y, width, bandHeight, offset, y, width, bandHeight);
+    context.fillStyle = `rgba(42,239,220,${.12 + Number(state.rgbSplit) / 95})`;
+    context.fillRect(Math.max(0, offset), y - 2, width - Math.abs(offset), 2);
+    context.fillStyle = `rgba(244,38,157,${.12 + Number(state.rgbSplit) / 95})`;
+    context.fillRect(Math.max(0, -offset), y + bandHeight, width - Math.abs(offset), 2);
+  }
+}
+
+function addRaster(context, width, height) {
+  const amount = Number(state.scanlineAmount) / 100;
+  if (!amount) return;
+  context.save();
+  context.lineWidth = state.backgroundPreset === 'signalGhost' ? 2 : 1.4;
+  context.strokeStyle = `rgba(0,0,8,${.18 + amount * .72})`;
+  if (state.backgroundPreset === 'tubeBloom') {
+    for (let y = -40; y < height + 40; y += 5) {
+      context.beginPath();
+      context.moveTo(0, y + 92);
+      context.quadraticCurveTo(width / 2, y, width, y + 92);
+      context.stroke();
+    }
+  } else {
+    const spacing = state.backgroundPreset === 'signalGhost' ? 4 : 5;
+    for (let y = 0; y < height; y += spacing) {
+      context.beginPath(); context.moveTo(0, y + .5); context.lineTo(width, y + .5); context.stroke();
+    }
+  }
+  const splitAlpha = .012 + Number(state.rgbSplit) / 500;
+  context.fillStyle = `rgba(255,20,100,${splitAlpha})`;
+  for (let x = 0; x < width; x += 6) context.fillRect(x, 0, 1, height);
+  context.fillStyle = `rgba(0,240,220,${splitAlpha})`;
+  for (let x = 2; x < width; x += 6) context.fillRect(x, 0, 1, height);
   context.restore();
+}
+
+function addFinish(context, width, height) {
+  const bloom = Number(state.bloomAmount) / 100;
+  if (bloom > 0) {
+    context.save();
+    context.globalCompositeOperation = 'screen';
+    const glow = context.createRadialGradient(width * .5, height * .48, 20, width * .5, height * .48, height * .54);
+    glow.addColorStop(0, `rgba(255,255,245,${bloom * .22})`);
+    glow.addColorStop(.45, `rgba(96,211,225,${bloom * .07})`);
+    glow.addColorStop(1, 'rgba(255,255,255,0)');
+    context.fillStyle = glow; context.fillRect(0, 0, width, height);
+    context.restore();
+  }
+  const vignette = Number(state.vignetteAmount) / 100;
+  if (vignette > 0) {
+    const shade = context.createRadialGradient(width / 2, height / 2, height * .22, width / 2, height / 2, height * .72);
+    shade.addColorStop(0, 'rgba(0,0,4,0)');
+    shade.addColorStop(.68, `rgba(0,0,5,${vignette * .18})`);
+    shade.addColorStop(1, `rgba(0,0,5,${vignette * .95})`);
+    context.fillStyle = shade; context.fillRect(0, 0, width, height);
+  }
 }
 
 function makePaperDataUrl() {
   const width = 1080;
   const height = 1440;
-  const size = Math.max(1, Number(state.grainSize));
   const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = width; canvas.height = height;
   const context = canvas.getContext('2d');
-  const baseRgb = hexToRgb(state.paperColor);
-  const washRandom = seededRandom(state.washSeed);
-  const noiseRandom = seededRandom(state.noiseSeed);
-  context.fillStyle = state.paperColor;
-  context.fillRect(0, 0, width, height);
-
-  if (state.backgroundPreset === 'pearl') drawPearlSurface(context, width, height, washRandom);
-  if (state.backgroundPreset === 'badSignal') {
-    const cast = context.createLinearGradient(0, 0, width, height);
-    cast.addColorStop(0, 'rgba(63,202,190,.12)');
-    cast.addColorStop(.52, 'rgba(255,255,255,0)');
-    cast.addColorStop(1, 'rgba(223,70,146,.13)');
-    context.fillStyle = cast;
-    context.fillRect(0, 0, width, height);
-  }
-
-  const washPalette = [[255,178,198],[80,202,194],[135,119,220],[238,205,88]];
-  const washOpacity = Number(state.washAmount) / 100 * .38;
-  context.globalCompositeOperation = 'multiply';
-  washPalette.forEach((color) => {
-    const x = width * (.08 + washRandom() * .84);
-    const y = height * (.04 + washRandom() * .92);
-    const radius = 260 + washRandom() * 310;
-    const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
-    gradient.addColorStop(0, `rgba(${color.join(',')},${washOpacity})`);
-    gradient.addColorStop(.55, `rgba(${color.join(',')},${washOpacity * .36})`);
-    gradient.addColorStop(1, `rgba(${color.join(',')},0)`);
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, width, height);
-  });
-
-  context.globalCompositeOperation = 'source-over';
-  const palette = state.backgroundPreset === 'badSignal'
-    ? [[236,64,139],[44,216,203],[36,45,48],[255,255,255],[103,100,206]]
-    : [[236,111,145],[75,213,198],[103,100,206],[232,200,77],[64,90,113]];
-  const cells = Math.ceil(width / size) * Math.ceil(height / size);
-  const count = Math.round(cells * Number(state.noiseAmount) / 100 * .42);
-  for (let index = 0; index < count; index += 1) {
-    const x = Math.floor(noiseRandom() * width / size) * size;
-    const y = Math.floor(noiseRandom() * height / size) * size;
-    const inSafeArea = x > width * .16 && x < width * .84 && y > height * .1 && y < height * .9;
-    if (state.safeCenter && inSafeArea && noiseRandom() < .68) continue;
-    const color = palette[Math.floor(noiseRandom() * palette.length)];
-    context.fillStyle = `rgba(${color.join(',')},${.1 + noiseRandom() * .2})`;
-    context.fillRect(x, y, size, size);
-  }
-
-  if (state.safeCenter) {
-    context.save();
-    context.translate(width / 2, height / 2);
-    context.scale(1, 1.35);
-    const clearing = context.createRadialGradient(0, 0, 30, 0, 0, 410);
-    clearing.addColorStop(0, `rgba(${baseRgb.join(',')},.30)`);
-    clearing.addColorStop(.68, `rgba(${baseRgb.join(',')},.12)`);
-    clearing.addColorStop(1, `rgba(${baseRgb.join(',')},0)`);
-    context.fillStyle = clearing;
-    context.fillRect(-width / 2, -height / 2, width, height);
-    context.restore();
-  }
-
-  const bloomOpacity = Number(state.bloomAmount) / 100 * .55;
-  if (bloomOpacity > 0) {
-    context.save();
-    context.globalCompositeOperation = 'screen';
-    for (let index = 0; index < 2; index += 1) {
-      const x = width * (.12 + washRandom() * .76);
-      const y = height * (.08 + washRandom() * .84);
-      const radius = 180 + washRandom() * 240;
-      const glow = context.createRadialGradient(x, y, 0, x, y, radius);
-      glow.addColorStop(0, `rgba(255,255,255,${bloomOpacity})`);
-      glow.addColorStop(1, 'rgba(255,255,255,0)');
-      context.fillStyle = glow;
-      context.fillRect(0, 0, width, height);
-    }
-    context.restore();
-  }
-
-  const tearCount = Number(state.tearAmount);
-  if (tearCount > 0) {
-    const source = document.createElement('canvas');
-    source.width = width; source.height = height;
-    source.getContext('2d').drawImage(canvas, 0, 0);
-    const tearRandom = seededRandom(state.washSeed + 887);
-    for (let index = 0; index < tearCount; index += 1) {
-      let y = Math.floor(tearRandom() * (height - 30));
-      if (state.safeCenter && y > height * .15 && y < height * .85) y = tearRandom() < .5 ? 70 + tearRandom() * 120 : height - 190 + tearRandom() * 100;
-      const bandHeight = 3 + Math.floor(tearRandom() * (state.backgroundPreset === 'badSignal' ? 24 : 9));
-      const offset = Math.round((tearRandom() - .5) * (28 + Number(state.rgbSplit) * 9));
-      context.drawImage(source, 0, y, width, bandHeight, offset, y, width, bandHeight);
-      context.fillStyle = `rgba(28,207,199,${.08 + Number(state.rgbSplit) / 120})`;
-      context.fillRect(Math.max(0, offset), y - 1, width - Math.abs(offset), 1);
-      context.fillStyle = `rgba(235,55,139,${.08 + Number(state.rgbSplit) / 120})`;
-      context.fillRect(Math.max(0, -offset), y + bandHeight, width - Math.abs(offset), 1);
-    }
-  }
-
-  const split = Number(state.rgbSplit);
-  if (split > 0) {
-    const edgeAlpha = .018 + split / 360;
-    const leftGhost = context.createLinearGradient(0, 0, 160 + split * 8, 0);
-    leftGhost.addColorStop(0, `rgba(0,211,205,${edgeAlpha * 2.4})`);
-    leftGhost.addColorStop(1, 'rgba(0,211,205,0)');
-    context.fillStyle = leftGhost; context.fillRect(0, 0, 180 + split * 8, height);
-    const rightGhost = context.createLinearGradient(width, 0, width - 180 - split * 8, 0);
-    rightGhost.addColorStop(0, `rgba(240,43,137,${edgeAlpha * 2.4})`);
-    rightGhost.addColorStop(1, 'rgba(240,43,137,0)');
-    context.fillStyle = rightGhost; context.fillRect(width - 180 - split * 8, 0, 180 + split * 8, height);
-    context.fillStyle = `rgba(230,30,105,${edgeAlpha})`;
-    for (let x = 0; x < width; x += 6) context.fillRect(x, 0, 1, height);
-    context.fillStyle = `rgba(20,190,205,${edgeAlpha})`;
-    for (let x = 2; x < width; x += 6) context.fillRect(x, 0, 1, height);
-  }
-
-  const scanAlpha = Number(state.scanlineAmount) / 100 * .34;
-  if (scanAlpha > 0) {
-    context.fillStyle = `rgba(8,20,18,${scanAlpha})`;
-    const spacing = state.backgroundPreset === 'badSignal' ? 3 : 4;
-    for (let y = 0; y < height; y += spacing) context.fillRect(0, y, width, 1);
-  }
-
-  const vignetteAlpha = Number(state.vignetteAmount) / 100 * .78;
-  if (vignetteAlpha > 0) {
-    const vignette = context.createRadialGradient(width / 2, height / 2, height * .25, width / 2, height / 2, height * .76);
-    vignette.addColorStop(0, 'rgba(8,17,16,0)');
-    vignette.addColorStop(.72, `rgba(8,17,16,${vignetteAlpha * .22})`);
-    vignette.addColorStop(1, `rgba(8,17,16,${vignetteAlpha})`);
-    context.fillStyle = vignette;
-    context.fillRect(0, 0, width, height);
-  }
-
-  drawSignalMarkers(context, width, height);
+  if (state.backgroundPreset === 'liquidChrome') drawLiquidChrome(context);
+  else if (state.backgroundPreset === 'tubeBloom') drawTubeBloom(context);
+  else drawSignalGhost(context);
+  addNoise(context, width, height);
+  addTears(context, width, height);
+  addRaster(context, width, height);
+  addFinish(context, width, height);
   return canvas.toDataURL('image/png');
 }
 
