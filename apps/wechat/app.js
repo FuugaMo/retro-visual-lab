@@ -16,8 +16,9 @@ const backgroundPresets = {
   signalGhost: { paperColor: '#030611', noiseAmount: 22, grainSize: 1, washAmount: 68, scanlineAmount: 28, rgbSplit: 8, bloomAmount: 48, vignetteAmount: 34, tearAmount: 5, safeCenter: false },
   liquidChrome: { paperColor: '#f5f4ef', noiseAmount: 13, grainSize: 1, washAmount: 82, scanlineAmount: 8, rgbSplit: 10, bloomAmount: 28, vignetteAmount: 3, tearAmount: 1, safeCenter: false },
   tubeBloom: { paperColor: '#141217', noiseAmount: 9, grainSize: 2, washAmount: 58, scanlineAmount: 25, rgbSplit: 8, bloomAmount: 58, vignetteAmount: 40, tearAmount: 2, safeCenter: false },
+  tvStatic: { paperColor: '#777777', noiseAmount: 42, grainSize: 1, washAmount: 76, scanlineAmount: 22, rgbSplit: 0, bloomAmount: 18, vignetteAmount: 36, tearAmount: 4, safeCenter: false },
 };
-const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless' };
+const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless', tvStatic: 'tv-static-seamless' };
 const hasValidSavedBackground = Boolean(backgroundPresets[saved.backgroundPreset]);
 const initialBackgroundPreset = hasValidSavedBackground ? saved.backgroundPreset : 'signalGhost';
 const initialBackground = backgroundPresets[initialBackgroundPreset];
@@ -127,7 +128,7 @@ function periodicGaussian(value, center, spread, period = 2) {
   return Math.exp(-(wrapped ** 2) / (2 * spread * spread));
 }
 
-function paintField(context, renderer) {
+function paintField(context, renderer, smoothing = true) {
   const field = document.createElement('canvas');
   field.width = FIELD_WIDTH;
   field.height = FIELD_HEIGHT;
@@ -148,8 +149,8 @@ function paintField(context, renderer) {
     }
   }
   fieldContext.putImageData(image, 0, 0);
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = 'high';
+  context.imageSmoothingEnabled = smoothing;
+  if (smoothing) context.imageSmoothingQuality = 'high';
   context.drawImage(field, 0, 0, context.canvas.width, context.canvas.height);
 }
 
@@ -240,17 +241,35 @@ function drawTubeBloom(context) {
   });
 }
 
+function drawTvStatic(context) {
+  const strength = Number(state.washAmount) / 100;
+  const base = hexToRgb(state.paperColor).reduce((sum, value) => sum + value, 0) / 3;
+  paintField(context, (x, y, phase, random) => {
+    const loop = Math.PI * (y + 1);
+    const averagedNoise = (random() + random() + random()) / 3;
+    const saltAndPepper = random() < .16 ? (random() < .5 ? -1 : 1) * (75 + random() * 105) : 0;
+    const horizontalDrift = Math.sin(loop * 43 + x * 17 + phase) * 17 * strength;
+    const broadInterference = Math.sin(loop * 7 - x * 4 + phase * .6) * 23 * strength;
+    const syncBands = periodicGaussian(y, -.52, .025) * -88 + periodicGaussian(y, .41, .018) * 76;
+    const level = base * (1 - strength * .28) + averagedNoise * 255 * (.48 + strength * .42)
+      + saltAndPepper * strength + horizontalDrift + broadInterference + syncBands;
+    return [level, level, level];
+  }, false);
+}
+
 function addNoise(context, width, height) {
   const size = Math.max(1, Number(state.grainSize));
   const random = seededRandom(state.noiseSeed);
-  const palette = [[242,59,151],[36,225,215],[96,113,255],[255,220,75],[255,255,255],[3,4,12]];
+  const palette = state.backgroundPreset === 'tvStatic'
+    ? [[0,0,0],[38,38,38],[110,110,110],[190,190,190],[255,255,255]]
+    : [[242,59,151],[36,225,215],[96,113,255],[255,220,75],[255,255,255],[3,4,12]];
   const count = Math.round(width * height / (size * size) * Number(state.noiseAmount) / 100 * .18);
   for (let index = 0; index < count; index += 1) {
     const color = palette[Math.floor(random() * palette.length)];
     const x = Math.floor(random() * width / size) * size;
     const y = Math.floor(random() * height / size) * size;
     if (state.safeCenter && x > width * .16 && x < width * .84 && y > height * .1 && y < height * .9 && random() < .72) continue;
-    const alpha = state.backgroundPreset === 'liquidChrome' ? .08 + random() * .17 : .06 + random() * .24;
+    const alpha = state.backgroundPreset === 'liquidChrome' ? .08 + random() * .17 : state.backgroundPreset === 'tvStatic' ? .18 + random() * .42 : .06 + random() * .24;
     context.fillStyle = `rgba(${color.join(',')},${alpha})`;
     context.fillRect(x, y, size, size);
   }
@@ -269,9 +288,10 @@ function addTears(context, width, height) {
     const bandHeight = 3 + Math.floor(random() * 26);
     const offset = Math.round((random() - .5) * (50 + Number(state.rgbSplit) * 12));
     context.drawImage(source, 0, y, width, bandHeight, offset, y, width, bandHeight);
-    context.fillStyle = `rgba(42,239,220,${.12 + Number(state.rgbSplit) / 95})`;
+    const isMono = state.backgroundPreset === 'tvStatic';
+    context.fillStyle = isMono ? 'rgba(255,255,255,.28)' : `rgba(42,239,220,${.12 + Number(state.rgbSplit) / 95})`;
     context.fillRect(Math.max(0, offset), y - 2, width - Math.abs(offset), 2);
-    context.fillStyle = `rgba(244,38,157,${.12 + Number(state.rgbSplit) / 95})`;
+    context.fillStyle = isMono ? 'rgba(0,0,0,.34)' : `rgba(244,38,157,${.12 + Number(state.rgbSplit) / 95})`;
     context.fillRect(Math.max(0, -offset), y + bandHeight, width - Math.abs(offset), 2);
   }
 }
@@ -281,7 +301,8 @@ function addRaster(context, width, height) {
   if (!amount) return;
   context.save();
   context.lineWidth = state.backgroundPreset === 'signalGhost' ? 2 : 1.4;
-  context.strokeStyle = `rgba(0,0,8,${.18 + amount * .72})`;
+  const rasterInk = state.backgroundPreset === 'tvStatic' ? '0,0,0' : '0,0,8';
+  context.strokeStyle = `rgba(${rasterInk},${.18 + amount * .72})`;
   if (state.backgroundPreset === 'tubeBloom') {
     for (let y = -40; y < height + 40; y += 5) {
       context.beginPath();
@@ -294,6 +315,10 @@ function addRaster(context, width, height) {
     for (let y = 0; y < height; y += spacing) {
       context.beginPath(); context.moveTo(0, y + .5); context.lineTo(width, y + .5); context.stroke();
     }
+  }
+  if (state.backgroundPreset === 'tvStatic') {
+    context.restore();
+    return;
   }
   const splitAlpha = .012 + Number(state.rgbSplit) / 500;
   context.fillStyle = `rgba(255,20,100,${splitAlpha})`;
@@ -310,21 +335,24 @@ function addFinish(context, width, height) {
     context.globalCompositeOperation = 'screen';
     const glow = context.createLinearGradient(0, 0, width, 0);
     glow.addColorStop(0, 'rgba(255,255,255,0)');
-    glow.addColorStop(.3, `rgba(96,211,225,${bloom * .07})`);
-    glow.addColorStop(.5, `rgba(255,255,245,${bloom * .22})`);
-    glow.addColorStop(.7, `rgba(96,211,225,${bloom * .07})`);
+    const glowTint = state.backgroundPreset === 'tvStatic' ? '255,255,255' : '96,211,225';
+    const glowCore = state.backgroundPreset === 'tvStatic' ? '255,255,255' : '255,255,245';
+    glow.addColorStop(.3, `rgba(${glowTint},${bloom * .07})`);
+    glow.addColorStop(.5, `rgba(${glowCore},${bloom * .22})`);
+    glow.addColorStop(.7, `rgba(${glowTint},${bloom * .07})`);
     glow.addColorStop(1, 'rgba(255,255,255,0)');
     context.fillStyle = glow; context.fillRect(0, 0, width, height);
     context.restore();
   }
   const vignette = Number(state.vignetteAmount) / 100;
   if (vignette > 0) {
+    const vignetteInk = state.backgroundPreset === 'tvStatic' ? '0,0,0' : '0,0,5';
     const shade = context.createLinearGradient(0, 0, width, 0);
-    shade.addColorStop(0, `rgba(0,0,5,${vignette * .95})`);
-    shade.addColorStop(.22, `rgba(0,0,5,${vignette * .18})`);
-    shade.addColorStop(.5, 'rgba(0,0,4,0)');
-    shade.addColorStop(.78, `rgba(0,0,5,${vignette * .18})`);
-    shade.addColorStop(1, `rgba(0,0,5,${vignette * .95})`);
+    shade.addColorStop(0, `rgba(${vignetteInk},${vignette * .95})`);
+    shade.addColorStop(.22, `rgba(${vignetteInk},${vignette * .18})`);
+    shade.addColorStop(.5, `rgba(${vignetteInk},0)`);
+    shade.addColorStop(.78, `rgba(${vignetteInk},${vignette * .18})`);
+    shade.addColorStop(1, `rgba(${vignetteInk},${vignette * .95})`);
     context.fillStyle = shade; context.fillRect(0, 0, width, height);
   }
 }
@@ -346,7 +374,8 @@ function makePaperDataUrl() {
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext('2d');
-  if (state.backgroundPreset === 'liquidChrome') drawLiquidChrome(context);
+  if (state.backgroundPreset === 'tvStatic') drawTvStatic(context);
+  else if (state.backgroundPreset === 'liquidChrome') drawLiquidChrome(context);
   else if (state.backgroundPreset === 'tubeBloom') drawTubeBloom(context);
   else drawSignalGhost(context);
   addNoise(context, width, height);

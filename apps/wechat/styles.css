@@ -32,7 +32,7 @@ button { cursor:pointer; }
 .asset-tab small { opacity:.7; font:8px "Courier New",monospace; }
 .control-section { padding:13px 3px 15px; border-top:1px solid #777; }
 .section-title { margin-bottom:14px; font:700 12px "Courier New",monospace; letter-spacing:1px; }
-.background-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:0 0 14px; }
+.background-presets { display:grid; grid-template-columns:repeat(2,1fr); gap:5px; margin:0 0 14px; }
 .background-preset { min-height:59px; display:grid; align-content:center; gap:4px; padding:6px 5px; border:0; background:#d7d7d7; box-shadow:inset 2px 2px #fff,inset -2px -2px #111; text-align:left; }
 .background-preset b { font:700 9px/1 "Courier New",monospace; white-space:nowrap; }
 .background-preset small { color:#555; font-size:9px; }
