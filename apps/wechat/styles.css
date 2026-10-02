@@ -109,7 +109,7 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .dialog-body { min-height:330px; display:grid; grid-template-rows:1fr auto; padding:42px 80px 48px; background:#c0c0c0; }
 .dialog-blank { min-height:125px; }
 .dialog-actions { display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:490px; width:100%; margin:0 auto; }
-.dialog-button { min-height:62px; padding:10px 18px; border:0; background:#c0c0c0; box-shadow:inset 3px 3px #fff,inset -3px -3px #111,inset -5px -5px #777; font:24px/1 "Pixelated MS Sans Serif",sans-serif; }
+.dialog-button { min-height:62px; padding:10px 18px; appearance:none; border:2px solid; border-color:#fff #111 #111 #fff; background:#c0c0c0; box-shadow:inset 1px 1px #dfdfdf,inset -1px -1px #808080; font:24px/1 "Pixelated MS Sans Serif",sans-serif; }
 .painter-window { padding:4px; }
 .painter-titlebar { height:40px; gap:7px; font-size:21px; }
 .paint-app-icon { width:25px; height:25px; display:grid; place-items:center; overflow:hidden; background:#fff; border:1px solid #111; font-size:16px; }
