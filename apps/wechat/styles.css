@@ -49,6 +49,14 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .crt-controls { margin-top:3px; padding-top:10px; border-top:1px dotted #777; }
 .crt-controls .field-stack { min-width:0; }
 .crt-controls .field-stack > span { align-items:flex-start; gap:4px; }
+.note-layout-presets { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin:0 0 14px; }
+.note-layout-preset { min-height:56px; display:grid; align-content:center; gap:4px; padding:6px; border:0; text-align:left; background:#d7d7d7; box-shadow:inset 2px 2px #fff,inset -2px -2px #111; }
+.note-layout-preset b { font:700 8px/1 "Courier New",monospace; white-space:nowrap; }
+.note-layout-preset small { color:#555; font-size:8px; line-height:1.15; }
+.note-layout-preset.active { color:#fff; background:var(--blue); box-shadow:inset 2px 2px #7da0c9,inset -2px -2px #071527; }
+.note-layout-preset.active small { color:#dceeff; }
+.note-structure-fields { padding-top:2px; }
+.note-structure-fields[hidden] { display:none!important; }
 .font-section { margin:0 0 13px; padding:10px; background:#d5d5d5; box-shadow:inset 2px 2px #777,inset -2px -2px #fff; }
 .font-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:10px; }
 .font-heading strong { font:700 11px "Courier New",monospace; }
@@ -96,6 +104,24 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .notepad-menu { height:35px; display:flex; align-items:center; gap:28px; padding:0 12px; font:18px/1 "Pixelated MS Sans Serif",sans-serif; }
 .notepad-menu u { text-underline-offset:2px; }
 .notepad-body { min-height:280px; margin:0 4px 4px; padding:48px; overflow:hidden; color:#111; background:#fff; box-shadow:inset 3px 3px #777,inset -3px -3px #fff; white-space:pre-wrap; overflow-wrap:anywhere; font:400 34px/1.45 "Fusion Pixel 10",sans-serif; }
+.notepad-body--lineup,.notepad-body--bandIndex { white-space:normal; }
+.note-masthead { display:grid; grid-template-columns:auto 1fr; align-items:end; gap:.6em; padding-bottom:.6em; border-bottom:.14em solid currentColor; }
+.note-number { align-self:stretch; display:grid; place-items:center; min-width:4.8em; padding:.42em .65em; color:#fff; background:#111; box-shadow:inset .08em .08em rgba(255,255,255,.55),inset -.08em -.08em rgba(0,0,0,.45); font-size:.55em; line-height:1; }
+.note-number > span { color:#fff; }
+.note-heading { display:block; font-size:2.1em; line-height:.82; letter-spacing:-.045em; text-transform:uppercase; }
+.lineup-list { display:grid; margin-top:.65em; border-top:.06em solid currentColor; }
+.lineup-row { display:grid; grid-template-columns:2.3em 1fr; align-items:baseline; gap:.5em; padding:.38em .15em; border-bottom:.06em solid currentColor; }
+.lineup-index { opacity:.62; font-size:.58em; }
+.lineup-name { font-size:1.22em; line-height:1.02; text-transform:uppercase; }
+.band-masthead { grid-template-columns:5.6em 1fr; }
+.band-number { min-width:0; font-size:1.7em; letter-spacing:-.08em; }
+.band-name-wall { display:grid; margin-top:.55em; overflow:hidden; border-top:.08em solid currentColor; border-bottom:.08em solid currentColor; }
+.band-name-row { position:relative; display:flex; align-items:center; min-height:1.08em; padding:.03em 0 .03em 1.8em; border-bottom:.035em solid color-mix(in srgb,currentColor 25%,transparent); font-size:1.58em; font-weight:700; line-height:.86; letter-spacing:-.055em; text-transform:uppercase; white-space:nowrap; }
+.band-name-row::before { content:attr(data-index); position:absolute; left:0; top:.28em; font-size:.28em; font-weight:400; letter-spacing:0; }
+.band-name-row--1 { padding-left:.65em; color:#fff; background:#111; }
+.band-name-row--1 > span { color:#fff; }
+.band-name-row--2 { transform:translateX(-.25em); opacity:.48; }
+.band-name-row--3 { padding-left:2.6em; font-style:italic; }
 .divider-artboard { width:1080px; height:180px; display:grid; place-items:center; padding:28px 60px; }
 .divider-wrap { width:100%; display:flex; align-items:center; gap:23px; color:#1d4f86; }
 .divider-label { flex:none; max-width:52%; color:currentColor; font:700 21px/1 "Pixelated MS Sans Serif",sans-serif; letter-spacing:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }

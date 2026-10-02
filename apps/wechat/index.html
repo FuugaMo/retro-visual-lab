@@ -51,8 +51,17 @@
 
         <section class="control-section" data-controls="notepad" hidden>
           <div class="section-title">02 / Notepad 98</div>
+          <div class="note-layout-presets" aria-label="记事本版式">
+            <button class="note-layout-preset active" data-note-layout="editorial" type="button"><b>EDITORIAL</b><small>正文 / 宣言</small></button>
+            <button class="note-layout-preset" data-note-layout="lineup" type="button"><b>LINE UP</b><small>时间 / 阵容</small></button>
+            <button class="note-layout-preset" data-note-layout="bandIndex" type="button"><b>BAND INDEX</b><small>序号 / 乐队名墙</small></button>
+          </div>
           <label class="field-stack"><span>窗口标题</span><input id="noteTitle" class="win-input" type="text" value="untitled.txt - Notepad" /></label>
-          <label class="field-stack"><span>正文</span><textarea id="noteContent" class="win-input note-input" rows="7">透明酚酞 / TRANSPARENT PHENOLPHTHALEIN
+          <div class="two-col note-structure-fields" data-note-structured hidden>
+            <label class="field-stack"><span>序号 / 日期</span><input id="noteNumber" class="win-input" type="text" value="01" /></label>
+            <label class="field-stack"><span>大标题</span><input id="noteHeading" class="win-input" type="text" value="LINE UP" /></label>
+          </div>
+          <label class="field-stack"><span id="noteContentLabel">正文</span><textarea id="noteContent" class="win-input note-input" rows="7">透明酚酞 / TRANSPARENT PHENOLPHTHALEIN
 
 声音经过身体，留下没有名字的颜色。
 我们把它们收集在这里。</textarea></label>

@@ -19,9 +19,28 @@ const backgroundPresets = {
   tvStatic: { paperColor: '#777777', noiseAmount: 42, grainSize: 1, washAmount: 76, scanlineAmount: 22, rgbSplit: 0, bloomAmount: 18, vignetteAmount: 36, tearAmount: 4, safeCenter: false },
 };
 const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless', tvStatic: 'tv-static-seamless' };
+const noteLayoutDefaults = {
+  editorial: {
+    number: '01',
+    heading: 'EDITORIAL',
+    content: '透明酚酞 / TRANSPARENT PHENOLPHTHALEIN\n\n声音经过身体，留下没有名字的颜色。\n我们把它们收集在这里。',
+  },
+  lineup: {
+    number: 'SAT. 10.24',
+    heading: 'LINE UP',
+    content: '透明酚酞\n缺省乐队\n白日梦游\nSIGNAL LOST\n午夜售票亭',
+  },
+  bandIndex: {
+    number: '01',
+    heading: 'BAND INTRODUCTION',
+    content: '透明酚酞',
+  },
+};
 const hasValidSavedBackground = Boolean(backgroundPresets[saved.backgroundPreset]);
 const initialBackgroundPreset = hasValidSavedBackground ? saved.backgroundPreset : 'signalGhost';
 const initialBackground = backgroundPresets[initialBackgroundPreset];
+const initialNoteLayout = noteLayoutDefaults[saved.noteLayout] ? saved.noteLayout : 'editorial';
+const initialNoteDefaults = noteLayoutDefaults[initialNoteLayout];
 
 const state = {
   asset: saved.asset || 'background',
@@ -38,8 +57,11 @@ const state = {
   safeCenter: hasValidSavedBackground ? (saved.safeCenter ?? initialBackground.safeCenter) : initialBackground.safeCenter,
   noiseSeed: saved.noiseSeed || Math.floor(Math.random() * 1000000),
   washSeed: saved.washSeed || Math.floor(Math.random() * 1000000),
+  noteLayout: initialNoteLayout,
   noteTitle: saved.noteTitle || 'untitled.txt - Notepad',
-  noteContent: saved.noteContent || '透明酚酞 / TRANSPARENT PHENOLPHTHALEIN\n\n声音经过身体，留下没有名字的颜色。\n我们把它们收集在这里。',
+  noteNumber: saved.noteNumber ?? initialNoteDefaults.number,
+  noteHeading: saved.noteHeading ?? initialNoteDefaults.heading,
+  noteContent: saved.noteContent || initialNoteDefaults.content,
   noteCjkFont: saved.noteCjkFont || ({ pixel: 'fusion10', sans: 'pingfang', serif: 'songti', mono: 'fusion12mono' }[saved.noteFont] || 'fusion10'),
   noteLatinFont: saved.noteLatinFont || ({ pixel: 'pixelms', sans: 'helvetica', serif: 'georgia', mono: 'monaco' }[saved.noteFont] || 'pixelms'),
   noteSize: saved.noteSize ?? 34,
@@ -416,6 +438,52 @@ function notepadMarkup() {
   </div>`;
 }
 
+function createMixedElement(tagName, className, text) {
+  const element = document.createElement(tagName);
+  element.className = className;
+  renderMixedText(element, text);
+  return element;
+}
+
+function renderNotepadBody(body) {
+  const lines = state.noteContent.split('\n').map((line) => line.trim()).filter(Boolean);
+  body.classList.add(`notepad-body--${state.noteLayout}`);
+  if (state.noteLayout === 'lineup') {
+    body.replaceChildren();
+    const masthead = document.createElement('div');
+    masthead.className = 'note-masthead';
+    masthead.append(createMixedElement('span', 'note-number', state.noteNumber), createMixedElement('strong', 'note-heading', state.noteHeading));
+    const list = document.createElement('div');
+    list.className = 'lineup-list';
+    (lines.length ? lines : ['BAND NAME']).forEach((name, index) => {
+      const row = document.createElement('div');
+      row.className = 'lineup-row';
+      row.append(createMixedElement('span', 'lineup-index', String(index + 1).padStart(2, '0')), createMixedElement('strong', 'lineup-name', name));
+      list.append(row);
+    });
+    body.append(masthead, list);
+    return;
+  }
+  if (state.noteLayout === 'bandIndex') {
+    body.replaceChildren();
+    const masthead = document.createElement('div');
+    masthead.className = 'note-masthead band-masthead';
+    masthead.append(createMixedElement('span', 'note-number band-number', state.noteNumber), createMixedElement('strong', 'note-heading', state.noteHeading));
+    const wall = document.createElement('div');
+    wall.className = 'band-name-wall';
+    const names = lines.length ? lines : ['BAND NAME'];
+    for (let index = 0; index < 11; index += 1) {
+      const name = names[index % names.length];
+      const row = createMixedElement('div', `band-name-row band-name-row--${index % 4}`, name);
+      row.dataset.index = String(index + 1).padStart(2, '0');
+      wall.append(row);
+    }
+    body.append(masthead, wall);
+    return;
+  }
+  renderMixedText(body, state.noteContent);
+}
+
 function dividerMarkup() {
   return `<div class="divider-wrap ${state.dividerStyle}"><span class="divider-line"></span><span class="divider-label"></span><span class="divider-line"></span></div>`;
 }
@@ -424,6 +492,7 @@ function render() {
   $$('.asset-tab').forEach((button) => button.classList.toggle('active', button.dataset.asset === state.asset));
   $$('.preset').forEach((button) => button.classList.toggle('active', button.dataset.divider === state.dividerStyle));
   $$('.background-preset').forEach((button) => button.classList.toggle('active', button.dataset.backgroundPreset === state.backgroundPreset));
+  $$('.note-layout-preset').forEach((button) => button.classList.toggle('active', button.dataset.noteLayout === state.noteLayout));
   $$('[data-controls]').forEach((section) => { section.hidden = section.dataset.controls !== state.asset; });
   stage.className = 'asset-artboard';
   stage.removeAttribute('style');
@@ -446,16 +515,21 @@ function render() {
     const titlebar = stage.querySelector('.notepad-titlebar');
     const body = stage.querySelector('.notepad-body');
     stage.querySelector('.titlebar-title').textContent = state.noteTitle;
-    renderMixedText(body, state.noteContent);
+    renderNotepadBody(body);
     windowElement.style.width = `${state.noteWidth}px`;
     windowElement.style.boxShadow = state.noteShadow ? '14px 14px 0 rgba(10,17,13,.25), inset 3px 3px #fff, inset -3px -3px #111' : 'inset 3px 3px #fff, inset -3px -3px #111';
     titlebar.style.background = state.titlebarColor;
     Object.assign(body.style, { fontFamily: fontFamilies[state.noteCjkFont], fontSize: `${state.noteSize}px`, fontWeight: state.noteBold ? '700' : state.noteWeight, textAlign: state.noteAlign, lineHeight: state.noteLineHeight, letterSpacing: `${state.noteLetterSpacing}px`, color: state.noteColor, fontStyle: state.noteItalic ? 'italic' : 'normal', textDecoration: state.noteUnderline ? 'underline' : 'none', padding: `${state.notePadding}px` });
-    const bodyHeight = Math.max(280, state.noteContent.split('\n').length * state.noteSize * state.noteLineHeight + state.notePadding * 2);
+    const lineCount = state.noteContent.split('\n').filter((line) => line.trim()).length;
+    const bodyHeight = state.noteLayout === 'bandIndex'
+      ? Math.max(680, state.noteSize * 14 + state.notePadding * 2)
+      : state.noteLayout === 'lineup'
+        ? Math.max(520, lineCount * state.noteSize * 1.55 + state.notePadding * 2 + 130)
+        : Math.max(280, state.noteContent.split('\n').length * state.noteSize * state.noteLineHeight + state.notePadding * 2);
     body.style.minHeight = `${bodyHeight}px`;
     stage.style.height = `${Math.max(500, windowElement.offsetHeight + 152)}px`;
     $('#previewDimensions').textContent = `1080 × ${Math.round(parseFloat(stage.style.height))}`;
-    $('#exportName').textContent = 'NOTEPAD-98.PNG';
+    $('#exportName').textContent = `NOTEPAD-${state.noteLayout.replace(/([A-Z])/g, '-$1').toUpperCase()}.PNG`;
     $('#exportHint').textContent = '1080px 宽 · 透明底';
   } else {
     stage.classList.add('divider-artboard');
@@ -499,6 +573,11 @@ function updateOutputs() {
     if ($(`#${id}`).value !== String(state[id])) $(`#${id}`).value = state[id];
   });
   $('#safeCenter').checked = state.safeCenter;
+  $$('[data-note-structured]').forEach((element) => { element.hidden = state.noteLayout === 'editorial'; });
+  $('#noteContentLabel').textContent = state.noteLayout === 'lineup' ? '乐队名单（每行一个）' : state.noteLayout === 'bandIndex' ? '填充乐队名（每行一个）' : '正文';
+  ['noteTitle','noteNumber','noteHeading','noteContent'].forEach((id) => {
+    if ($(`#${id}`).value !== String(state[id])) $(`#${id}`).value = state[id];
+  });
   $('#noteWidthValue').textContent = `${state.noteWidth}px`;
   $('#notePaddingValue').textContent = `${state.notePadding}px`;
   $('#dividerThicknessValue').textContent = `${state.dividerThickness}px`;
@@ -527,7 +606,20 @@ $$('.background-preset').forEach((button) => button.addEventListener('click', ()
   render();
 }));
 
-['paperColor','noteTitle','noteContent','noteCjkFont','noteLatinFont','noteWeight','noteAlign','noteColor','titlebarColor','dividerLabel','dividerColor','dividerAccent'].forEach((id) => bindValue(id, id));
+$$('.note-layout-preset').forEach((button) => button.addEventListener('click', () => {
+  const nextLayout = button.dataset.noteLayout;
+  if (nextLayout === state.noteLayout) return;
+  const previousDefaults = noteLayoutDefaults[state.noteLayout];
+  const nextDefaults = noteLayoutDefaults[nextLayout];
+  const contentWasDefault = !state.noteContent.trim() || state.noteContent === previousDefaults.content;
+  state.noteLayout = nextLayout;
+  state.noteNumber = nextDefaults.number;
+  state.noteHeading = nextDefaults.heading;
+  if (contentWasDefault) state.noteContent = nextDefaults.content;
+  render();
+}));
+
+['paperColor','noteTitle','noteNumber','noteHeading','noteContent','noteCjkFont','noteLatinFont','noteWeight','noteAlign','noteColor','titlebarColor','dividerLabel','dividerColor','dividerAccent'].forEach((id) => bindValue(id, id));
 ['noiseAmount','grainSize','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','noteSize','noteLineHeight','noteLetterSpacing','noteWidth','notePadding','dividerThickness'].forEach((id) => bindValue(id, id, 'input', Number));
 $('#safeCenter').checked = state.safeCenter;
 $('#safeCenter').addEventListener('change', (event) => { state.safeCenter = event.target.checked; render(); });
@@ -603,7 +695,8 @@ exportButton.addEventListener('click', async () => {
       ? paperDataUrl
       : await window.htmlToImage.toPng(stage, { pixelRatio: 1, cacheBust: true, backgroundColor: null });
     const link = document.createElement('a');
-    const slug = state.asset === 'divider' ? `divider-${state.dividerStyle}` : state.asset === 'notepad' ? 'notepad-98' : backgroundPresetSlugs[state.backgroundPreset];
+    const noteSlug = `notepad-${state.noteLayout.replace(/([A-Z])/g, '-$1').toLowerCase()}`;
+    const slug = state.asset === 'divider' ? `divider-${state.dividerStyle}` : state.asset === 'notepad' ? noteSlug : backgroundPresetSlugs[state.backgroundPreset];
     link.download = `${slug}.png`;
     link.href = dataUrl;
     link.click();
