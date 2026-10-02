@@ -76,11 +76,12 @@ const state = {
   noteWidth: saved.noteWidth ?? initialNoteDefaults.width,
   notePadding: saved.notePadding ?? 48,
   noteShadow: saved.noteShadow ?? true,
-  dividerStyle: saved.dividerStyle || 'signal',
-  dividerLabel: saved.dividerLabel ?? 'TRANSPARENT PHENOLPHTHALEIN',
-  dividerColor: saved.dividerColor || '#1d4f86',
-  dividerAccent: saved.dividerAccent || '#ec6f91',
-  dividerThickness: saved.dividerThickness ?? 4,
+  dividerStyle: 'progress98',
+  dividerLabel: saved.dividerStyle === 'progress98' ? (saved.dividerLabel ?? '') : '',
+  dividerColor: saved.dividerStyle === 'progress98' ? (saved.dividerColor || '#000080') : '#000080',
+  dividerAccent: saved.dividerStyle === 'progress98' ? (saved.dividerAccent || '#c0c0c0') : '#c0c0c0',
+  dividerProgress: saved.dividerProgress ?? 64,
+  dividerSegments: saved.dividerSegments ?? 16,
 };
 
 const fontFamilies = {
@@ -471,12 +472,13 @@ function notepadMarkup() {
 }
 
 function dividerMarkup() {
-  return `<div class="divider-wrap ${state.dividerStyle}"><span class="divider-line"></span><span class="divider-label"></span><span class="divider-line"></span></div>`;
+  const filledSegments = Math.round(state.dividerSegments * state.dividerProgress / 100);
+  const segments = Array.from({ length: state.dividerSegments }, (_, index) => `<i class="progress98-segment${index < filledSegments ? ' filled' : ''}"></i>`).join('');
+  return `<div class="progress98-wrap"><span class="progress98-bracket">[</span><div class="progress98-frame"><div class="progress98-track">${segments}</div></div><span class="progress98-bracket">]</span><span class="progress98-label"></span></div>`;
 }
 
 function render() {
   $$('.asset-tab').forEach((button) => button.classList.toggle('active', button.dataset.asset === state.asset));
-  $$('.preset').forEach((button) => button.classList.toggle('active', button.dataset.divider === state.dividerStyle));
   $$('.background-preset').forEach((button) => button.classList.toggle('active', button.dataset.backgroundPreset === state.backgroundPreset));
   $$('.note-layout-preset').forEach((button) => button.classList.toggle('active', button.dataset.noteLayout === state.noteLayout));
   $$('[data-controls]').forEach((section) => { section.hidden = section.dataset.controls !== state.asset; });
@@ -520,13 +522,13 @@ function render() {
   } else {
     stage.classList.add('divider-artboard');
     stage.innerHTML = dividerMarkup();
-    const divider = stage.querySelector('.divider-wrap');
-    divider.style.color = state.dividerColor;
-    divider.style.setProperty('--accent', state.dividerAccent);
-    divider.style.setProperty('--thickness', `${state.dividerThickness}px`);
-    stage.querySelector('.divider-label').textContent = state.dividerLabel;
+    const divider = stage.querySelector('.progress98-wrap');
+    divider.style.setProperty('--progress-color', state.dividerColor);
+    divider.style.setProperty('--empty-color', state.dividerAccent);
+    stage.querySelector('.progress98-track').style.gridTemplateColumns = `repeat(${state.dividerSegments}, 1fr)`;
+    stage.querySelector('.progress98-label').textContent = state.dividerLabel.trim() || `${state.dividerProgress}%`;
     $('#previewDimensions').textContent = '1080 × 180';
-    $('#exportName').textContent = `DIVIDER-${state.dividerStyle.toUpperCase()}.PNG`;
+    $('#exportName').textContent = 'PROGRESS-98.PNG';
     $('#exportHint').textContent = '1080 × 180 · 透明底';
   }
   updateOutputs();
@@ -570,7 +572,8 @@ function updateOutputs() {
   });
   $('#noteWidthValue').textContent = `${state.noteWidth}px`;
   $('#notePaddingValue').textContent = `${state.notePadding}px`;
-  $('#dividerThicknessValue').textContent = `${state.dividerThickness}px`;
+  $('#dividerProgressValue').textContent = `${state.dividerProgress}%`;
+  $('#dividerSegmentsValue').textContent = state.dividerSegments;
   $('#fontPreview .cjk-sample').style.fontFamily = fontFamilies[state.noteCjkFont];
   $('#fontPreview .latin-sample').style.fontFamily = fontFamilies[state.noteLatinFont];
   [['boldToggle','noteBold'],['italicToggle','noteItalic'],['underlineToggle','noteUnderline']].forEach(([id,key]) => {
@@ -587,7 +590,6 @@ function bindValue(id, key, event = 'input', transform = (value) => value) {
 }
 
 $$('.asset-tab').forEach((button) => button.addEventListener('click', () => { state.asset = button.dataset.asset; render(); }));
-$$('.preset').forEach((button) => button.addEventListener('click', () => { state.dividerStyle = button.dataset.divider; $$('.preset').forEach((item) => item.classList.toggle('active', item === button)); render(); }));
 $$('.background-preset').forEach((button) => button.addEventListener('click', () => {
   state.backgroundPreset = button.dataset.backgroundPreset;
   Object.assign(state, backgroundPresets[state.backgroundPreset]);
@@ -607,7 +609,7 @@ $$('.note-layout-preset').forEach((button) => button.addEventListener('click', (
 }));
 
 ['paperColor','noteTitle','noteContent','dialogPrimary','dialogSecondary','noteCjkFont','noteLatinFont','noteWeight','noteAlign','noteColor','titlebarColor','dividerLabel','dividerColor','dividerAccent'].forEach((id) => bindValue(id, id));
-['noiseAmount','grainSize','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','noteSize','noteLineHeight','noteLetterSpacing','noteWidth','notePadding','dividerThickness'].forEach((id) => bindValue(id, id, 'input', Number));
+['noiseAmount','grainSize','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','noteSize','noteLineHeight','noteLetterSpacing','noteWidth','notePadding','dividerProgress','dividerSegments'].forEach((id) => bindValue(id, id, 'input', Number));
 $('#safeCenter').checked = state.safeCenter;
 $('#safeCenter').addEventListener('change', (event) => { state.safeCenter = event.target.checked; render(); });
 $('#noteShadow').checked = state.noteShadow;
@@ -683,7 +685,7 @@ exportButton.addEventListener('click', async () => {
       : await window.htmlToImage.toPng(stage, { pixelRatio: 1, cacheBust: true, backgroundColor: null });
     const link = document.createElement('a');
     const noteSlug = noteLayoutSlugs[state.noteLayout];
-    const slug = state.asset === 'divider' ? `divider-${state.dividerStyle}` : state.asset === 'notepad' ? noteSlug : backgroundPresetSlugs[state.backgroundPreset];
+    const slug = state.asset === 'divider' ? 'progress-98' : state.asset === 'notepad' ? noteSlug : backgroundPresetSlugs[state.backgroundPreset];
     link.download = `${slug}.png`;
     link.href = dataUrl;
     link.click();

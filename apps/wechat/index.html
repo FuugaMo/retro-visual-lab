@@ -104,19 +104,14 @@
         </section>
 
         <section class="control-section" data-controls="divider" hidden>
-          <div class="section-title">03 / 分割线素材</div>
-          <div class="divider-presets">
-            <button class="preset active" data-divider="signal" type="button"><span class="mini-signal"></span>SIGNAL</button>
-            <button class="preset" data-divider="pixel" type="button"><span class="mini-pixel"></span>PIXEL</button>
-            <button class="preset" data-divider="spectrum" type="button"><span class="mini-spectrum"></span>SPECTRUM</button>
-            <button class="preset" data-divider="chrome" type="button"><span class="mini-chrome"></span>CHROME</button>
-          </div>
-          <label class="field-stack"><span>中间文字（可留空）</span><input id="dividerLabel" class="win-input" type="text" value="TRANSPARENT PHENOLPHTHALEIN" /></label>
+          <div class="section-title">03 / Progress 98</div>
+          <label class="field-stack"><span>进度 <output id="dividerProgressValue">64%</output></span><input id="dividerProgress" type="range" min="0" max="100" value="64" /></label>
+          <label class="field-stack"><span>方块数量 <output id="dividerSegmentsValue">16</output></span><input id="dividerSegments" type="range" min="8" max="24" value="16" /></label>
+          <label class="field-stack"><span>右侧文字（留空自动显示百分比）</span><input id="dividerLabel" class="win-input" type="text" value="" placeholder="64%" /></label>
           <div class="two-col">
-            <label class="field-stack"><span>主色</span><input id="dividerColor" class="win-input color-input" type="color" value="#1d4f86" /></label>
-            <label class="field-stack"><span>强调色</span><input id="dividerAccent" class="win-input color-input" type="color" value="#ec6f91" /></label>
+            <label class="field-stack"><span>已完成</span><input id="dividerColor" class="win-input color-input" type="color" value="#000080" /></label>
+            <label class="field-stack"><span>未完成</span><input id="dividerAccent" class="win-input color-input" type="color" value="#c0c0c0" /></label>
           </div>
-          <label class="field-stack"><span>线条粗细 <output id="dividerThicknessValue">4px</output></span><input id="dividerThickness" type="range" min="1" max="12" value="4" /></label>
         </section>
 
         <div class="export-box">
