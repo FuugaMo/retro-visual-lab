@@ -3,6 +3,10 @@ const scaler = document.querySelector('#stageScaler');
 const viewport = document.querySelector('#previewViewport');
 const status = document.querySelector('#appStatus');
 const exportButton = document.querySelector('#exportButton');
+const PAPER_WIDTH = 1080;
+const PAPER_HEIGHT = 2400;
+const FIELD_WIDTH = 360;
+const FIELD_HEIGHT = 800;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -13,7 +17,7 @@ const backgroundPresets = {
   liquidChrome: { paperColor: '#f5f4ef', noiseAmount: 13, grainSize: 1, washAmount: 82, scanlineAmount: 8, rgbSplit: 10, bloomAmount: 28, vignetteAmount: 3, tearAmount: 1, safeCenter: false },
   tubeBloom: { paperColor: '#141217', noiseAmount: 9, grainSize: 2, washAmount: 58, scanlineAmount: 25, rgbSplit: 8, bloomAmount: 58, vignetteAmount: 40, tearAmount: 2, safeCenter: false },
 };
-const backgroundPresetSlugs = { signalGhost: 'signal-ghost', liquidChrome: 'liquid-chrome', tubeBloom: 'tube-bloom' };
+const backgroundPresetSlugs = { signalGhost: 'signal-ghost-seamless', liquidChrome: 'liquid-chrome-seamless', tubeBloom: 'tube-bloom-seamless' };
 const hasValidSavedBackground = Boolean(backgroundPresets[saved.backgroundPreset]);
 const initialBackgroundPreset = hasValidSavedBackground ? saved.backgroundPreset : 'signalGhost';
 const initialBackground = backgroundPresets[initialBackgroundPreset];
@@ -118,10 +122,15 @@ function gaussian(value, center, spread) {
   return Math.exp(-((value - center) ** 2) / (2 * spread * spread));
 }
 
+function periodicGaussian(value, center, spread, period = 2) {
+  const wrapped = ((value - center + period / 2) % period + period) % period - period / 2;
+  return Math.exp(-(wrapped ** 2) / (2 * spread * spread));
+}
+
 function paintField(context, renderer) {
   const field = document.createElement('canvas');
-  field.width = 360;
-  field.height = 480;
+  field.width = FIELD_WIDTH;
+  field.height = FIELD_HEIGHT;
   const fieldContext = field.getContext('2d');
   const image = fieldContext.createImageData(field.width, field.height);
   const random = seededRandom(state.washSeed);
@@ -155,12 +164,13 @@ function drawSignalGhost(context) {
     let r = base[0] + 2;
     let g = base[1] + 5;
     let b = base[2] + 15;
-    const column = gaussian(x, 0, .43) * (.35 + .22 * Math.cos(y * 7 + phase));
+    const loop = Math.PI * (y + 1);
+    const column = gaussian(x, 0, .43) * (.35 + .22 * Math.cos(loop * 4 + phase));
     r += 14 * column; g += 42 * column; b += 78 * column;
     for (const [cy, sy, hue, power, skew] of bands) {
-      const shiftedX = x - skew * Math.sin((y - cy) * 9 + phase);
-      const glow = gaussian(y, cy, sy) * gaussian(shiftedX, 0, .52 + sy) * power * strength;
-      const spectral = hsvToRgb(hue + x * 95 + y * 24, .78, 1);
+      const shiftedX = x - skew * Math.sin((y - cy) * Math.PI * 4 + phase);
+      const glow = periodicGaussian(y, cy, sy) * gaussian(shiftedX, 0, .52 + sy) * power * strength;
+      const spectral = hsvToRgb(hue + x * 95 + Math.sin(loop) * 24, .78, 1);
       r += spectral[0] * glow;
       g += spectral[1] * glow;
       b += spectral[2] * glow;
@@ -177,16 +187,19 @@ function drawLiquidChrome(context) {
   const strength = Number(state.washAmount) / 100;
   const base = hexToRgb(state.paperColor);
   paintField(context, (x, y, phase, random) => {
-    const warpX = x + (.20 + strength * .17) * Math.sin(y * 3.2 + Math.sin(x * 2.1 + phase)) + .07 * Math.sin(y * 9 - phase);
-    const warpY = y + (.14 + strength * .12) * Math.sin(x * 2.7 - Math.cos(y * 2.6 - phase)) + .06 * Math.cos(x * 8 + phase);
+    const loop = Math.PI * (y + 1);
+    const loopSin = Math.sin(loop);
+    const loopCos = Math.cos(loop);
+    const warpX = x + (.20 + strength * .17) * Math.sin(loop * 2 + Math.sin(x * 2.1 + phase)) + .07 * Math.sin(loop * 5 - phase);
+    const warpY = loopSin * .78 + loopCos * .26 + (.14 + strength * .12) * Math.sin(x * 2.7 - loopCos * 1.4 - phase) + .06 * Math.cos(x * 8 + phase);
     const field = Math.sin(warpX * 3.35 + 2.35 * Math.sin(warpY * 2.25 + phase))
       + .66 * Math.sin(warpY * 4.1 - 1.9 * Math.cos(warpX * 2.5 - phase));
     const dark = smoothstep(.18, .72, field);
     const boundary = Math.exp(-Math.abs(field - .12) * 2.75);
     const innerBand = Math.exp(-Math.abs(field - .54) * 8.5);
-    const stripe = (.45 + .55 * Math.sin(field * 42 + x * 6 - y * 4 + phase)) * boundary;
+    const stripe = (.45 + .55 * Math.sin(field * 42 + x * 6 - loopSin * 4 + phase)) * boundary;
     const contour = (.5 + .5 * Math.cos((field - .12) * 34)) * Math.exp(-Math.abs(field - .28) * 1.45);
-    const spectral = hsvToRgb(190 + (field - .12) * 520 + y * 85 + phase * 18, .88, 1);
+    const spectral = hsvToRgb(190 + (field - .12) * 520 + loopSin * 85 + phase * 18, .88, 1);
     const shadow = [15, 20, 42];
     const iridescence = clamp(boundary * .52 + innerBand * .86 + stripe * .34 + contour * .48, 0, 1);
     const paper = 1 - dark;
@@ -204,13 +217,14 @@ function drawTubeBloom(context) {
   const base = hexToRgb(state.paperColor);
   const bands = [[-.78,24,.15],[-.52,170,.13],[-.27,320,.11],[-.02,48,.18],[.26,195,.15],[.51,310,.12],[.76,32,.17]];
   paintField(context, (x, y, phase, random) => {
+    const loop = Math.PI * (y + 1);
     const curveY = y + .19 * x * x + .025 * Math.sin(x * 7 + phase);
     const tube = Math.max(0, 1 - Math.abs(x) ** 2.2);
     let r = base[0] * .45 + 10;
     let g = base[1] * .45 + 8;
     let b = base[2] * .45 + 12;
     for (const [cy, hue, spread] of bands) {
-      const glow = gaussian(curveY, cy, spread) * (.58 + .42 * tube) * strength;
+      const glow = periodicGaussian(curveY, cy, spread) * (.58 + .42 * tube) * strength;
       const spectral = hsvToRgb(hue + x * 72, .55, 1);
       r += spectral[0] * glow;
       g += spectral[1] * glow;
@@ -218,7 +232,7 @@ function drawTubeBloom(context) {
       const core = Math.max(0, glow - .35) * 185;
       r += core; g += core; b += core;
     }
-    const centralBloom = gaussian(x, 0, .48) * (.20 + .18 * Math.cos(curveY * 10 + phase));
+    const centralBloom = gaussian(x, 0, .48) * (.20 + .18 * Math.cos(loop * 3 + x * x * 2 + phase));
     r += 155 * centralBloom; g += 170 * centralBloom; b += 145 * centralBloom;
     const sideFalloff = Math.pow(Math.abs(x), 2.2) * 190;
     const grain = (random() - .5) * 11;
@@ -249,8 +263,9 @@ function addTears(context, width, height) {
   source.width = width; source.height = height;
   source.getContext('2d').drawImage(context.canvas, 0, 0);
   const random = seededRandom(state.washSeed + 887);
+  const margin = Math.min(80, height * .04);
   for (let index = 0; index < tearCount; index += 1) {
-    const y = Math.floor(random() * (height - 45));
+    const y = Math.floor(margin + random() * (height - margin * 2 - 45));
     const bandHeight = 3 + Math.floor(random() * 26);
     const offset = Math.round((random() - .5) * (50 + Number(state.rgbSplit) * 12));
     context.drawImage(source, 0, y, width, bandHeight, offset, y, width, bandHeight);
@@ -293,26 +308,41 @@ function addFinish(context, width, height) {
   if (bloom > 0) {
     context.save();
     context.globalCompositeOperation = 'screen';
-    const glow = context.createRadialGradient(width * .5, height * .48, 20, width * .5, height * .48, height * .54);
-    glow.addColorStop(0, `rgba(255,255,245,${bloom * .22})`);
-    glow.addColorStop(.45, `rgba(96,211,225,${bloom * .07})`);
+    const glow = context.createLinearGradient(0, 0, width, 0);
+    glow.addColorStop(0, 'rgba(255,255,255,0)');
+    glow.addColorStop(.3, `rgba(96,211,225,${bloom * .07})`);
+    glow.addColorStop(.5, `rgba(255,255,245,${bloom * .22})`);
+    glow.addColorStop(.7, `rgba(96,211,225,${bloom * .07})`);
     glow.addColorStop(1, 'rgba(255,255,255,0)');
     context.fillStyle = glow; context.fillRect(0, 0, width, height);
     context.restore();
   }
   const vignette = Number(state.vignetteAmount) / 100;
   if (vignette > 0) {
-    const shade = context.createRadialGradient(width / 2, height / 2, height * .22, width / 2, height / 2, height * .72);
-    shade.addColorStop(0, 'rgba(0,0,4,0)');
-    shade.addColorStop(.68, `rgba(0,0,5,${vignette * .18})`);
+    const shade = context.createLinearGradient(0, 0, width, 0);
+    shade.addColorStop(0, `rgba(0,0,5,${vignette * .95})`);
+    shade.addColorStop(.22, `rgba(0,0,5,${vignette * .18})`);
+    shade.addColorStop(.5, 'rgba(0,0,4,0)');
+    shade.addColorStop(.78, `rgba(0,0,5,${vignette * .18})`);
     shade.addColorStop(1, `rgba(0,0,5,${vignette * .95})`);
     context.fillStyle = shade; context.fillRect(0, 0, width, height);
   }
 }
 
+function rotateToSeamlessVerticalTile(context, width, height) {
+  const source = document.createElement('canvas');
+  source.width = width;
+  source.height = height;
+  source.getContext('2d').drawImage(context.canvas, 0, 0);
+  const split = Math.floor(height / 2);
+  context.clearRect(0, 0, width, height);
+  context.drawImage(source, 0, split, width, height - split, 0, 0, width, height - split);
+  context.drawImage(source, 0, 0, width, split, 0, height - split, width, split);
+}
+
 function makePaperDataUrl() {
-  const width = 1080;
-  const height = 1440;
+  const width = PAPER_WIDTH;
+  const height = PAPER_HEIGHT;
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const context = canvas.getContext('2d');
@@ -323,6 +353,7 @@ function makePaperDataUrl() {
   addTears(context, width, height);
   addRaster(context, width, height);
   addFinish(context, width, height);
+  rotateToSeamlessVerticalTile(context, width, height);
   return canvas.toDataURL('image/png');
 }
 
@@ -376,9 +407,9 @@ function render() {
     paperImage.src = paperDataUrl;
     paperImage.alt = '';
     stage.replaceChildren(paperImage);
-    $('#previewDimensions').textContent = '1080 × 1440';
+    $('#previewDimensions').textContent = `${PAPER_WIDTH} × ${PAPER_HEIGHT}`;
     $('#exportName').textContent = `${backgroundPresetSlugs[state.backgroundPreset].toUpperCase()}.PNG`;
-    $('#exportHint').textContent = '1080 × 1440 · 不透明背景';
+    $('#exportHint').textContent = `${PAPER_WIDTH} × ${PAPER_HEIGHT} · 上下无缝`;
   } else if (state.asset === 'notepad') {
     stage.classList.add('note-artboard');
     stage.innerHTML = notepadMarkup();
