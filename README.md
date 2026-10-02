@@ -5,7 +5,7 @@ A dependency-free browser workstation combining four local image tools:
 - **Win98 Layout**: arrange editable Win98-style event widgets over the bundled default poster or an uploaded image, with full-state restore and two persistent snapshots.
 - **CRT Processor**: apply real-time WebGL CRT simulation, distortion, signal artifacts, and color adjustments, with source-image-aware snapshots.
 - **Invitation Maker**: personalize a Win98 invitation card and export the live CRT-rendered result.
-- **WeChat Assets**: create 1080 × 2400 vertically seamless CRT backgrounds, including a single-layer uniformly distributed monochrome TV Static texture, editable Win98 Editorial, Line Up, and Band Index windows, and transparent divider graphics.
+- **WeChat Assets**: create 1080 × 2400 vertically seamless CRT backgrounds, including uniform monochrome TV Static, plus editable Win98 Notepad, two-button Dialog, Paint 98, and transparent divider graphics.
 
 All image processing happens locally in the browser. Uploaded images are not sent to a server.
 
