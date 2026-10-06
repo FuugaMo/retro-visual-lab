@@ -30,7 +30,7 @@ const controlSchema = [
   {
     title: 'DISPLAY / 显示结构',
     controls: [
-      ['scanline', '扫描线', 0, 1, 0.01, 0.34, ''],
+      ['scanline', '竖向扫描线', 0, 1, 0.01, 0.34, ''],
       ['scanDensity', '扫描密度', 0.35, 1.5, 0.01, 0.86, '×'],
       ['mask', '荧光栅格', 0, 1, 0.01, 0.16, ''],
       ['bloom', '像素辉光', 0, 1.5, 0.01, 0.22, ''],
@@ -233,7 +233,7 @@ void main() {
     color *= u_brightness;
     color += vec3(u_tint * .055, u_tint * .016, -u_tint * .048);
 
-    float scanPhase = gl_FragCoord.y * 3.14159265 * u_scanDensity;
+    float scanPhase = gl_FragCoord.x * 3.14159265 * u_scanDensity;
     float scan = .5 + .5 * sin(scanPhase);
     color *= 1.0 - u_scanline * (.18 + scan * .48);
 
