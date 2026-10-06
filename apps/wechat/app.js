@@ -12,6 +12,15 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 const saved = JSON.parse(localStorage.getItem('wechat-asset-factory') || '{}');
 
+function parsePaintRatio(value) {
+  const match = String(value).trim().match(/^(\d+(?:\.\d+)?)\s*[:：/]\s*(\d+(?:\.\d+)?)$/);
+  if (!match) return null;
+  const width = Number(match[1]);
+  const height = Number(match[2]);
+  if (!width || !height || height / width < .25 || height / width > 4) return null;
+  return { label: `${match[1]}:${match[2]}`, width, height };
+}
+
 const backgroundPresets = {
   signalGhost: { paperColor: '#030611', noiseAmount: 22, grainSize: 1, washAmount: 68, scanlineAmount: 28, rgbSplit: 8, bloomAmount: 48, vignetteAmount: 34, tearAmount: 5, safeCenter: false },
   liquidChrome: { paperColor: '#f5f4ef', noiseAmount: 13, grainSize: 1, washAmount: 82, scanlineAmount: 8, rgbSplit: 10, bloomAmount: 28, vignetteAmount: 3, tearAmount: 1, safeCenter: false },
@@ -62,6 +71,7 @@ const state = {
   noteContent: saved.noteContent || noteLayoutDefaults.editorial.content,
   dialogPrimary: saved.dialogPrimary || 'Ok',
   dialogSecondary: saved.dialogSecondary || 'Cancel',
+  paintRatio: parsePaintRatio(saved.paintRatio)?.label || '3:2',
   noteCjkFont: saved.noteCjkFont || ({ pixel: 'fusion10', sans: 'pingfang', serif: 'songti', mono: 'fusion12mono' }[saved.noteFont] || 'fusion10'),
   noteLatinFont: saved.noteLatinFont || ({ pixel: 'pixelms', sans: 'helvetica', serif: 'georgia', mono: 'monaco' }[saved.noteFont] || 'pixelms'),
   noteSize: saved.noteSize ?? 34,
@@ -585,6 +595,12 @@ function render() {
     } else if (state.noteLayout === 'dialog') {
       stage.querySelector('.dialog-primary').textContent = state.dialogPrimary;
       stage.querySelector('.dialog-secondary').textContent = state.dialogSecondary;
+    } else if (state.noteLayout === 'painter') {
+      const paintCanvas = stage.querySelector('.paint-canvas');
+      const paintRatio = parsePaintRatio(state.paintRatio);
+      const paintHeight = Math.round(paintCanvas.offsetWidth * paintRatio.height / paintRatio.width);
+      stage.querySelector('.paint-workbench').style.height = `${paintHeight + 45}px`;
+      $('#paintRatioHint').textContent = `棋盘格画布 ${paintCanvas.offsetWidth} × ${paintCanvas.offsetHeight}px · 导出窗口随比例调整`;
     }
     stage.style.height = `${Math.max(500, windowElement.offsetHeight + 152)}px`;
     $('#previewDimensions').textContent = `1080 × ${Math.round(parseFloat(stage.style.height))}`;
@@ -620,6 +636,8 @@ function fitStage() {
 }
 
 function updateOutputs() {
+  $('#paintRatio').value = state.paintRatio;
+  $('#paintRatio').removeAttribute('aria-invalid');
   $('#noiseValue').textContent = `${state.noiseAmount}%`;
   $('#grainValue').textContent = `${state.grainSize}px`;
   $('#washValue').textContent = `${state.washAmount}%`;
@@ -638,6 +656,7 @@ function updateOutputs() {
   });
   $$('[data-note-editorial]').forEach((element) => { element.hidden = state.noteLayout !== 'editorial'; });
   $$('[data-note-dialog]').forEach((element) => { element.hidden = state.noteLayout !== 'dialog'; });
+  $$('[data-note-painter]').forEach((element) => { element.hidden = state.noteLayout !== 'painter'; });
   ['noteTitle','noteContent','dialogPrimary','dialogSecondary'].forEach((id) => {
     if ($(`#${id}`).value !== String(state[id])) $(`#${id}`).value = state[id];
   });
@@ -678,6 +697,31 @@ $$('.note-layout-preset').forEach((button) => button.addEventListener('click', (
   state.noteWidth = nextDefaults.width;
   render();
 }));
+
+$('#paintRatio').addEventListener('input', (event) => {
+  const parsed = parsePaintRatio(event.target.value);
+  if (!parsed) {
+    event.target.setAttribute('aria-invalid', 'true');
+    $('#paintRatioHint').textContent = '请输入有效的宽:高比例（支持 4:1 至 1:4）。';
+    return;
+  }
+  state.paintRatio = parsed.label;
+  render();
+});
+$('#paintRatio').addEventListener('blur', (event) => {
+  const parsed = parsePaintRatio(event.target.value);
+  if (!parsed) {
+    event.target.value = state.paintRatio;
+    event.target.setAttribute('aria-invalid', 'true');
+    $('#paintRatioHint').textContent = '请输入有效的宽:高比例（支持 4:1 至 1:4）。';
+    return;
+  }
+  state.paintRatio = parsed.label;
+  render();
+});
+$('#paintRatio').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') event.target.blur();
+});
 
 ['paperColor','noteTitle','noteContent','dialogPrimary','dialogSecondary','noteCjkFont','noteLatinFont','noteWeight','noteAlign','noteColor','titlebarColor','dividerLabel','dividerColor','dividerAccent'].forEach((id) => bindValue(id, id));
 ['noiseAmount','grainSize','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','noteSize','noteLineHeight','noteLetterSpacing','noteWidth','notePadding','dividerProgress','dividerSegments'].forEach((id) => bindValue(id, id, 'input', Number));

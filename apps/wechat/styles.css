@@ -67,6 +67,7 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .font-preview .cjk-sample { font-size:19px; white-space:nowrap; }
 .font-preview .latin-sample { color:#284b6f; font-size:15px; white-space:nowrap; }
 .local-hint { margin:7px 0 0; line-height:1.35; }
+.paint-ratio-hint { margin:-5px 0 12px; }
 .check-row { display:flex; gap:8px; align-items:center; margin:4px 0 13px; font-size:12px; }
 .win-button { min-height:32px; padding:6px 11px; border:0; background:var(--chrome); box-shadow:inset 2px 2px #fff,inset -2px -2px #111,inset -3px -3px #777; }
 .win-button:active,.win-button.pressed { box-shadow:inset 2px 2px #111,inset -2px -2px #fff; transform:translate(1px,1px); }
@@ -107,7 +108,7 @@ input[type="range"] { width:100%; accent-color:var(--blue); }
 .paint-app-icon { width:25px; height:25px; display:grid; place-items:center; overflow:hidden; background:#fff; border:1px solid #111; font-size:16px; }
 .painter-menu { height:34px; gap:22px; font-size:17px; }
 .paint-workbench { height:560px; display:grid; grid-template-columns:118px 1fr; gap:5px; padding:4px; background:#c0c0c0; }
-.paint-toolbar { display:grid; grid-template-rows:auto 1fr; gap:8px; min-width:0; }
+.paint-toolbar { display:grid; grid-template-rows:auto 1fr; gap:8px; min-width:0; min-height:0; overflow:hidden; }
 .paint-tools { display:grid; grid-template-columns:1fr 1fr; gap:2px; align-content:start; }
 .paint-tool { height:44px; display:grid; place-items:center; overflow:hidden; color:#111; background:#c0c0c0; box-shadow:inset 2px 2px #fff,inset -2px -2px #111; font:24px/1 Georgia,serif; font-style:normal; }
 .paint-tool.selected { background:#fff; box-shadow:inset 2px 2px #111,inset -2px -2px #fff; }
