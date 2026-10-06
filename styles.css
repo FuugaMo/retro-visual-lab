@@ -113,3 +113,6 @@ button { font: inherit; color: inherit; }
   .lab-tab { flex: 1; display: flex; justify-content: center; }
   .lab-tab b { font-size: 9px; }
 }
+
+/* Keep all five tools accessible on laptops. */
+@media (min-width:841px) and (max-width:1500px){.lab-header{grid-template-columns:190px minmax(0,1fr)}.lab-status{display:none}.lab-brand strong{font-size:18px}.lab-tabs{overflow-x:auto}.lab-tab{min-width:140px;flex:1}}

@@ -1,5 +1,6 @@
 const tabs = [...document.querySelectorAll('[data-tab]')];
 const panels = {
+  paperplay: document.querySelector('#paperplayPanel'),
   layout: document.querySelector('#layoutPanel'),
   crt: document.querySelector('#crtPanel'),
   invitation: document.querySelector('#invitationPanel'),
@@ -16,6 +17,7 @@ function selectTab(name, updateHash = true) {
   });
   Object.entries(panels).forEach(([key, panel]) => {
     panel.hidden = key !== next;
+    if(key!==next) panel.querySelector('iframe')?.contentWindow.postMessage({type:'retro-pause-media'},location.origin);
     panel.classList.toggle('active', key === next);
   });
   if (updateHash) history.replaceState(null, '', `#${next}`);
