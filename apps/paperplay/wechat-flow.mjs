@@ -29,11 +29,22 @@ export function auditFlowInsertion(before,after,inserted){
  for(const [label,pattern] of [
   ['连续底图',/background-image\s*:/gi],
   ['SVG 排版',/<svg\b/gi],
+  ['素材叠层',/<foreignObject\b/gi],
+  ['文字素材',/<text\b/gi],
   ['图片素材',/<img\b/gi],
   ['媒体插入点',/data-paperplay-slot\s*=/gi],
  ]){
   const expected=count(inserted,pattern),actual=count(after,pattern)-count(before,pattern);
   if(expected>actual)missing.push(`${label} ${Math.max(0,actual)}/${expected}`);
  }
+ const boxes=html=>[...String(html||'').matchAll(/<svg\b[^>]*\bviewBox\s*=\s*["']([^"']+)["']/gi)].map(match=>match[1].trim().replace(/\s+/g,' '));
+ const expected=boxes(inserted),beforeBoxes=boxes(before),afterBoxes=boxes(after);
+ let retained=0;
+ for(const box of new Set(expected)){
+  const needed=expected.filter(value=>value===box).length;
+  const added=afterBoxes.filter(value=>value===box).length-beforeBoxes.filter(value=>value===box).length;
+  retained+=Math.min(needed,Math.max(0,added));
+ }
+ if(retained<expected.length)missing.push(`画布高度 ${retained}/${expected.length}`);
  return missing;
 }

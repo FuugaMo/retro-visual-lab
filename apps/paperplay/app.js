@@ -205,7 +205,7 @@ async function ensureWechatBackgroundSlices(){
 }
 async function autoWechatInsert(mode='classic'){
  if(mode!=='flow')mode=state.layers.some(layer=>layer.type==='media'||layer.type==='music')?'flow':'classic';
- if(!confirm('将把本工程的图片上传到当前登录的微信公众号素材库，并把生成的排版插入正在编辑的正文。插入前会自动备份正文，最后仍由你检查并保存草稿。'))return;
+ if(!confirm('请先切到新建的空白公众号图文草稿。本操作会上传图片，并在当前光标处追加整篇排版，不会替换或清理现有正文；如果草稿已有内容，会出现重复。插入前会自动备份，最后仍需你检查并保存。确认当前是空白草稿并继续吗？'))return;
  const button=$(mode==='flow'?'#flowAuto':'#autoWechat'),setStatus=text=>{const e=$('#autoWechatStatus');if(e)e.textContent=text;toast(text)};button.disabled=true;let session=false;
  try{
   setStatus('正在连接公众号编辑器…');const ping=await extensionRequest('PING');if(!ping?.ok)throw Error(ping?.error||'未连接公众号编辑器');

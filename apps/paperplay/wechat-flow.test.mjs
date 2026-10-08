@@ -30,8 +30,8 @@ test('canvas media layers become export slots at their saved coordinates',()=>{
 
 test('audits what WeChat actually retained after insertion',()=>{
  const before='<p>原有内容</p><svg></svg>';
- const inserted='<section style="background-image:url(x)"><svg><foreignObject><img src="x"></foreignObject></svg><p data-paperplay-slot="music">在此插入音乐</p></section>';
+ const inserted='<section style="background-image:url(x)"><svg viewBox="0 0 1080 400"><foreignObject><img src="x"></foreignObject><text>标题</text></svg><p data-paperplay-slot="music">在此插入音乐</p></section>';
  assert.deepEqual(auditFlowInsertion(before,before+inserted,inserted),[]);
- const stripped='<section><svg></svg><p>在此插入音乐</p></section>';
- assert.deepEqual(auditFlowInsertion(before,before+stripped,inserted),['连续底图 0/1','图片素材 0/1','媒体插入点 0/1']);
+ const stripped='<section><svg viewBox="0 0 1080 200"></svg><p>在此插入音乐</p></section>';
+ assert.deepEqual(auditFlowInsertion(before,before+stripped,inserted),['连续底图 0/1','素材叠层 0/1','文字素材 0/1','图片素材 0/1','媒体插入点 0/1','画布高度 0/1']);
 });
