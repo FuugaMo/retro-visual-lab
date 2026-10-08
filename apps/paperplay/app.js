@@ -35,7 +35,28 @@ function backgroundLayout(){
 function backgroundHTML(){return backgroundLayout().map(({asset,y,height})=>`<img class="background" alt="${esc(asset.name)}" src="${esc(asset.src)}" style="top:${y}px;height:${height}px;bottom:auto;display:block;">`).join('')}
 function sizeFromSlices(){if(state.backgroundSlices?.length)state.height=Math.max(320,Math.round(state.backgroundSlices.reduce((n,a)=>n+a.height*state.width/a.width,0)))}
 function renderSlices(){const host=$('#sliceList');if(!host)return;const slices=state.backgroundSlices||[];host.innerHTML=slices.map((a,i)=>`<div class="image-row"><span title="${esc(a.name)}">${i+1}. ${esc(a.name)}</span><button data-slice-up="${i}" ${i===0?'disabled':''} aria-label="底图上移">↑</button><button data-slice-down="${i}" ${i===slices.length-1?'disabled':''} aria-label="底图下移">↓</button><button data-slice-remove="${i}" aria-label="删除底图切片">×</button></div>`).join('');
+ const sourceCount=(state.background?1:0)+slices.length;$('#splitBgBtn').disabled=sourceCount!==1;$('#splitBgBtn').title=sourceCount>1?'当前底图已经由多张切片组成':sourceCount?'将当前长底图自动裁成无缝分段':'请先导入一张长底图';
  for(const action of ['up','down','remove'])$$(`[data-slice-${action}]`).forEach(b=>b.onclick=()=>{commit();const i=Number(b.getAttribute(`data-slice-${action}`));if(action==='remove')slices.splice(i,1);else{const j=i+(action==='up'?-1:1);[slices[i],slices[j]]=[slices[j],slices[i]]}sizeFromSlices();state.layers.forEach(clampLayer);render();changed()});
+}
+let splitBgResult=[];
+const backgroundSource=()=>state.backgroundSlices?.length===1?state.backgroundSlices[0]:!state.backgroundSlices?.length?state.background:null;
+const blobData=blob=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob)});
+const canvasBlob=(canvas,type)=>new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('无法生成分段图片')),type,type==='image/jpeg'?.9:undefined));
+function renderSplitResults(){const host=$('#splitBgResults');host.innerHTML=splitBgResult.map((part,i)=>`<div class="split-result"><img src="${esc(part.asset.src)}" alt="第 ${i+1} 段预览"><span><b>${esc(part.asset.name)}</b><small>${part.asset.width} × ${part.asset.height} · ${(part.blob.size/1024).toFixed(0)} KB</small></span><button data-download-bg-slice="${i}">下载</button></div>`).join('');$$('[data-download-bg-slice]').forEach(b=>b.onclick=()=>{const part=splitBgResult[Number(b.dataset.downloadBgSlice)];download(part.asset.name,part.blob)});$('#downloadAllBgSlices').disabled=!splitBgResult.length;$('#applyBgSlices').disabled=!splitBgResult.length}
+async function generateBackgroundSlices(){
+ const source=backgroundSource();if(!source)throw Error(state.backgroundSlices?.length>1?'当前底图已经是多张切片，请撤销或重新导入一张长底图':'请先导入一张长底图');
+ const img=await loadImg(source.src),format=$('#splitFormat').value,extension=format==='image/png'?'png':'jpg',outputWidth=clamp(Math.round(Number($('#splitWidth').value)||Math.min(state.width,1080)),320,2160),maxHeight=clamp(Math.round(Number($('#splitHeight').value)||1800),200,8000),targetBytes=clamp(Math.round(Number($('#splitKB').value)||900),100,10240)*1024,totalHeight=Math.max(1,Math.round(state.height*outputWidth/state.width)),base=(source.name||filename()).replace(/\.[^.]+$/,'')||'background';
+ $('#splitWidth').value=outputWidth;$('#splitHeight').value=maxHeight;splitBgResult=[];renderSplitResults();let y=0,index=1;
+ while(y<totalHeight){
+  let height=Math.min(maxHeight,totalHeight-y),blob,canvas;
+  for(let attempt=0;attempt<10;attempt++){
+   $('#splitBgStatus').textContent=`正在生成第 ${index} 段 · ${Math.round(y/totalHeight*100)}%`;
+   canvas=document.createElement('canvas');canvas.width=outputWidth;canvas.height=height;const ctx=canvas.getContext('2d');if(format==='image/jpeg'){ctx.fillStyle=state.color;ctx.fillRect(0,0,outputWidth,height)}const sy=y/totalHeight*img.naturalHeight,sh=height/totalHeight*img.naturalHeight;ctx.drawImage(img,0,sy,img.naturalWidth,sh,0,0,outputWidth,height);blob=await canvasBlob(canvas,format);if(blob.size<=targetBytes||height<=120)break;const next=Math.max(120,Math.floor(height*Math.max(.35,targetBytes/blob.size*.92)));height=next>=height?Math.max(120,height-40):next;
+  }
+  if(blob.size>targetBytes)throw Error(`第 ${index} 段在最小高度下仍有 ${(blob.size/1024).toFixed(0)} KB，请降低输出宽度`);
+  const name=`${base}-${String(index).padStart(3,'0')}.${extension}`,src=await blobData(blob);splitBgResult.push({blob,asset:{id:uid(),name,src,url:'',width:outputWidth,height}});renderSplitResults();y+=height;index++;
+ }
+ const maxSize=Math.max(...splitBgResult.map(p=>p.blob.size));$('#splitBgStatus').textContent=`已生成 ${splitBgResult.length} 段 · 最大 ${(maxSize/1024).toFixed(0)} KB · 边界无重叠、无间隙`;
 }
 let appendSlices=false;
 function render(){syncSelection();stopMedia();$('#projectName').value=state.name;$('#boardW').value=state.width;$('#boardH').value=state.height;$('#boardColor').value=state.color;$('#sizeLabel').textContent=`${state.width} × ${state.height} PX`;$('#boardLabel').textContent=preview?'交互预览 / 网页效果':'画板 01 / 编辑模式';$('#board').style.width=state.width+'px';$('#board').style.height=state.height+'px';$('#board').style.background=state.color;$('#board').className=preview?'previewing':'editing';$('#board').innerHTML=backgroundHTML()+state.layers.map(layerHTML).join('');renderLayers();renderInspector();renderSlices();fit();if(preview)bindPreview();else bindDrag();$('#undoBtn').disabled=!history.length;$('#redoBtn').disabled=!future.length}
@@ -74,6 +95,10 @@ async function imageAsset(file){let src;if(file.type==='image/svg+xml'||/\.svg$/
 const loadImg=src=>new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>reject(Error('无法读取图片，请检查图片格式'));i.src=src});
 $('#bgBtn').onclick=()=>{appendSlices=false;$('#bgFile').click()};
 $('#appendSlices').onclick=()=>{appendSlices=true;$('#bgFile').click()};
+$('#splitBgBtn').onclick=()=>{const source=backgroundSource();if(!source){toast(state.backgroundSlices?.length>1?'当前底图已经是多张切片':'请先导入一张长底图');return}splitBgResult=[];renderSplitResults();$('#splitWidth').value=Math.min(state.width,1080);$('#splitBgStatus').textContent=`当前底图：${source.name} · ${state.width} × ${state.height}`;$('#splitBgDialog').showModal()};
+$('#generateBgSlices').onclick=async()=>{const button=$('#generateBgSlices');button.disabled=true;$('#downloadAllBgSlices').disabled=true;$('#applyBgSlices').disabled=true;try{await generateBackgroundSlices();toast(`已生成 ${splitBgResult.length} 张底图切片`)}catch(err){splitBgResult=[];renderSplitResults();$('#splitBgStatus').textContent=err.message;toast(err.message)}finally{button.disabled=false}};
+$('#downloadAllBgSlices').onclick=()=>{splitBgResult.forEach((part,i)=>setTimeout(()=>download(part.asset.name,part.blob),i*180));toast(`开始下载 ${splitBgResult.length} 张切片`)};
+$('#applyBgSlices').onclick=()=>{if(!splitBgResult.length)return;commit();state.background=null;state.backgroundSlices=splitBgResult.map(part=>structuredClone(part.asset));sizeFromSlices();state.layers.forEach(clampLayer);render();changed();$('#splitBgDialog').close();toast(`已用 ${state.backgroundSlices.length} 张无缝切片替换原底图，可撤销恢复`)};
 $('#bgFile').onchange=async e=>{const files=[...e.target.files].sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));if(!files.length)return;const append=appendSlices;appendSlices=false;$('#bgBtn').disabled=true;$('#appendSlices').disabled=true;try{
  const assets=[];for(let i=0;i<files.length;i++){toast(`读取底图 ${i+1} / ${files.length}`);assets.push(await imageAsset(files[i]))}
  let existing=state.backgroundSlices||[];if(append&&state.background&&!existing.length){const img=await loadImg(state.background.src);existing=[{...state.background,width:img.naturalWidth,height:img.naturalHeight}]}
