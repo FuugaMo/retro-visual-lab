@@ -2,6 +2,7 @@ import {playerHTML,playerSVG,bindPlayer} from './player.mjs';
 import {isEffect,normalizeEffect,effectHTML} from './effects.mjs';
 import {clamp,bounds,moveDelta,snapDelta,alignItems,imageRect} from './geometry.mjs';
 import {auditFlowInsertion,composeFlowHTML,flowSlots} from './wechat-flow.mjs';
+import {encodeWechatImage} from './image-upload.mjs';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>crypto.randomUUID();
@@ -195,11 +196,8 @@ async function optimizeWechatGif(blob,name,onProgress=()=>{}){
 async function uploadPayload(asset,onProgress){
  const safeBase=(asset.name||'paperplay-image').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|]/g,'_');
  if(/^data:image\/gif;base64,/i.test(asset.src)){const original=await (await fetch(asset.src)).blob(),result=await optimizeWechatGif(original,asset.name,onProgress);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:result.optimized?await blobData(result.blob):asset.src,optimization:result.optimized?`${result.method}：${fileSize(result.originalSize)} → ${fileSize(result.blob.size)}`:''}}
- const img=await loadImg(asset.src),limit=900*1024;let width=Math.min(img.naturalWidth,1080),blob,canvas;
- for(let attempt=0;attempt<8;attempt++){
-  const height=Math.max(1,Math.round(img.naturalHeight*width/img.naturalWidth));canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);blob=await canvasBlob(canvas,'image/png');if(blob.size<=limit)return {id:asset.id,name:safeBase+'.png',mime:'image/png',data:await blobData(blob)};if(width<=320)break;width=Math.max(320,Math.floor(width*.82));
- }
- const flat=document.createElement('canvas');flat.width=canvas.width;flat.height=canvas.height;const ctx=flat.getContext('2d');ctx.fillStyle=state.color;ctx.fillRect(0,0,flat.width,flat.height);ctx.drawImage(canvas,0,0);blob=await canvasBlob(flat,'image/jpeg');if(blob.size>limit)throw Error(`${asset.name} 无法压到 900KB 内，请先降低图片尺寸`);return {id:asset.id,name:safeBase+'.jpg',mime:'image/jpeg',data:await blobData(blob)}
+ const image=await loadImg(asset.src),encoded=await encodeWechatImage(image,{name:asset.name,background:state.color,preferPNG:!/^data:image\/jpe?g[;,]/i.test(asset.src)});
+ return {id:asset.id,name:safeBase+'.'+encoded.extension,mime:encoded.mime,data:await blobData(encoded.blob)}
 }
 async function ensureWechatBackgroundSlices(){
  if(state.backgroundRepeatHeight>0)return false;
