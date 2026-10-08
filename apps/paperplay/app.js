@@ -155,9 +155,18 @@ async function staticPNG(offset=0,height=state.height){
 async function gifFrameCount(blob){
  const bytes=new Uint8Array(await blob.arrayBuffer());if(bytes.length<13||String.fromCharCode(...bytes.slice(0,3))!=='GIF')throw Error('GIF 文件无效');let p=13,count=0,packed=bytes[10];if(packed&128)p+=3*(1<<((packed&7)+1));const skipBlocks=()=>{while(p<bytes.length){const size=bytes[p++];if(!size)return;p+=size}};while(p<bytes.length){const marker=bytes[p++];if(marker===59)break;if(marker===33){p++;skipBlocks();continue}if(marker!==44||p+9>bytes.length)throw Error('GIF 文件结构无效');count++;packed=bytes[p+8];p+=9;if(packed&128)p+=3*(1<<((packed&7)+1));p++;skipBlocks()}return count
 }
-async function uploadPayload(asset){
+const fileSize=n=>n>=1_000_000?(n/1_000_000).toFixed(2)+'MB':Math.ceil(n/1000)+'KB';
+let gifsicleEngine;
+async function optimizeWechatGif(blob,name,onProgress=()=>{}){
+ const frames=await gifFrameCount(blob);if(frames>300)throw Error(`${name} 有 ${frames} 帧，超过公众号 GIF 的 300 帧上限，请先减帧`);const target=9_700_000;if(blob.size<=target)return {blob,frames,optimized:false};
+ onProgress(`${name} 为 ${fileSize(blob.size)}，正在载入本地 GIF 压缩器…`);gifsicleEngine||=import('./vendor/gifsicle.min.js').then(m=>m.default||m);const gifsicle=await gifsicleEngine;
+ const presets=[['无损优化','-O1'],['轻微压缩','-O1 --lossy=20'],['轻度压缩','-O1 --lossy=35'],['均衡压缩','-O1 --lossy=55'],['增强压缩','-O1 --lossy=75'],['高压缩','-O1 --lossy=95'],['缩放 95%','-O1 --lossy=55 --scale 0.95'],['缩放 90%','-O1 --lossy=55 --scale 0.90'],['缩放 85%','-O1 --lossy=55 --scale 0.85'],['缩放 80%','-O1 --lossy=55 --scale 0.80'],['缩放 75%','-O1 --lossy=65 --scale 0.75']];let smallest=blob;
+ for(const [label,options] of presets){onProgress(`${name}：${label}，目标小于 9.7MB…`);const outputs=await gifsicle.run({input:[{file:blob,name:'input.gif'}],command:[`${options} input.gif -o /out/paperplay.gif`]});const candidate=outputs.find(f=>/paperplay\.gif$/i.test(f.name))||outputs[0];if(candidate?.size&&candidate.size<smallest.size)smallest=candidate;if(candidate?.size<=target)return {blob:candidate,frames,optimized:true,method:label,originalSize:blob.size};await new Promise(requestAnimationFrame)}
+ throw Error(`${name} 已从 ${fileSize(blob.size)} 压到 ${fileSize(smallest.size)}，仍超过安全上限 9.7MB；请缩短动画或降低原始尺寸`)
+}
+async function uploadPayload(asset,onProgress){
  const safeBase=(asset.name||'paperplay-image').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|]/g,'_');
- if(/^data:image\/gif;base64,/i.test(asset.src)){const blob=await (await fetch(asset.src)).blob();if(blob.size>10_000_000)throw Error(`${asset.name} 超过公众号 GIF 的 10MB 上限，请先压缩`);const frames=await gifFrameCount(blob);if(frames>300)throw Error(`${asset.name} 有 ${frames} 帧，超过公众号 GIF 的 300 帧上限，请先减帧`);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:asset.src}}
+ if(/^data:image\/gif;base64,/i.test(asset.src)){const original=await (await fetch(asset.src)).blob(),result=await optimizeWechatGif(original,asset.name,onProgress);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:result.optimized?await blobData(result.blob):asset.src,optimization:result.optimized?`${result.method}：${fileSize(result.originalSize)} → ${fileSize(result.blob.size)}`:''}}
  const img=await loadImg(asset.src),limit=900*1024;let width=Math.min(img.naturalWidth,1080),blob,canvas;
  for(let attempt=0;attempt<8;attempt++){
   const height=Math.max(1,Math.round(img.naturalHeight*width/img.naturalWidth));canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);blob=await canvasBlob(canvas,'image/png');if(blob.size<=limit)return {id:asset.id,name:safeBase+'.png',mime:'image/png',data:await blobData(blob)};if(width<=320)break;width=Math.max(320,Math.floor(width*.82));
@@ -173,7 +182,7 @@ async function autoWechatInsert(){
  try{
   setStatus('正在连接公众号编辑器…');const ping=await extensionRequest('PING');if(!ping?.ok)throw Error(ping?.error||'未连接公众号编辑器');
   if(await ensureWechatBackgroundSlices())setStatus(`长底图已自动裁成 ${state.backgroundSlices.length} 段`);
-  const assets=allAssets(),missing=assets.filter(a=>!wechatURL(a.url));if(missing.length){commit();const start=await extensionRequest('UPLOAD_START');if(!start?.ok)throw Error(start?.error||'无法打开微信图片上传窗口');session=true;for(let i=0;i<missing.length;i++){setStatus(`正在处理并上传图片 ${i+1} / ${missing.length}`);const payload=await uploadPayload(missing[i]),result=await extensionRequest('UPLOAD_ASSET',payload,90000);if(!result?.ok||!wechatURL(result.url))throw Error(result?.error||`${missing[i].name} 未取得微信图片地址`);missing[i].url=result.url}changed()}
+  const assets=allAssets(),missing=assets.filter(a=>!wechatURL(a.url));if(missing.length){commit();const start=await extensionRequest('UPLOAD_START');if(!start?.ok)throw Error(start?.error||'无法打开微信图片上传窗口');session=true;for(let i=0;i<missing.length;i++){setStatus(`正在处理并上传图片 ${i+1} / ${missing.length}`);const payload=await uploadPayload(missing[i],text=>{const e=$('#autoWechatStatus');if(e)e.textContent=text});if(payload.optimization)setStatus(`GIF 已${payload.optimization}`);const result=await extensionRequest('UPLOAD_ASSET',payload,180000);if(!result?.ok||!wechatURL(result.url))throw Error(result?.error||`${missing[i].name} 未取得微信图片地址`);missing[i].url=result.url}changed()}
   if(session){await extensionRequest('UPLOAD_FINISH').catch(()=>{});session=false}renderExport();setStatus('图片已上传，正在插入排版…');const inserted=await extensionRequest('INSERT',{html:wechatHTML(),label:`Paperplay · ${state.name}`},30000);if(!inserted?.ok)throw Error(inserted?.error||'公众号编辑器未接受排版');setStatus('已上传并插入公众号正文。请检查预览后保存草稿。')
  }catch(error){setStatus('自动导入中止：'+error.message)}finally{if(session)await extensionRequest('UPLOAD_FINISH').catch(()=>{});if($('#autoWechat'))$('#autoWechat').disabled=false}
 }
