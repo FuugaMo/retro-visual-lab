@@ -154,7 +154,7 @@ async function staticPNG(offset=0,height=state.height){
 }
 async function uploadPayload(asset){
  const safeBase=(asset.name||'paperplay-image').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|]/g,'_');
- if(/^data:image\/gif;base64,/i.test(asset.src)){const blob=await (await fetch(asset.src)).blob();if(blob.size>10*1024*1024)throw Error(`${asset.name} 超过 10MB，请先压缩 GIF`);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:asset.src}}
+ if(/^data:image\/gif;base64,/i.test(asset.src)){const blob=await (await fetch(asset.src)).blob();if(blob.size>30*1024*1024)throw Error(`${asset.name} 超过 30MB，请先压缩 GIF`);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:asset.src}}
  const img=await loadImg(asset.src),limit=900*1024;let width=Math.min(img.naturalWidth,1080),blob,canvas;
  for(let attempt=0;attempt<8;attempt++){
   const height=Math.max(1,Math.round(img.naturalHeight*width/img.naturalWidth));canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);blob=await canvasBlob(canvas,'image/png');if(blob.size<=limit)return {id:asset.id,name:safeBase+'.png',mime:'image/png',data:await blobData(blob)};if(width<=320)break;width=Math.max(320,Math.floor(width*.82));
