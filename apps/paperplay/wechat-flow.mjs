@@ -2,8 +2,9 @@ const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;'
 
 export function flowSlots(state){
  const music=state.layers.filter(layer=>layer.type==='music').map(layer=>({id:layer.id,kind:'音乐',y:layer.y,end:layer.y+layer.h}));
+ const media=state.layers.filter(layer=>layer.type==='media').map(layer=>({id:layer.id,kind:layer.mediaKind||'音频',y:layer.y,end:layer.y+layer.h}));
  const manual=(state.flowSlots||[]).map(slot=>({id:slot.id,kind:slot.kind,y:slot.y,end:slot.y}));
- return [...music,...manual].filter(slot=>Number.isFinite(slot.y)&&slot.y>=0&&slot.y<state.height).sort((a,b)=>a.y-b.y||a.end-b.end);
+ return [...music,...media,...manual].filter(slot=>Number.isFinite(slot.y)&&slot.y>=0&&slot.y<state.height).sort((a,b)=>a.y-b.y||a.end-b.end);
 }
 
 export function composeFlowHTML(state,renderStrip){
@@ -20,4 +21,19 @@ export function composeFlowHTML(state,renderStrip){
  }
  if(cursor<state.height)parts.push(renderStrip(cursor,state.height));
  return `<section style="margin:0;padding:0;background-color:${escapeHTML(state.color)};background-image:url(&quot;${escapeHTML(tile.url)}&quot;);background-position:0 0;background-size:100% auto;background-repeat:repeat-y;line-height:normal;">${parts.join('')}</section>`;
+}
+
+export function auditFlowInsertion(before,after,inserted){
+ const count=(html,pattern)=>(String(html||'').match(pattern)||[]).length;
+ const missing=[];
+ for(const [label,pattern] of [
+  ['连续底图',/background-image\s*:/gi],
+  ['SVG 排版',/<svg\b/gi],
+  ['图片素材',/<img\b/gi],
+  ['媒体插入点',/data-paperplay-slot\s*=/gi],
+ ]){
+  const expected=count(inserted,pattern),actual=count(after,pattern)-count(before,pattern);
+  if(expected>actual)missing.push(`${label} ${Math.max(0,actual)}/${expected}`);
+ }
+ return missing;
 }
