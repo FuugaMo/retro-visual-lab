@@ -152,9 +152,12 @@ async function staticPNG(offset=0,height=state.height){
  }
  return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('导出失败')),'image/png'))
 }
+async function gifFrameCount(blob){
+ const bytes=new Uint8Array(await blob.arrayBuffer());if(bytes.length<13||String.fromCharCode(...bytes.slice(0,3))!=='GIF')throw Error('GIF 文件无效');let p=13,count=0,packed=bytes[10];if(packed&128)p+=3*(1<<((packed&7)+1));const skipBlocks=()=>{while(p<bytes.length){const size=bytes[p++];if(!size)return;p+=size}};while(p<bytes.length){const marker=bytes[p++];if(marker===59)break;if(marker===33){p++;skipBlocks();continue}if(marker!==44||p+9>bytes.length)throw Error('GIF 文件结构无效');count++;packed=bytes[p+8];p+=9;if(packed&128)p+=3*(1<<((packed&7)+1));p++;skipBlocks()}return count
+}
 async function uploadPayload(asset){
  const safeBase=(asset.name||'paperplay-image').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|]/g,'_');
- if(/^data:image\/gif;base64,/i.test(asset.src)){const blob=await (await fetch(asset.src)).blob();if(blob.size>30*1024*1024)throw Error(`${asset.name} 超过 30MB，请先压缩 GIF`);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:asset.src}}
+ if(/^data:image\/gif;base64,/i.test(asset.src)){const blob=await (await fetch(asset.src)).blob();if(blob.size>10_000_000)throw Error(`${asset.name} 超过公众号 GIF 的 10MB 上限，请先压缩`);const frames=await gifFrameCount(blob);if(frames>300)throw Error(`${asset.name} 有 ${frames} 帧，超过公众号 GIF 的 300 帧上限，请先减帧`);return {id:asset.id,name:safeBase+'.gif',mime:'image/gif',data:asset.src}}
  const img=await loadImg(asset.src),limit=900*1024;let width=Math.min(img.naturalWidth,1080),blob,canvas;
  for(let attempt=0;attempt<8;attempt++){
   const height=Math.max(1,Math.round(img.naturalHeight*width/img.naturalWidth));canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').drawImage(img,0,0,width,height);blob=await canvasBlob(canvas,'image/png');if(blob.size<=limit)return {id:asset.id,name:safeBase+'.png',mime:'image/png',data:await blobData(blob)};if(width<=320)break;width=Math.max(320,Math.floor(width*.82));
