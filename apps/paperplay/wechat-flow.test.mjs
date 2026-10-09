@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {auditFlowInsertion,auditRasterFlowInsertion,composeFlowHTML,composeRasterFlowHTML,flowSlots,rasterFlowPlan} from './wechat-flow.mjs';
+import {auditFlowInsertion,auditRasterFlowInsertion,composeFlowHTML,composeRasterFlowHTML,flowSlots,rasterFlowPlan,refineRasterFlowPlan} from './wechat-flow.mjs';
 
 const state={height:1200,color:'#dce3cb',flowBackground:{url:'https://mmbiz.qpic.cn/test.png'},layers:[{id:'music-1',type:'music',y:400,h:180}],flowSlots:[{id:'video-1',kind:'视频号',y:900}]};
 
@@ -63,4 +63,11 @@ test('raster flow refuses to flatten overlapping animated artwork',()=>{
   {id:'title',type:'text',x:0,y:100,w:500,h:100},
  ]};
  assert.throws(()=>rasterFlowPlan(project),/重叠/);
+});
+
+test('adaptive raster strips preserve exact canvas coverage without downscaling',()=>{
+ const parts=[{type:'strip',start:0,end:800},{type:'media',id:'audio',y:800,end:1000},{type:'strip',start:1000,end:1800}];
+ const assets=[{start:0,end:400},{start:400,end:800},{start:1000,end:1800}];
+ assert.deepEqual(refineRasterFlowPlan(parts,assets).map(part=>[part.type,part.start??part.y,part.end]),[['strip',0,400],['strip',400,800],['media',800,1000],['strip',1000,1800]]);
+ assert.throws(()=>refineRasterFlowPlan(parts,assets.slice(1)),/不连续/);
 });

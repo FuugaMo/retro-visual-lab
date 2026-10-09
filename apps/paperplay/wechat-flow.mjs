@@ -38,6 +38,17 @@ export function rasterFlowPlan(state,maxStripHeight=1600){
  return parts;
 }
 
+export function refineRasterFlowPlan(parts,assets){
+ return parts.flatMap(part=>{
+  if(part.type!=='strip')return [part];
+  const strips=assets.filter(asset=>asset.start>=part.start&&asset.end<=part.end).sort((a,b)=>a.start-b.start);
+  let cursor=part.start;
+  for(const strip of strips){if(strip.start!==cursor||strip.end<=strip.start)throw Error(`视觉分段 ${part.start}–${part.end}px 不连续`);cursor=strip.end}
+  if(cursor!==part.end)throw Error(`视觉分段 ${part.start}–${part.end}px 不完整`);
+  return strips.map(strip=>({type:'strip',start:strip.start,end:strip.end}));
+ });
+}
+
 export function composeRasterFlowHTML(state,parts,stripAssets){
  const tile=state.flowBackground;
  if(!tile||!/^https:\/\/mmbiz\.(?:qpic|qlogo)\.cn\//.test(tile.url||''))throw Error('请先上传连续背景纹理');
