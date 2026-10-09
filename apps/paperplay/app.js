@@ -191,7 +191,7 @@ async function staticPNG(offset=0,height=state.height,options={}){
  if(!options.transparent)for(const part of backgroundLayout()){if(part.y+part.height<=offset||part.y>=offset+height)continue;ctx.drawImage(await loadImg(part.asset.src),0,part.y,state.width,part.height)}
  for(const l of state.layers){
   if(l.y+l.h<=offset||l.y>=offset+height||options.skipLayerIds?.has(l.id)||options.skipMedia&&['music','media'].includes(l.type))continue;
-  ctx.save();if(l.rotation){ctx.translate(l.x,l.y);ctx.rotate(l.rotation*Math.PI/180);ctx.translate(-l.x,-l.y)}ctx.beginPath();ctx.roundRect(l.x,l.y,l.w,l.h,l.type==='music'?0:l.radius||0);ctx.clip();
+  ctx.save();if(l.rotation){ctx.translate(l.x,l.y);ctx.rotate(l.rotation*Math.PI/180);ctx.translate(-l.x,-l.y)}if(l.type!=='text'){ctx.beginPath();ctx.roundRect(l.x,l.y,l.w,l.h,l.type==='music'?0:l.radius||0);ctx.clip()}
   if((l.type==='image'||l.type==='gallery'||isEffect(l))&&l.images[0]){const asset=l.images[0],img=await loadImg(asset.src),s=l.fit==='contain'?Math.min(l.w/img.naturalWidth,l.h/img.naturalHeight):Math.max(l.w/img.naturalWidth,l.h/img.naturalHeight),w=img.naturalWidth*s,h=img.naturalHeight*s;ctx.drawImage(img,l.x+(l.w-w)*(asset.focusX??50)/100,l.y+(l.h-h)*(asset.focusY??50)/100,w,h)}
   if(l.type==='text'){ctx.fillStyle=l.color;ctx.font=l.fontSize+'px "'+(l.fontFamily||'sans-serif')+'"';ctx.textBaseline='top';ctx.textAlign=l.align;l.text.split('\n').forEach((t,i)=>ctx.fillText(t,l.x+(l.align==='center'?l.w/2:l.align==='right'?l.w:0),l.y+i*l.fontSize*1.5))}
   if(l.type==='music')ctx.drawImage(await loadImg(svgData(playerSVG(l))),l.x,l.y,l.w,l.h);
