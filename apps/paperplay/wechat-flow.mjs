@@ -1,4 +1,5 @@
 const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+const slotHTML=slot=>`<p data-paperplay-slot="${escapeHTML(slot.id)}" style="box-sizing:border-box;height:${Math.max(1,slot.end-slot.y)}px;margin:0;padding:24px 16px;min-height:1px;text-align:center;color:#333333;line-height:1.6;overflow:hidden;">在此插入${escapeHTML(slot.kind)}</p>`;
 
 export function flowSlots(state){
  const music=state.layers.filter(layer=>layer.type==='music').map(layer=>({id:layer.id,kind:'音乐',y:layer.y,end:layer.y+layer.h}));
@@ -16,7 +17,7 @@ export function composeFlowHTML(state,renderStrip){
  for(const slot of slots){
   if(slot.y<cursor)throw Error('媒体插入点与音乐区域重叠，请调整位置');
   if(slot.y>cursor)parts.push(renderStrip(cursor,slot.y));
-  parts.push(`<p data-paperplay-slot="${escapeHTML(slot.id)}" style="margin:0;padding:24px 16px;min-height:1em;text-align:center;color:#333333;line-height:1.6;">在此插入${escapeHTML(slot.kind)}</p>`);
+  parts.push(slotHTML(slot));
   cursor=slot.end;
  }
  if(cursor<state.height)parts.push(renderStrip(cursor,state.height));
@@ -56,16 +57,16 @@ export function composeRasterFlowHTML(state,parts,stripAssets){
   if(part.type==='strip'){
    const asset=stripAssets.find(item=>item.start===part.start&&item.end===part.end);
    if(!asset||!/^https:\/\/mmbiz\.(?:qpic|qlogo)\.cn\//.test(asset.url||''))throw Error(`第 ${part.start}–${part.end}px 段尚未上传`);
-   return `<img data-paperplay-strip="${part.start}-${part.end}" src="${escapeHTML(asset.url)}" width="${state.width}" height="${part.end-part.start}" style="display:block;width:100%;height:auto;margin:0;padding:0;"/>`;
+   return `<img data-paperplay-strip="${part.start}-${part.end}" src="${escapeHTML(asset.url)}" width="${state.width}" height="${part.end-part.start}" style="display:block;width:100%;height:auto;margin:0;padding:0;border:0;vertical-align:top;"/>`;
   }
   if(part.type==='gif'){
    const layer=part.layer,asset=layer.images[0];
    if(!/^https:\/\/mmbiz\.(?:qpic|qlogo)\.cn\//.test(asset.url||''))throw Error(`${asset.name} 尚未上传`);
-   return `<img data-paperplay-gif="${escapeHTML(layer.id)}" src="${escapeHTML(asset.url)}" width="${Math.round(layer.w)}" height="${Math.round(layer.h)}" style="display:block;width:${layer.w/state.width*100}%;height:auto;margin:0 0 0 ${layer.x/state.width*100}%;padding:0;"/>`;
+   return `<img data-paperplay-gif="${escapeHTML(layer.id)}" src="${escapeHTML(asset.url)}" width="${Math.round(layer.w)}" height="${Math.round(layer.h)}" style="display:block;width:${layer.w/state.width*100}%;height:auto;margin:0 0 0 ${layer.x/state.width*100}%;padding:0;border:0;vertical-align:top;"/>`;
   }
-  return `<p data-paperplay-slot="${escapeHTML(part.id)}" style="margin:0;padding:24px 16px;min-height:1em;text-align:center;color:#333333;line-height:1.6;">在此插入${escapeHTML(part.kind)}</p>`;
+  return slotHTML(part);
  }).join('');
- return `<section style="margin:0;padding:0;background-color:${escapeHTML(state.color)};background-image:url(&quot;${escapeHTML(tile.url)}&quot;);background-position:0 0;background-size:100% auto;background-repeat:repeat-y;line-height:0;">${inner}</section>`;
+ return `<section style="display:block;box-sizing:border-box;width:100%;margin:0;padding:0;border:0;background-color:${escapeHTML(state.color)};background-image:url(&quot;${escapeHTML(tile.url)}&quot;);background-position:0 0;background-size:100% auto;background-repeat:repeat-y;font-size:0;line-height:0;overflow:hidden;">${inner}</section>`;
 }
 
 export function auditRasterFlowInsertion(before,after,inserted){

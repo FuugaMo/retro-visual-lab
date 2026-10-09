@@ -12,6 +12,7 @@ test('one repeating background wraps normal-flow media points',()=>{
  assert.match(html,/background-repeat:repeat-y/);
  assert.match(html,/在此插入音乐/);
  assert.match(html,/在此插入视频号/);
+ assert.match(html,/height:180px;margin:0;padding:24px 16px/);
  assert.equal(flowSlots(state).length,2);
 });
 
@@ -26,6 +27,7 @@ test('canvas media layers become export slots at their saved coordinates',()=>{
  const html=composeFlowHTML(project,(start,end)=>{ranges.push([start,end]);return '<svg></svg>'});
  assert.deepEqual(ranges,[[0,250],[570,1200]]);
  assert.match(html,/在此插入视频号/);
+ assert.match(html,/height:320px;margin:0;padding:24px 16px/);
 });
 
 test('audits what WeChat actually retained after insertion',()=>{
@@ -50,6 +52,7 @@ test('raster flow preserves an isolated animated poster and native media positio
  assert.equal((html.match(/<svg\b/g)||[]).length,0);
  assert.match(html,/poster\.gif/);
  assert.match(html,/在此插入视频号/);
+ assert.match(html,/font-size:0;line-height:0;overflow:hidden/);
  assert.deepEqual(auditRasterFlowInsertion('',html,html),[]);
  assert.deepEqual(auditRasterFlowInsertion('',html.replace(/background-image:/,'background:'),html),[]);
  assert.deepEqual(auditRasterFlowInsertion('',html.replace(/background-image:/,'background-color:'),html),['连续底图 0/1']);
