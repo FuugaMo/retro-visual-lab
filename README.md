@@ -26,3 +26,5 @@ The Windows 98 CD Player supports a custom cover (cover/contain), Artist, Track,
 Extension drafts belong to a different browser origin. Download the project JSON from the extension and open it here to transfer existing work. Website drafts are stored separately in IndexedDB. Reading or modifying the WeChat editor requires the extension; the website provides copy/export instead.
 
 The fifth tab and its export panel have been checked in a local browser. Phone WeChat compatibility still needs final-device verification before publication.
+
+For公众号正文 containing native media insertion points, the automatic export now renders static artwork into transparent image strips instead of relying on SVG `foreignObject`. An isolated GIF stays animated; the repeating background remains on the article container. Generate and preview the strips before uploading. The Chrome extension requires an empty draft and will reject a second full-article insertion into a nonempty editor. Native music, audio, and video号 cards still need to be placed at the marked positions in the WeChat editor, followed by phone preview.

@@ -23,6 +23,51 @@ export function composeFlowHTML(state,renderStrip){
  return `<section style="margin:0;padding:0;background-color:${escapeHTML(state.color)};background-image:url(&quot;${escapeHTML(tile.url)}&quot;);background-position:0 0;background-size:100% auto;background-repeat:repeat-y;line-height:normal;">${parts.join('')}</section>`;
 }
 
+export function rasterFlowPlan(state,maxStripHeight=1600){
+ const animated=state.layers.filter(layer=>layer.type==='image'&&/^(?:data:image\/gif;base64,|https?:\/\/[^\s]+\.gif(?:[?#]|$))/i.test(layer.images?.[0]?.src||''));
+ const occupied=[...flowSlots(state).map(slot=>({...slot,type:'media'})),...animated.map(layer=>({id:layer.id,type:'gif',y:layer.y,end:layer.y+layer.h,layer}))].sort((a,b)=>a.y-b.y||a.end-b.end);
+ let cursor=0;const parts=[];
+ const strips=(start,end)=>{for(let y=start;y<end;y=Math.min(end,y+maxStripHeight))parts.push({type:'strip',start:y,end:Math.min(end,y+maxStripHeight)})};
+ for(const slot of occupied){if(slot.y<cursor)throw Error('GIF 与其他图层或媒体插入点重叠，不能安全导出动画');strips(cursor,slot.y);parts.push(slot);cursor=slot.end}
+ strips(cursor,state.height);
+ for(const slot of occupied.filter(item=>item.type==='gif')){
+  const layer=slot.layer;
+  if(state.layers.some(other=>other.id!==layer.id&&!['music','media'].includes(other.type)&&other.y<slot.end&&other.y+other.h>slot.y))throw Error(`${layer.name||'GIF'} 与其他视觉图层重叠，无法保持动画和准确位置`);
+  if(layer.rotation||layer.radius||layer.fit!=='contain')throw Error(`${layer.name||'GIF'} 使用了旋转、圆角或裁切；请改为完整显示后再导出动画`);
+ }
+ return parts;
+}
+
+export function composeRasterFlowHTML(state,parts,stripAssets){
+ const tile=state.flowBackground;
+ if(!tile||!/^https:\/\/mmbiz\.(?:qpic|qlogo)\.cn\//.test(tile.url||''))throw Error('请先上传连续背景纹理');
+ const inner=parts.map(part=>{
+  if(part.type==='strip'){
+   const asset=stripAssets.find(item=>item.start===part.start&&item.end===part.end);
+   if(!asset||!/^https:\/\/mmbiz\.(?:qpic|qlogo)\.cn\//.test(asset.url||''))throw Error(`第 ${part.start}–${part.end}px 段尚未上传`);
+   return `<img data-paperplay-strip="${part.start}-${part.end}" src="${escapeHTML(asset.url)}" width="${state.width}" height="${part.end-part.start}" style="display:block;width:100%;height:auto;margin:0;padding:0;"/>`;
+  }
+  if(part.type==='gif'){
+   const layer=part.layer,asset=layer.images[0];
+   if(!/^https:\/\/mmbiz\.(?:qpic|qlogo)\.cn\//.test(asset.url||''))throw Error(`${asset.name} 尚未上传`);
+   return `<img data-paperplay-gif="${escapeHTML(layer.id)}" src="${escapeHTML(asset.url)}" width="${Math.round(layer.w)}" height="${Math.round(layer.h)}" style="display:block;width:${layer.w/state.width*100}%;height:auto;margin:0 0 0 ${layer.x/state.width*100}%;padding:0;"/>`;
+  }
+  return `<p data-paperplay-slot="${escapeHTML(part.id)}" style="margin:0;padding:24px 16px;min-height:1em;text-align:center;color:#333333;line-height:1.6;">在此插入${escapeHTML(part.kind)}</p>`;
+ }).join('');
+ return `<section style="margin:0;padding:0;background-color:${escapeHTML(state.color)};background-image:url(&quot;${escapeHTML(tile.url)}&quot;);background-position:0 0;background-size:100% auto;background-repeat:repeat-y;line-height:0;">${inner}</section>`;
+}
+
+export function auditRasterFlowInsertion(before,after,inserted){
+ const count=(html,pattern)=>(String(html||'').match(pattern)||[]).length;
+ const checks=[['连续底图',/background-image\s*:/gi],['图像分段',/<img\b/gi],['媒体插入点',/在此插入(?:音乐|音频|视频号)/gi]];
+ const missing=checks.flatMap(([label,pattern])=>{const expected=count(inserted,pattern),actual=count(after,pattern)-count(before,pattern);return expected>actual?[`${label} ${Math.max(0,actual)}/${expected}`]:[]});
+ const paths=[...String(inserted).matchAll(/<img\b[^>]*\bsrc="([^"]+)"/gi)].map(match=>{try{return new URL(match[1].replace(/&amp;/g,'&')).pathname.replace(/\/(?:0|300|640)$/,'')}catch{return ''}}).filter(Boolean);
+ const actual=String(after||''),previous=String(before||'');
+ if(paths.some(path=>count(actual,new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))<=count(previous,new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))))missing.push('图片地址未全部保留');
+ let last=-1;if(paths.some(path=>{const index=actual.indexOf(path,last+1);if(index<0||index<last)return true;last=index;return false}))missing.push('图片顺序发生变化');
+ return missing;
+}
+
 export function auditFlowInsertion(before,after,inserted){
  const count=(html,pattern)=>(String(html||'').match(pattern)||[]).length;
  const missing=[];

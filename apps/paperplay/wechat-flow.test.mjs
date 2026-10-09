@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {auditFlowInsertion,composeFlowHTML,flowSlots} from './wechat-flow.mjs';
+import {auditFlowInsertion,auditRasterFlowInsertion,composeFlowHTML,composeRasterFlowHTML,flowSlots,rasterFlowPlan} from './wechat-flow.mjs';
 
 const state={height:1200,color:'#dce3cb',flowBackground:{url:'https://mmbiz.qpic.cn/test.png'},layers:[{id:'music-1',type:'music',y:400,h:180}],flowSlots:[{id:'video-1',kind:'视频号',y:900}]};
 
@@ -34,4 +34,32 @@ test('audits what WeChat actually retained after insertion',()=>{
  assert.deepEqual(auditFlowInsertion(before,before+inserted,inserted),[]);
  const stripped='<section><svg viewBox="0 0 1080 200"></svg><p>在此插入音乐</p></section>';
  assert.deepEqual(auditFlowInsertion(before,before+stripped,inserted),['连续底图 0/1','素材叠层 0/1','文字素材 0/1','图片素材 0/1','媒体插入点 0/1','画布高度 0/1']);
+});
+
+test('raster flow preserves an isolated animated poster and native media positions',()=>{
+ const project={height:1200,width:750,color:'#ffffff',flowBackground:{url:'https://mmbiz.qpic.cn/tile.png'},flowSlots:[],layers:[
+  {id:'poster',type:'image',name:'动态海报',x:75,y:50,w:600,h:150,fit:'contain',radius:0,images:[{name:'poster.gif',src:'data:image/gif;base64,AA==',url:'https://mmbiz.qpic.cn/poster.gif'}]},
+  {id:'music',type:'media',mediaKind:'音乐',y:400,h:180},
+  {id:'video',type:'media',mediaKind:'视频号',y:900,h:180},
+ ]};
+ const parts=rasterFlowPlan(project,500),strips=parts.filter(part=>part.type==='strip');
+ assert.deepEqual(parts.map(part=>part.type),['strip','gif','strip','media','strip','media','strip']);
+ assert.deepEqual(strips.map(part=>[part.start,part.end]),[[0,50],[200,400],[580,900],[1080,1200]]);
+ const html=composeRasterFlowHTML(project,parts,strips.map(part=>({...part,url:`https://mmbiz.qpic.cn/strip-${part.start}.png`})));
+ assert.equal((html.match(/<img\b/g)||[]).length,5);
+ assert.equal((html.match(/<svg\b/g)||[]).length,0);
+ assert.match(html,/poster\.gif/);
+ assert.match(html,/在此插入视频号/);
+ assert.deepEqual(auditRasterFlowInsertion('',html,html),[]);
+ assert.deepEqual(auditRasterFlowInsertion('',html.replace(/background-image:/,'background:'),html),['连续底图 0/1']);
+ const swapped=html.replace('https://mmbiz.qpic.cn/strip-0.png','PLACEHOLDER').replace('https://mmbiz.qpic.cn/strip-200.png','https://mmbiz.qpic.cn/strip-0.png').replace('PLACEHOLDER','https://mmbiz.qpic.cn/strip-200.png');
+ assert.ok(auditRasterFlowInsertion('',swapped,html).includes('图片顺序发生变化'));
+});
+
+test('raster flow refuses to flatten overlapping animated artwork',()=>{
+ const project={width:750,height:500,layers:[
+  {id:'poster',type:'image',name:'动图',x:0,y:0,w:400,h:300,fit:'contain',images:[{src:'data:image/gif;base64,AA=='}]},
+  {id:'title',type:'text',x:0,y:100,w:500,h:100},
+ ]};
+ assert.throws(()=>rasterFlowPlan(project),/重叠/);
 });
