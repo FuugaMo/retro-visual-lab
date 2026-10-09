@@ -51,7 +51,8 @@ test('raster flow preserves an isolated animated poster and native media positio
  assert.match(html,/poster\.gif/);
  assert.match(html,/在此插入视频号/);
  assert.deepEqual(auditRasterFlowInsertion('',html,html),[]);
- assert.deepEqual(auditRasterFlowInsertion('',html.replace(/background-image:/,'background:'),html),['连续底图 0/1']);
+ assert.deepEqual(auditRasterFlowInsertion('',html.replace(/background-image:/,'background:'),html),[]);
+ assert.deepEqual(auditRasterFlowInsertion('',html.replace(/background-image:/,'background-color:'),html),['连续底图 0/1']);
  const swapped=html.replace('https://mmbiz.qpic.cn/strip-0.png','PLACEHOLDER').replace('https://mmbiz.qpic.cn/strip-200.png','https://mmbiz.qpic.cn/strip-0.png').replace('PLACEHOLDER','https://mmbiz.qpic.cn/strip-200.png');
  assert.ok(auditRasterFlowInsertion('',swapped,html).includes('图片顺序发生变化'));
 });

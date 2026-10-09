@@ -59,8 +59,11 @@ export function composeRasterFlowHTML(state,parts,stripAssets){
 
 export function auditRasterFlowInsertion(before,after,inserted){
  const count=(html,pattern)=>(String(html||'').match(pattern)||[]).length;
- const checks=[['连续底图',/background-image\s*:/gi],['图像分段',/<img\b/gi],['媒体插入点',/在此插入(?:音乐|音频|视频号)/gi]];
+ const backgroundCount=html=>[...String(html||'').matchAll(/\bstyle\s*=\s*(["'])(.*?)\1/gi)].filter(match=>/(?:^|;)\s*background(?:-image)?\s*:\s*(?:url\(|[^;]*\burl\()/i.test(match[2])).length;
+ const expectedBackground=backgroundCount(inserted),actualBackground=backgroundCount(after)-backgroundCount(before);
+ const checks=[['图像分段',/<img\b/gi],['媒体插入点',/在此插入(?:音乐|音频|视频号)/gi]];
  const missing=checks.flatMap(([label,pattern])=>{const expected=count(inserted,pattern),actual=count(after,pattern)-count(before,pattern);return expected>actual?[`${label} ${Math.max(0,actual)}/${expected}`]:[]});
+ if(expectedBackground>actualBackground)missing.unshift(`连续底图 ${Math.max(0,actualBackground)}/${expectedBackground}`);
  const paths=[...String(inserted).matchAll(/<img\b[^>]*\bsrc="([^"]+)"/gi)].map(match=>{try{return new URL(match[1].replace(/&amp;/g,'&')).pathname.replace(/\/(?:0|300|640)$/,'')}catch{return ''}}).filter(Boolean);
  const actual=String(after||''),previous=String(before||'');
  if(paths.some(path=>count(actual,new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))<=count(previous,new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))))missing.push('图片地址未全部保留');
