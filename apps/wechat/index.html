@@ -54,10 +54,11 @@
           <div class="section-title">02 / Windows 98</div>
           <div class="note-layout-presets" aria-label="记事本版式">
             <button class="note-layout-preset active" data-note-layout="editorial" type="button"><b>NOTEPAD</b><small>正文 / 宣言</small></button>
-            <button class="note-layout-preset" data-note-layout="dialog" type="button"><b>DIALOG 98</b><small>双按钮空白窗</small></button>
+            <button class="note-layout-preset" data-note-layout="dialog" type="button"><b>DIALOG 98</b><small>双按钮提示窗</small></button>
             <button class="note-layout-preset" data-note-layout="painter" type="button"><b>PAINT 98</b><small>工具 / 透明画布</small></button>
           </div>
           <label class="field-stack"><span>窗口标题</span><input id="noteTitle" class="win-input" type="text" value="untitled.txt - Notepad" /></label>
+          <label class="field-stack" data-note-dialog hidden><span>对话框内容（留空保持空白）</span><textarea id="dialogContent" class="win-input note-input" rows="4" placeholder="输入提示文字…"></textarea></label>
           <div class="two-col note-dialog-fields" data-note-dialog hidden>
             <label class="field-stack"><span>左侧按钮</span><input id="dialogPrimary" class="win-input" type="text" value="Ok" /></label>
             <label class="field-stack"><span>右侧按钮</span><input id="dialogSecondary" class="win-input" type="text" value="Cancel" /></label>
@@ -70,7 +71,7 @@
 
 声音经过身体，留下没有名字的颜色。
 我们把它们收集在这里。</textarea></label>
-          <div class="font-section" data-note-editorial>
+          <div class="font-section" data-note-typography>
             <div class="font-heading"><strong>字体组合</strong><small>中文与拉丁字符独立设置</small></div>
             <label class="field-stack"><span>中文字体</span><select id="noteCjkFont" class="win-input">
               <optgroup label="像素 / PIXEL"><option value="fusion8">Fusion Pixel 8</option><option value="fusion10" selected>Fusion Pixel 10</option><option value="fusion12">Fusion Pixel 12</option><option value="fusion12mono">Fusion Pixel 12 等宽</option></optgroup>
@@ -89,7 +90,7 @@
             <div class="font-preview" id="fontPreview"><span class="cjk-sample">声音经过身体</span><span class="latin-sample">TYPE / 1998 / SIGNAL</span></div>
             <p class="local-hint" id="fontUploadStatus">字体文件仅在当前浏览器会话中使用，不会上传。</p>
           </div>
-          <div class="two-col" data-note-editorial>
+          <div class="two-col" data-note-typography>
             <label class="field-stack"><span>字号</span><input id="noteSize" class="win-input" type="number" min="18" max="72" value="34" /></label>
             <label class="field-stack"><span>字重</span><select id="noteWeight" class="win-input"><option value="400">常规</option><option value="600">半粗</option><option value="700">粗体</option></select></label>
             <label class="field-stack"><span>对齐</span><select id="noteAlign" class="win-input"><option value="left">左对齐</option><option value="center">居中</option><option value="right">右对齐</option></select></label>
@@ -98,7 +99,7 @@
             <label class="field-stack"><span>文字色</span><input id="noteColor" class="win-input color-input" type="color" value="#111111" /></label>
             <label class="field-stack"><span>标题栏</span><input id="titlebarColor" class="win-input color-input" type="color" value="#000080" /></label>
           </div>
-          <div class="format-buttons" aria-label="文字格式" data-note-editorial>
+          <div class="format-buttons" aria-label="文字格式" data-note-typography>
             <button class="win-button toggle" id="boldToggle" type="button" aria-pressed="false"><b>B</b></button>
             <button class="win-button toggle" id="italicToggle" type="button" aria-pressed="false"><i>I</i></button>
             <button class="win-button toggle" id="underlineToggle" type="button" aria-pressed="false"><u>U</u></button>

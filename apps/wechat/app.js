@@ -69,6 +69,7 @@ const state = {
   noteLayout: initialNoteLayout,
   noteTitle: saved.noteTitle || initialNoteDefaults.title,
   noteContent: saved.noteContent || noteLayoutDefaults.editorial.content,
+  dialogContent: saved.dialogContent ?? '',
   dialogPrimary: saved.dialogPrimary || 'Ok',
   dialogSecondary: saved.dialogSecondary || 'Cancel',
   paintRatio: parsePaintRatio(saved.paintRatio)?.label || '3:2',
@@ -84,6 +85,19 @@ const state = {
   noteBold: saved.noteBold || false,
   noteItalic: saved.noteItalic || false,
   noteUnderline: saved.noteUnderline || false,
+  dialogTypography: {
+    noteCjkFont: saved.dialogTypography?.noteCjkFont || 'fusion10',
+    noteLatinFont: saved.dialogTypography?.noteLatinFont || 'pixelms',
+    noteSize: saved.dialogTypography?.noteSize ?? 26,
+    noteWeight: saved.dialogTypography?.noteWeight || '400',
+    noteAlign: saved.dialogTypography?.noteAlign || 'center',
+    noteLineHeight: saved.dialogTypography?.noteLineHeight ?? 1.35,
+    noteLetterSpacing: saved.dialogTypography?.noteLetterSpacing ?? 0,
+    noteColor: saved.dialogTypography?.noteColor || '#111111',
+    noteBold: saved.dialogTypography?.noteBold || false,
+    noteItalic: saved.dialogTypography?.noteItalic || false,
+    noteUnderline: saved.dialogTypography?.noteUnderline || false,
+  },
   noteWidth: saved.noteWidth ?? initialNoteDefaults.width,
   notePadding: saved.notePadding ?? 48,
   noteShadow: saved.noteShadow ?? true,
@@ -502,7 +516,11 @@ function makePaperDataUrl() {
   return canvas.toDataURL('image/png');
 }
 
-function renderMixedText(element, text) {
+function activeTypography() {
+  return state.noteLayout === 'dialog' ? state.dialogTypography : state;
+}
+
+function renderMixedText(element, text, typography = state) {
   element.replaceChildren();
   let currentType = null;
   let currentText = '';
@@ -510,7 +528,7 @@ function renderMixedText(element, text) {
     if (!currentText) return;
     const span = document.createElement('span');
     span.className = currentType === 'latin' ? 'latin-run' : 'cjk-run';
-    span.style.fontFamily = fontFamilies[currentType === 'latin' ? state.noteLatinFont : state.noteCjkFont];
+    span.style.fontFamily = fontFamilies[currentType === 'latin' ? typography.noteLatinFont : typography.noteCjkFont];
     span.textContent = currentText;
     element.append(span);
     currentText = '';
@@ -528,7 +546,7 @@ function notepadMarkup() {
   if (state.noteLayout === 'dialog') {
     return `<div class="notepad-window dialog-window">
       <div class="notepad-titlebar dialog-titlebar"><span class="titlebar-title"></span><span class="window-buttons"><i class="window-button">×</i></span></div>
-      <div class="dialog-body"><div class="dialog-blank" aria-hidden="true"></div><div class="dialog-actions"><button class="dialog-button dialog-primary" type="button"></button><button class="dialog-button dialog-secondary" type="button"></button></div></div>
+      <div class="dialog-body"><div class="dialog-message"><div class="dialog-message-text"></div></div><div class="dialog-actions"><button class="dialog-button dialog-primary" type="button"></button><button class="dialog-button dialog-secondary" type="button"></button></div></div>
     </div>`;
   }
   if (state.noteLayout === 'painter') {
@@ -593,6 +611,10 @@ function render() {
       const bodyHeight = Math.max(280, state.noteContent.split('\n').length * state.noteSize * state.noteLineHeight + state.notePadding * 2);
       body.style.minHeight = `${bodyHeight}px`;
     } else if (state.noteLayout === 'dialog') {
+      const typography = state.dialogTypography;
+      const message = stage.querySelector('.dialog-message-text');
+      renderMixedText(message, state.dialogContent, typography);
+      Object.assign(message.style, { fontFamily: fontFamilies[typography.noteCjkFont], fontSize: `${typography.noteSize}px`, fontWeight: typography.noteBold ? '700' : typography.noteWeight, textAlign: typography.noteAlign, lineHeight: typography.noteLineHeight, letterSpacing: `${typography.noteLetterSpacing}px`, color: typography.noteColor, fontStyle: typography.noteItalic ? 'italic' : 'normal', textDecoration: typography.noteUnderline ? 'underline' : 'none' });
       stage.querySelector('.dialog-primary').textContent = state.dialogPrimary;
       stage.querySelector('.dialog-secondary').textContent = state.dialogSecondary;
     } else if (state.noteLayout === 'painter') {
@@ -655,20 +677,23 @@ function updateOutputs() {
     $(`#${id}`).disabled = isUniformStatic;
   });
   $$('[data-note-editorial]').forEach((element) => { element.hidden = state.noteLayout !== 'editorial'; });
+  $$('[data-note-typography]').forEach((element) => { element.hidden = state.noteLayout === 'painter'; });
   $$('[data-note-dialog]').forEach((element) => { element.hidden = state.noteLayout !== 'dialog'; });
   $$('[data-note-painter]').forEach((element) => { element.hidden = state.noteLayout !== 'painter'; });
-  ['noteTitle','noteContent','dialogPrimary','dialogSecondary'].forEach((id) => {
+  ['noteTitle','noteContent','dialogContent','dialogPrimary','dialogSecondary'].forEach((id) => {
     if ($(`#${id}`).value !== String(state[id])) $(`#${id}`).value = state[id];
   });
   $('#noteWidthValue').textContent = `${state.noteWidth}px`;
   $('#notePaddingValue').textContent = `${state.notePadding}px`;
   $('#dividerProgressValue').textContent = `${state.dividerProgress}%`;
   $('#dividerSegmentsValue').textContent = state.dividerSegments;
-  $('#fontPreview .cjk-sample').style.fontFamily = fontFamilies[state.noteCjkFont];
-  $('#fontPreview .latin-sample').style.fontFamily = fontFamilies[state.noteLatinFont];
+  const typography = activeTypography();
+  ['noteCjkFont','noteLatinFont','noteSize','noteWeight','noteAlign','noteLineHeight','noteLetterSpacing','noteColor'].forEach((id) => { $(`#${id}`).value = typography[id]; });
+  $('#fontPreview .cjk-sample').style.fontFamily = fontFamilies[typography.noteCjkFont];
+  $('#fontPreview .latin-sample').style.fontFamily = fontFamilies[typography.noteLatinFont];
   [['boldToggle','noteBold'],['italicToggle','noteItalic'],['underlineToggle','noteUnderline']].forEach(([id,key]) => {
-    $(`#${id}`).classList.toggle('pressed', state[key]);
-    $(`#${id}`).setAttribute('aria-pressed', String(state[key]));
+    $(`#${id}`).classList.toggle('pressed', typography[key]);
+    $(`#${id}`).setAttribute('aria-pressed', String(typography[key]));
   });
 }
 
@@ -723,13 +748,15 @@ $('#paintRatio').addEventListener('keydown', (event) => {
   if (event.key === 'Enter') event.target.blur();
 });
 
-['paperColor','noteTitle','noteContent','dialogPrimary','dialogSecondary','noteCjkFont','noteLatinFont','noteWeight','noteAlign','noteColor','titlebarColor','dividerLabel','dividerColor','dividerAccent'].forEach((id) => bindValue(id, id));
-['noiseAmount','grainSize','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','noteSize','noteLineHeight','noteLetterSpacing','noteWidth','notePadding','dividerProgress','dividerSegments'].forEach((id) => bindValue(id, id, 'input', Number));
+['paperColor','noteTitle','noteContent','dialogContent','dialogPrimary','dialogSecondary','titlebarColor','dividerLabel','dividerColor','dividerAccent'].forEach((id) => bindValue(id, id));
+['noiseAmount','grainSize','washAmount','scanlineAmount','rgbSplit','bloomAmount','vignetteAmount','tearAmount','noteWidth','notePadding','dividerProgress','dividerSegments'].forEach((id) => bindValue(id, id, 'input', Number));
+['noteCjkFont','noteLatinFont','noteWeight','noteAlign','noteColor'].forEach((id) => $(`#${id}`).addEventListener('input', (event) => { activeTypography()[id] = event.target.value; render(); }));
+['noteSize','noteLineHeight','noteLetterSpacing'].forEach((id) => $(`#${id}`).addEventListener('input', (event) => { activeTypography()[id] = Number(event.target.value); render(); }));
 $('#safeCenter').checked = state.safeCenter;
 $('#safeCenter').addEventListener('change', (event) => { state.safeCenter = event.target.checked; render(); });
 $('#noteShadow').checked = state.noteShadow;
 $('#noteShadow').addEventListener('change', (event) => { state.noteShadow = event.target.checked; render(); });
-[['boldToggle','noteBold'],['italicToggle','noteItalic'],['underlineToggle','noteUnderline']].forEach(([id,key]) => $(`#${id}`).addEventListener('click', () => { state[key] = !state[key]; render(); }));
+[['boldToggle','noteBold'],['italicToggle','noteItalic'],['underlineToggle','noteUnderline']].forEach(([id,key]) => $(`#${id}`).addEventListener('click', () => { const typography = activeTypography(); typography[key] = !typography[key]; render(); }));
 $('#rerollNoise').addEventListener('click', () => {
   state.noiseSeed = Math.floor(Math.random() * 1000000);
   state.washSeed = Math.floor(Math.random() * 1000000);
@@ -775,7 +802,7 @@ async function loadCustomFont(file, kind) {
     option.textContent = file.name.replace(/\.(ttf|otf|woff2?)$/i, '');
     group.append(option);
     select.value = id;
-    state[kind === 'cjk' ? 'noteCjkFont' : 'noteLatinFont'] = id;
+    activeTypography()[kind === 'cjk' ? 'noteCjkFont' : 'noteLatinFont'] = id;
     fontStatus.textContent = `已载入 ${file.name} · 仅限当前会话`;
     render();
   } catch (error) {
